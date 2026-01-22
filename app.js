@@ -1,126 +1,73 @@
+// 1. Connection Keys
 const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. SIGNUP
-    document.getElementById('signup-btn').onclick = async () => {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const { data, error } = await supabaseClient.auth.signUp({ email, password });
-        if (error) alert("Error: " + error.message);
-        else alert("Account Created! Now tap Login.");
-    };
+// 2. The Brain - Starts when any page opens
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log("Ghost Engine: Online");
 
-    // 2. LOGIN
-    document.getElementById('login-btn').onclick = async () => {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) alert("Login Failed: " + error.message);
-        else {
-            alert("Welcome to the Ghost Layer!");
-            window.location.href = './hub.html';
-        }
-    };
-});
-            
-// --- BUCKET LIST LOGIC ---
-const addTodoBtn = document.getElementById('add-todo-btn');
-if (addTodoBtn) {
-    // 1. Function to Load Items
-    const loadTodos = async () => {
-        const { data: todos } = await supabaseClient.from('bucket_list').select('*').order('created_at', { ascending: false });
-        const container = document.getElementById('todo-container');
-        container.innerHTML = '';
+    // Get the current user session
+    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    // --- ROOM: HUB (Weather & Clock) ---
+    if (document.getElementById('time')) {
+        // Start the Digital Clock
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('time').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }, 1000);
         
-        todos.forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'glass-card';
-            card.style.display = 'flex';
-            card.style.justifyContent = 'space-between';
-            card.style.alignItems = 'center';
-            card.innerHTML = `
-                <div>
-                    <strong style="${item.is_completed ? 'text-decoration: line-through; opacity: 0.5;' : ''}">${item.title}</strong>
-                    <p style="font-size: 12px; margin: 5px 0 0 0; opacity: 0.6;">${item.target_date || 'No date'}</p>
-                </div>
-                <input type="checkbox" ${item.is_completed ? 'checked' : ''} onclick="toggleTodo('${item.id}', ${item.is_completed})">
-            `;
-            container.appendChild(card);
-        });
-    };
+        // Setup Weather & Quote
+        document.getElementById('temp').innerText = "24°C";
+        document.getElementById('condition').innerText = "Clear Skies";
+        document.getElementById('daily-quote').innerText = "“Ghost Layer: Built by Phestone.”";
+    }
 
-    // 2. Function to Add Item
-    addTodoBtn.onclick = async () => {
-        const title = document.getElementById('todo-input').value;
-        const date = document.getElementById('todo-date').value;
-        const { data: { user } } = await supabaseClient.auth.getUser();
+    // --- ROOM: CHAT (iMessage Style) ---
+    const chatBox = document.getElementById('chat-box');
+    if (chatBox && user) {
+        // Function to create the bubbles
+        const displayMessage = (msg) => {
+            const isMe = msg.sender_email === user.email;
+            const bubble = document.createElement('div');
+            // These classes use the CSS we wrote earlier
+            bubble.className = `message ${isMe ? 'sent' : 'received'}`;
+            bubble.innerText = msg.content;
+            chatBox.appendChild(bubble);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        };
 
-        if (title) {
-            await supabaseClient.from('bucket_list').insert([{ 
-                title, 
-                target_date: date, 
-                user_email: user.email 
-            }]);
-            document.getElementById('todo-input').value = '';
-            loadTodos();
-        }
-    };
+        // 1. Load Past Messages
+        const { data: history } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: true });
+        history?.forEach(displayMessage);
 
-    // 3. Run on Load
-    loadTodos();
-}
+        // 2. Listen for New Messages LIVE
+        supabaseClient.channel('messages').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+            displayMessage(payload.new);
+        }).subscribe();
 
-// Global Toggle Function
-window.toggleTodo = async (id, currentState) => {
-    await supabaseClient.from('bucket_list').update({ is_completed: !currentState }).eq('id', id);
-    location.reload(); // Refresh to show changes
-};
-                
-// --- SETTINGS LOGIC ---
-const logoutBtn = document.getElementById('logout-btn');
-const emailDisplay = document.getElementById('user-display-email');
-
-if (emailDisplay || logoutBtn) {
-    // 1. Show the user's email so they know who they are
-    const getProfile = async () => {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        if (user && emailDisplay) {
-            emailDisplay.innerText = user.email;
-        }
-    };
-    getProfile();
-
-    // 2. Handle the Logout button
-    if (logoutBtn) {
-        logoutBtn.onclick = async () => {
-            const { error } = await supabaseClient.auth.signOut();
-            if (error) alert(error.message);
-            else window.location.href = 'index.html'; // Send back to login screen
+        // 3. Send Message Logic
+        document.getElementById('send-btn').onclick = async () => {
+            const input = document.getElementById('msg-input');
+            if (input.value.trim() !== "") {
+                await supabaseClient.from('messages').insert([{ 
+                    content: input.value, 
+                    sender_email: user.email 
+                }]);
+                input.value = '';
+            }
         };
     }
-}
-         
-// --- iMESSAGE BUBBLE LOGIC ---
-function displayMessage(msg) {
-    const chatBox = document.getElementById('chat-box');
-    if (!chatBox) return;
 
-    // Check if the message is from YOU or your FRIEND
-    const isMe = msg.sender_email === localStorage.getItem('user-email');
-    
-    const bubble = document.createElement('div');
-    bubble.className = `message ${isMe ? 'sent' : 'received'}`;
-    bubble.innerText = msg.content;
-    
-    chatBox.appendChild(bubble);
-    
-    // Auto-scroll to the bottom so you see the newest message
-    chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-// Update your Login success to save the email for the bubbles
-// Add this inside your login success block:
-// localStorage.setItem('user-email', email);
-        
+    // --- ROOM: SETTINGS (Profile & Logout) ---
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        document.getElementById('user-display-email').innerText = user?.email || "Ghost User";
+        logoutBtn.onclick = async () => {
+            await supabaseClient.auth.signOut();
+            window.location.href = 'index.html';
+        };
+    }
+});
+            

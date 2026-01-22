@@ -78,3 +78,20 @@ window.toggleTodo = async (id, currentState) => {
     location.reload(); // Refresh to show changes
 };
                 
+// --- SETTINGS LOGIC ---
+const logoutBtn = document.getElementById('logout-btn');
+if (logoutBtn) {
+    // Show current user
+    const displayUser = async () => {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (user) document.getElementById('user-display-email').innerText = user.email;
+    };
+    displayUser();
+
+    // Logout Action
+    logoutBtn.onclick = async () => {
+        await supabaseClient.auth.signOut();
+        window.location.href = 'index.html';
+    };
+            }
+            

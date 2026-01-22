@@ -95,3 +95,25 @@ if (logoutBtn) {
     };
             }
             
+// --- iMESSAGE BUBBLE LOGIC ---
+function displayMessage(msg) {
+    const chatBox = document.getElementById('chat-box');
+    if (!chatBox) return;
+
+    // Check if the message is from YOU or your FRIEND
+    const isMe = msg.sender_email === localStorage.getItem('user-email');
+    
+    const bubble = document.createElement('div');
+    bubble.className = `message ${isMe ? 'sent' : 'received'}`;
+    bubble.innerText = msg.content;
+    
+    chatBox.appendChild(bubble);
+    
+    // Auto-scroll to the bottom so you see the newest message
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// Update your Login success to save the email for the bubbles
+// Add this inside your login success block:
+// localStorage.setItem('user-email', email);
+        

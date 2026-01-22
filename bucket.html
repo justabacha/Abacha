@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghost Bucket List</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="glass-card" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 20px;">
+        <a href="hub.html" style="text-decoration: none; color: var(--accent);">← Back</a>
+        <h3 style="margin: 0;">Bucket List</h3>
+        <div style="width: 40px;"></div>
+    </div>
+
+    <div class="glass-card">
+        <input type="text" id="todo-input" placeholder="New Goal..." style="width: 100%; margin-bottom: 10px; box-sizing: border-box;">
+        <div style="display: flex; gap: 10px;">
+            <input type="date" id="todo-date" style="flex-grow: 1;">
+            <button id="add-todo-btn">Add</button>
+        </div>
+    </div>
+
+    <div id="todo-container" style="padding: 10px;">
+        </div>
+
+    <script src="app.js" defer></script>
+</body>
+  </html>
+              

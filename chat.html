@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghost Chat</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="glass-card" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 20px;">
+        <a href="hub.html" style="text-decoration: none; color: var(--accent);">← Back</a>
+        <h3 style="margin: 0;">Inner Circle</h3>
+        <div style="width: 40px;"></div> </div>
+
+    <div id="chat-box" style="flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column;">
+        </div>
+
+    <div class="glass-card" style="margin-bottom: 20px; display: flex; gap: 10px;">
+        <input type="text" id="msg-input" placeholder="iMessage" style="flex-grow: 1; border-radius: 30px;">
+        <button id="send-btn" style="border-radius: 50%; width: 45px; height: 45px; padding: 0;">↑</button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+  </html>
+      

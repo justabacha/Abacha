@@ -80,21 +80,28 @@ window.toggleTodo = async (id, currentState) => {
                 
 // --- SETTINGS LOGIC ---
 const logoutBtn = document.getElementById('logout-btn');
-if (logoutBtn) {
-    // Show current user
-    const displayUser = async () => {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        if (user) document.getElementById('user-display-email').innerText = user.email;
-    };
-    displayUser();
+const emailDisplay = document.getElementById('user-display-email');
 
-    // Logout Action
-    logoutBtn.onclick = async () => {
-        await supabaseClient.auth.signOut();
-        window.location.href = 'index.html';
+if (emailDisplay || logoutBtn) {
+    // 1. Show the user's email so they know who they are
+    const getProfile = async () => {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (user && emailDisplay) {
+            emailDisplay.innerText = user.email;
+        }
     };
-            }
-            
+    getProfile();
+
+    // 2. Handle the Logout button
+    if (logoutBtn) {
+        logoutBtn.onclick = async () => {
+            const { error } = await supabaseClient.auth.signOut();
+            if (error) alert(error.message);
+            else window.location.href = 'index.html'; // Send back to login screen
+        };
+    }
+}
+         
 // --- iMESSAGE BUBBLE LOGIC ---
 function displayMessage(msg) {
     const chatBox = document.getElementById('chat-box');

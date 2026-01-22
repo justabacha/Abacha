@@ -1,3 +1,18 @@
+/* These look for the 'class' we just added to the body tags */
+
+.login-page {
+    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), var(--login-bg);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+.hub-page {
+    background: var(--hub-bg);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
 :root {
     /* Place your HD Wallpaper links here */
     --login-bg: url('YOUR_PHOTO_URL_HERE');

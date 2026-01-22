@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghost Settings</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="glass-card" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 20px;">
+        <a href="hub.html" style="text-decoration: none; color: var(--accent);">← Back</a>
+        <h3 style="margin: 0;">Settings</h3>
+        <div style="width: 40px;"></div>
+    </div>
+
+    <div class="glass-card">
+        <p style="opacity: 0.5; font-size: 12px; margin-bottom: 5px;">ACCOUNT</p>
+        <p id="user-display-email" style="font-weight: bold; margin-bottom: 15px;">Loading...</p>
+        <button id="logout-btn" style="width: 100%; background: #ff3b30;">Logout</button>
+    </div>
+
+    <div class="glass-card">
+        <p style="opacity: 0.5; font-size: 12px; margin-bottom: 5px;">SYSTEM</p>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <span>Ghost Mode</span>
+            <input type="checkbox" checked>
+        </div>
+        <button id="clear-data-btn" style="width: 100%; background: transparent; border: 1px solid #ff3b30; color: #ff3b30;">Clear My Ghost Data</button>
+    </div>
+
+    <script src="app.js" defer></script>
+</body>
+  </html>
+    

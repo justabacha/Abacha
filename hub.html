@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghost Hub</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    
+    <div class="glass-card" id="weather-widget">
+        <h1 id="time">00:00</h1>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <p id="temp">--°C</p>
+            <p id="condition">Loading weather...</p>
+        </div>
+        <hr style="border: 0.5px solid var(--glass-border); margin: 15px 0;">
+        <p id="daily-quote" style="font-style: italic; opacity: 0.8;">"Loading inspiration..."</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px;">
+        <a href="chat.html" class="glass-card" style="text-decoration: none; text-align: center;">
+            <span style="font-size: 24px;">💬</span>
+            <p>Chat</p>
+        </a>
+        <a href="gallery.html" class="glass-card" style="text-decoration: none; text-align: center;">
+            <span style="font-size: 24px;">🖼️</span>
+            <p>Gallery</p>
+        </a>
+        <a href="bucket.html" class="glass-card" style="text-decoration: none; text-align: center;">
+            <span style="font-size: 24px;">📝</span>
+            <p>Bucket List</p>
+        </a>
+        <div class="glass-card" style="text-align: center; opacity: 0.5;">
+            <span style="font-size: 24px;">⚙️</span>
+            <p>Settings</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+          </html>
+          

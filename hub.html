@@ -17,26 +17,29 @@
         <hr style="border: 0.5px solid var(--glass-border); margin: 15px 0;">
         <p id="daily-quote" style="font-style: italic; opacity: 0.8;">"Loading inspiration..."</p>
     </div>
-
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px;">
-        <a href="chat.html" class="glass-card" style="text-decoration: none; text-align: center;">
-            <span style="font-size: 24px;">💬</span>
-            <p>Chat</p>
-        </a>
-        <a href="gallery.html" class="glass-card" style="text-decoration: none; text-align: center;">
-            <span style="font-size: 24px;">🖼️</span>
-            <p>Gallery</p>
-        </a>
-        <a href="bucket.html" class="glass-card" style="text-decoration: none; text-align: center;">
-            <span style="font-size: 24px;">📝</span>
-            <p>Bucket List</p>
-        </a>
-        <a href="settings.html" class="glass-card" style="text-decoration: none; text-align: center;">
-            <span style="font-size: 24px;">⚙️</span>
-            <p>Settings</p>
-        </a>
-                        </div>
-
+    <div class="glass-card" style="margin: 10px; padding: 20px; border-radius: 35px;">
+        <p style="opacity: 0.6; font-size: 12px; margin-bottom: 15px; letter-spacing: 1px;">GHOST NAVIGATION</p>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <a href="chat.html" class="nav-tile">
+                <span style="font-size: 28px;">💬</span>
+                <p>Chat</p>
+            </a>
+            <a href="gallery.html" class="nav-tile">
+                <span style="font-size: 28px;">🖼️</span>
+                <p>Gallery</p>
+            </a>
+            <a href="bucket.html" class="nav-tile">
+                <span style="font-size: 28px;">📝</span>
+                <p>Bucket</p>
+            </a>
+            <a href="settings.html" class="nav-tile">
+                <span style="font-size: 28px;">⚙️</span>
+                <p>Settings</p>
+            </a>
+        </div>
+    </div>
+ 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js" defer></script>
 </body>

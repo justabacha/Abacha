@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghost Gallery</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="glass-card" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 20px;">
+        <a href="hub.html" style="text-decoration: none; color: var(--accent);">← Back</a>
+        <h3 style="margin: 0;">Ghost Gallery</h3>
+        <label for="file-upload" style="cursor: pointer; color: var(--accent); font-weight: bold;">+</label>
+        <input type="file" id="file-upload" class="hidden" accept="image/*">
+    </div>
+
+    <div id="gallery-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px;">
+        </div>
+
+    <div id="upload-overlay" class="glass-card hidden" style="position: fixed; bottom: 20px; left: 10px; right: 10px;">
+        <p>How long should this last?</p>
+        <select id="duration-select" style="width: 100%; margin-bottom: 10px;">
+            <option value="1">1 Hour</option>
+            <option value="24">24 Hours</option>
+            <option value="168">1 week</option>
+        </select>
+        <button id="confirm-upload" style="width: 100%;">Post to Gallery</button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -2,24 +2,77 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ghost Settings</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="settings.css">
 </head>
-<body>
-    <div class="glass-card" style="display: flex; align-items: center; justify-content: space-between;">
-        <a href="hub.html" style="text-decoration: none; color: var(--accent);">← Hub</a>
-        <h3 style="margin: 0;">Settings</h3>
-        <div style="width: 40px;"></div>
+<body class="settings-page">
+    <div class="hero-bg-overlay"></div>
+
+    <div class="settings-container">
+        <div class="profile-section">
+            <div class="avatar-wrapper">
+                <div class="avatar-circle" id="user-avatar"></div>
+                <div class="status-dot"></div>
+            </div>
+            <div class="profile-info">
+                <h2 id="display-username">Phestone</h2>
+                <span class="active-note">Active Now</span>
+            </div>
+        </div>
+
+        <div class="settings-list">
+            <div class="settings-tile" onclick="openProfileEdit()">
+                <div class="tile-left">👤 <span>Profile</span></div>
+                <div class="tile-right">›</div>
+            </div>
+
+            <div class="settings-tile" onclick="openThemeSettings()">
+                <div class="tile-left">🎨 <span>Theme & Wallpaper</span></div>
+                <div class="tile-right">›</div>
+            </div>
+
+            <div class="settings-tile" onclick="openRequests()">
+                <div class="tile-left">📩 <span>Chat Requests</span></div>
+                <div class="tile-right">›</div>
+            </div>
+
+            <div class="settings-tile" onclick="openStorage()">
+                <div class="tile-left">💾 <span>Storage & Data</span></div>
+                <div class="tile-right">›</div>
+            </div>
+
+            <div class="settings-tile" onclick="openHelp()">
+                <div class="tile-left">🕯️ <span>Help & Credits</span></div>
+                <div class="tile-right">›</div>
+            </div>
+
+            <div class="settings-tile ghost-toggle" onclick="toggleGhostMode()">
+                <div class="tile-left">👻 <span>Go Ghost Mode</span></div>
+                <div class="status-label" id="ghost-status">OFF</div>
+            </div>
+        </div>
+
+        <div class="logout-section">
+            <button class="logout-btn" onclick="showLogoutModal()">🚪 Logout</button>
+        </div>
     </div>
 
-    <div class="glass-card">
-        <p style="opacity: 0.5; font-size: 12px;">LOGGED IN AS</p>
-        <p id="user-display-email" style="font-weight: bold; margin-bottom: 20px;">Loading...</p>
-        <button id="logout-btn" style="width: 100%; background: #ff3b30; color: white; border: none; padding: 12px; border-radius: 12px;">Logout</button>
+    <div id="logout-modal" class="ghost-modal-overlay">
+        <div class="ghost-modal-tile">
+            <div class="modal-header">Just•Abacha😎</div>
+            <p>Do you want to logout?</p>
+            <div class="modal-btns">
+                <button class="modal-btn btn-yes" onclick="executeLogout()">Yes</button>
+                <button class="modal-btn btn-no" onclick="closeLogoutModal()">No</button>
+            </div>
+        </div>
     </div>
 
-    <script src="app.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+    <script src="settings.js"></script>
 </body>
-</html>
+    </html>
+                

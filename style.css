@@ -1,23 +1,32 @@
 :root {
+    /* WALLPAPERS */
     --hub-bg: url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2000');
     --nature-tile: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1000');
     --chat-bg: url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2000'); 
     --login-bg: url('https://i.postimg.cc/G2k8p91C/IMG-6642-2.jpg');
+    
+    /* BRAND COLORS */
     --whatsapp-green: rgba(50, 215, 75, 0.7);
     --ghost-blue: #007AFF;
 }
 
+/* GLOBAL RESET */
 * { box-sizing: border-box; }
-body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, sans-serif; }
+body, html { 
+    margin: 0; padding: 0; 
+    width: 100%; height: 100%; 
+    overflow: hidden; 
+    font-family: -apple-system, sans-serif; 
+}
 
-/* --- LOGIN PAGE (Pushed Lower) --- */
+/* --- LOGIN PAGE (Just•Abacha Layout) --- */
 .login-page {
     background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), var(--login-bg) no-repeat center center fixed;
     background-size: cover;
     display: flex; 
     justify-content: center; 
-    align-items: flex-end; /* Pushes content toward the bottom half */
-    padding-bottom: 10vh; /* Adjust this to move the whole block up or down */
+    align-items: flex-end; 
+    padding-bottom: 10vh;
 }
 
 #login-screen { 
@@ -38,14 +47,14 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
 
 #login-screen p { color: white; margin-bottom: 40px; opacity: 0.8; font-size: 14px; }
 
-/* Bigger Input Tiles */
+/* Floating Input Tiles */
 .login-page input {
     background: rgba(255, 255, 255, 0.1); 
     backdrop-filter: blur(20px); 
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1); 
     border-radius: 20px; 
-    padding: 22px; /* Made them bigger as requested */
+    padding: 22px; 
     color: white; 
     width: 100%; 
     margin-bottom: 15px; 
@@ -53,21 +62,21 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
     font-size: 18px;
 }
 
-/* Dynamic Buttons */
+/* Dynamic Buttons (Controlled by app.js) */
 #login-btn { 
-    background: white; /* Starts white */
+    background: white; 
     color: black; 
     border: none; 
     border-radius: 20px; 
     padding: 18px; 
     width: 100%; 
     font-weight: 700; 
-    transition: all 0.4s ease; /* Smooth color shift */
+    transition: all 0.4s ease; 
     cursor: pointer; 
 }
 
 #signup-btn { 
-    background: transparent; /* Starts transparent */
+    background: transparent; 
     color: white; 
     border: 1px solid rgba(255,255,255,0.4); 
     border-radius: 20px; 
@@ -78,18 +87,36 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
     cursor: pointer; 
 }
 
-/* --- THE REST (STAYS THE SAME) --- */
-.hub-page { background: var(--hub-bg) no-repeat center center fixed; background-size: cover; }
-#weather-widget { background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), var(--nature-tile); background-size: cover; background-position: center; border-radius: 30px; padding: 25px; margin: 15px; border: 1px solid rgba(255,255,255,0.2); text-shadow: 0px 2px 10px rgba(0,0,0,0.8); }
+/* --- HUB PAGE (Dashboard) --- */
+.hub-page { 
+    background: var(--hub-bg) no-repeat center center fixed; 
+    background-size: cover; 
+}
+
+#weather-widget { 
+    background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), var(--nature-tile); 
+    background-size: cover; 
+    background-position: center; 
+    border-radius: 30px; 
+    padding: 25px; 
+    margin: 15px; 
+    border: 1px solid rgba(255,255,255,0.2); 
+    text-shadow: 0px 2px 10px rgba(0,0,0,0.8); 
+}
+
 #weather-widget h1 { font-size: 36px; margin: 0; color: white !important; }
 #weather-widget p { font-size: 14px; color: white !important; opacity: 0.9; }
-.nav-tile { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 20px; text-align: center; color: white; text-decoration: none; display: block; }
-.chat-page { background: var(--chat-bg) no-repeat center center fixed; background-size: cover; display: flex; flex-direction: column; }
-.chat-header { display: flex; align-items: center; padding: 15px; background: var(--chat-bg) no-repeat center top fixed; background-size: cover; z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.1); }
-#chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-.message.sent { align-self: flex-end; background: var(--whatsapp-green); color: white; border-radius: 18px 18px 2px 18px; padding: 12px; }
-.message.received { align-self: flex-start; background: rgba(20, 20, 20, 0.8); color: white; border-radius: 18px 18px 18px 2px; padding: 12px; }
-.floating-input-container { padding: 20px; padding-bottom: 35px; }
-.input-tile { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px); border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.1); }
-.input-tile input { flex: 1; background: transparent; border: none; color: white; outline: none; }
-                 
+
+/* Navigation Tiles */
+.nav-tile { 
+    background: rgba(255, 255, 255, 0.1); 
+    backdrop-filter: blur(10px); 
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    border-radius: 20px; 
+    padding: 20px; 
+    text-align: center; 
+    color: white; 
+    text-decoration: none; 
+    display: block; 
+    margin: 10px 15px;
+}

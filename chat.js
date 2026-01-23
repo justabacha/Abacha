@@ -93,4 +93,26 @@ const showActionMenu = (msg, clonedBubble) => {
         }
     }
 });
-              
+// --- THE DELETE BRAIN ---
+const deleteMessage = async (messageId) => {
+    // 1. Confirm with the user (Ghost Style)
+    const confirmDelete = confirm("Permanently wipe this message from the Ghost Layer?");
+    
+    if (confirmDelete) {
+        const { error } = await supabaseClient
+            .from('messages')
+            .delete()
+            .eq('id', messageId);
+
+        if (error) {
+            console.error("Delete failed:", error.message);
+            alert("Delete failed: " + error.message);
+        } else {
+            // 2. Refresh the UI
+            // Since we have a live listener, it might auto-remove, 
+            // but a quick reload ensures the 'popped' menu closes.
+            location.reload(); 
+        }
+    }
+};
+        

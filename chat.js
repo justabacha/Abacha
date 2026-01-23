@@ -68,13 +68,18 @@ const showActionMenu = (msg, clonedBubble) => {
 
         // 3. Listen for New Messages LIVE
         supabaseClient.channel('messages').on('postgres_changes', { 
-            event: 'INSERT', 
-            schema: 'public', 
-            table: 'messages' 
-        }, payload => {
-            displayMessage(payload.new);
-        }).subscribe();
-
+    event: '*', // Listen for INSERT and DELETE
+    schema: 'public', 
+    table: 'messages' 
+}, payload => {
+    if (payload.eventType === 'INSERT') {
+        displayMessage(payload.new);
+    } else if (payload.eventType === 'DELETE') {
+        // This tells the phone to just refresh the chat to show it's gone
+        location.reload();
+    }
+}).subscribe();
+            
         // 4. Send Message Logic
         const handleSend = async () => {
             const message = msgInput.value.trim();

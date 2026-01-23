@@ -9,16 +9,30 @@
 </head>
 <body class="chat-page">
     <div id="chat-overlay" class="message-overlay" onclick="this.style.display='none'">
-        <div id="menu-content" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+        <div id="menu-content" style="display: flex; flex-direction: column; align-items: center; width: 100%;"></div>
+    </div>
+
+    <div id="delete-modal" class="ghost-modal-overlay">
+        <div class="ghost-modal-tile">
+            <div class="modal-header">Just•Abacha😎</div>
+            <p style="font-size: 15px; margin-bottom: 20px;">Do you want to delete this message?</p>
+            <div class="modal-btns">
+                <button class="modal-btn btn-yes" onclick="confirmGhostDelete()">Yes</button>
+                <button class="modal-btn btn-no" onclick="closeGhostModal()">No</button>
             </div>
+        </div>
     </div>
 
     <div class="chat-header">
         <a href="hub.html" style="text-decoration:none; color:white; font-size:24px; margin-right:15px;">‹</a>
         <div style="width:40px; height:40px; border-radius:50%; background: #333; margin-right:10px;"></div>
-        <h4 style="margin:0; color:white;">Inner Circle</h4>
+        <div style="display: flex; flex-direction: column;">
+            <h4 style="margin:0; color:white;">Inner Circle</h4>
+        </div>
         <span style="margin-left: auto; color: #32D74B; font-size: 10px; font-weight: bold; letter-spacing: 1px;">● ONLINE</span>
     </div>
+
+    <div id="pinned-bar"></div>
 
     <div id="chat-box"></div>
 
@@ -33,4 +47,5 @@
     <script src="app.js"></script>
     <script src="chat.js"></script>
 </body>
-</html>
+    </html>
+    

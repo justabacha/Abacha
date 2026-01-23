@@ -2,34 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ghost Chat</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="chat-page" style="display: flex; flex-direction: column; height: 100vh; margin: 0;">
+    <body class="chat-page">
 
-    <div class="glass-card" style="display: flex; align-items: center; padding: 10px 15px; border-radius: 0 0 20px 20px; margin: 0; position: sticky; top: 0; z-index: 10;">
-        <a href="hub.html" style="text-decoration: none; font-size: 24px; color: var(--accent); margin-right: 15px;">‹</a>
-        <div style="width: 40px; height: 40px; border-radius: 50%; background: #555; margin-right: 12px; overflow: hidden;">
-            <div style="width:100%; height:100%; background: linear-gradient(45deg, #007AFF, #00c6ff);"></div>
+    <div class="chat-header">
+        <a href="hub.html" style="text-decoration:none; color:white; font-size:24px; margin-right:15px;">‹</a>
+        <div style="width:40px; height:40px; border-radius:50%; background: grey; margin-right:10px; overflow:hidden;">
+            <img src="YOUR_PROFILE_PIC_URL" style="width:100%; height:100%; object-fit:cover;">
         </div>
         <div>
-            <h4 style="margin: 0; font-size: 16px;">Inner Circle</h4>
-            <p style="margin: 0; font-size: 10px; color: #32D74B;">● Online</p>
+            <h4 style="margin:0; font-size:16px;">Inner Circle</h4>
+            <p style="margin:0; font-size:10px; color:#32D74B;">Online</p>
         </div>
     </div>
 
-    <div id="chat-box" style="flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px;">
+    <div id="chat-box">
         </div>
 
-    <div class="glass-card" style="margin: 15px; padding: 10px; border-radius: 30px; display: flex; gap: 10px; align-items: center; backdrop-filter: blur(20px);">
-        <input type="text" id="msg-input" placeholder="Type a message..." style="flex: 1; background: transparent; border: none; color: white; outline: none; padding: 5px 15px;">
-        <button id="send-btn" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; padding: 0;">
-            🚀
-        </button>
+    <div class="floating-input-container">
+        <div class="input-tile">
+            <input type="text" id="msg-input" placeholder="Type a message..." style="flex:1; background:transparent; border:none; color:white; outline:none;">
+            <button id="send-btn" style="background:transparent; border:none; font-size:20px;">🚀</button>
+        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js" defer></script>
-</body>
+    </body>
 </html>

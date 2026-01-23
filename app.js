@@ -48,18 +48,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         }).subscribe();
 
         // 3. Send Message Logic
-        document.getElementById('send-btn').onclick = async () => {
-            const input = document.getElementById('msg-input');
-            if (input.value.trim() !== "") {
-                await supabaseClient.from('messages').insert([{ 
-                    content: input.value, 
-                    sender_email: user.email 
-                }]);
-                input.value = '';
-            }
-        };
+// 1. Wait for the page to fully load
+document.addEventListener('DOMContentLoaded', () => {
+    const sendBtn = document.getElementById('send-btn');
+    const msgInput = document.getElementById('msg-input');
+
+    // 2. The main send function
+    const handleSend = () => {
+        const message = msgInput.value.trim();
+        if (message !== "") {
+            console.log("Rocket firing! Message:", message);
+            sendMessage(message); // This calls your Supabase/Database logic
+            msgInput.value = ""; // Clear the box
+        }
+    };
+
+    // 3. Click listener
+    if (sendBtn) {
+        sendBtn.addEventListener('click', handleSend);
     }
 
+    // 4. 'Enter' key listener
+    if (msgInput) {
+        msgInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSend();
+            }
+        });
+    }
+});
+            
     // --- ROOM: SETTINGS (Profile & Logout) ---
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {

@@ -14,10 +14,14 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     height: 100vh;
 }
 
+/* --- TRANSPARENT HEADER FIX --- */
 .chat-header {
-    display: flex; align-items: center; padding: 15px;
-    background: rgba(0,0,0,0.5); border-bottom: 1px solid rgba(255,255,255,0.1);
-    backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 100;
+    display: flex; 
+    align-items: center; 
+    padding: 15px;
+    background: transparent; /* No more black bar */
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    z-index: 100;
 }
 
 #chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
@@ -26,19 +30,35 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 .message.sent { align-self: flex-end; background: var(--whatsapp-green); border-bottom-right-radius: 2px; }
 .message.received { align-self: flex-start; background: rgba(30, 30, 30, 0.8); border-bottom-left-radius: 2px; }
 
+/* --- BLUE REPLY DISTINCTION --- */
+.reply-quote {
+    background: rgba(0, 122, 255, 0.2); /* Subtle Ghost Blue contrast */
+    border-left: 3px solid #007AFF; 
+    padding: 8px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    display: block;
+}
+
 .floating-input-container { padding: 20px; padding-bottom: 45px; position: relative; z-index: 1000; }
 .input-tile { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(25px); border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.15); }
 .input-tile input { flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 16px; }
 .input-tile button { background: transparent; border: none; font-size: 24px; }
 
-/* --- LONG PRESS OVERLAY --- */
+/* --- LONG PRESS OVERLAY (LIGHTER BLUR FIX) --- */
 .message-overlay {
     position: fixed;
     top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(0,0,0,0.75);
-    backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-    display: none; z-index: 9999;
-    justify-content: center; align-items: center;
+    background: rgba(0, 0, 0, 0.45); /* Lighter shadow */
+    backdrop-filter: blur(8px); /* Reduced blur as requested */
+    -webkit-backdrop-filter: blur(8px);
+    display: none; 
+    z-index: 9999;
+    justify-content: center; 
+    align-items: center;
+    flex-direction: column;
 }
 
 .popped-message {
@@ -60,4 +80,4 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 .action-item.delete { color: #FF3B30; }
-                   
+        

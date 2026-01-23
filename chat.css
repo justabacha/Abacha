@@ -57,8 +57,10 @@
 /* --- FLOATING INPUT BAR --- */
 .floating-input-container {
     padding: 20px;
-    padding-bottom: 35px; /* Extra space for iPhone home bar */
+    padding-bottom: 45px; /* Increased this so it sits ABOVE the home bar */
     background: transparent;
+    position: relative;
+    z-index: 1000;
 }
 
 .input-tile {

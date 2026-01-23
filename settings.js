@@ -19,6 +19,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 2. HELP & CREDITS (Refined to be a clean paragraph)
     window.openHelp = () => {
+        // LINK TO THE DISCOVERY PAGE
+window.openRequests = () => {
+    window.location.href = 'requests.html';
+};
+        
         const helpHTML = `
             <div class="ghost-modal-tile large-tile">
                 <h3 class="modal-title">😎 How to get started</h3>

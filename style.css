@@ -30,12 +30,35 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
 
 /* DASHBOARD TILES */
 #weather-widget {
-    background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), var(--nature-tile);
-    background-size: cover; background-position: center;
+    /* 1. Link the Nature background directly here */
+    background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), 
+                url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1000');
+    background-size: cover; 
+    background-position: center;
     border: 1px solid rgba(255,255,255,0.2);
     border-radius: 30px;
-    padding: 25px; margin: 15px;
+    padding: 25px; 
+    margin: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    /* 2. Text Shadow makes the white stand out against the mountains */
     text-shadow: 0px 2px 10px rgba(0,0,0,0.8);
+}
+
+#weather-widget h1 { 
+    font-size: 36px; 
+    margin: 0; 
+    color: #ffffff !important; 
+    font-weight: 700;
+}
+
+#weather-widget p { 
+    font-size: 14px; 
+    margin: 5px 0; 
+    color: #ffffff !important; 
+    font-weight: 500;
+    opacity: 0.9;
 }
 
 .nav-tile {

@@ -3,10 +3,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const chatBox = document.getElementById('chat-box');
     const sendBtn = document.getElementById('send-btn');
     const msgInput = document.getElementById('msg-input');
+    
     let replyingTo = null;
     let messageToDelete = null;
+    let pendingPinMsg = null;
+    let currentPins = [];
 
     if (chatBox && user) {
+        // --- DISPLAY LOGIC ---
         const displayMessage = (msg) => {
             const isMe = msg.sender_email === user.email;
             const bubble = document.createElement('div');
@@ -32,6 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             chatBox.scrollTop = chatBox.scrollHeight;
         };
 
+        // --- ACTION MENU ---
         const showActionMenu = (msg, clonedBubble) => {
             const overlay = document.getElementById('chat-overlay');
             const menuContainer = document.getElementById('menu-content');
@@ -39,19 +44,78 @@ document.addEventListener('DOMContentLoaded', async () => {
             clonedBubble.classList.add('popped-message');
             menuContainer.appendChild(clonedBubble);
             
+            const isPinned = currentPins.some(p => p.id === msg.id);
+            
             const tile = document.createElement('div');
             tile.className = 'action-tile';
             tile.innerHTML = `
                 <div class="action-item" onclick="copyToClipboard('${msg.content.replace(/'/g, "\\'")}')">Copy <span>📑</span></div>
                 <div class="action-item" onclick="setReply('${msg.sender_email}', '${msg.content.replace(/'/g, "\\'")}')">Reply <span>✍️</span></div>
                 <div class="action-item">Forward <span>📤</span></div>
-                <div class="action-item" onclick="pinMessage('${msg.content.replace(/'/g, "\\'")}')">Pin <span>📌</span></div>
+                <div class="action-item" onclick="${isPinned ? `unpinMessage('${msg.id}')` : `openPinModal('${msg.id}', '${msg.content.replace(/'/g, "\\'")}')`}">
+                    ${isPinned ? 'Unpin' : 'Pin'} <span>📌</span>
+                </div>
                 <div class="action-item delete" onclick="deleteMessage('${msg.id}')">Delete <span>🗑️</span></div>
             `;
             menuContainer.appendChild(tile);
             overlay.style.display = 'flex';
         };
 
+        // --- PIN LOGIC (The SURGERY) ---
+        window.openPinModal = (id, content) => {
+            if (currentPins.length >= 2) {
+                alert("Ghost Layer Limit: Only 2 pins allowed.");
+                document.getElementById('chat-overlay').style.display = 'none';
+                return;
+            }
+            pendingPinMsg = { id, content };
+            document.getElementById('pin-modal').style.display = 'flex';
+            document.getElementById('chat-overlay').style.display = 'none';
+        };
+
+        window.executePin = async (hours) => {
+            const expiry = new Date();
+            expiry.setHours(expiry.getHours() + hours);
+            
+            await supabaseClient.from('messages')
+                .update({ pinned_until: expiry.toISOString() })
+                .eq('id', pendingPinMsg.id);
+            
+            document.getElementById('pin-modal').style.display = 'none';
+            loadPins(); // Refresh bar
+        };
+
+        window.unpinMessage = async (id) => {
+            await supabaseClient.from('messages')
+                .update({ pinned_until: null })
+                .eq('id', id);
+            document.getElementById('chat-overlay').style.display = 'none';
+            loadPins();
+        };
+
+        const loadPins = async () => {
+            const now = new Date().toISOString();
+            const { data: pins } = await supabaseClient.from('messages')
+                .select('*')
+                .gt('pinned_until', now);
+            
+            currentPins = pins || [];
+            const pinBar = document.getElementById('pinned-bar');
+            
+            if (currentPins.length > 0) {
+                pinBar.style.display = 'block';
+                pinBar.innerHTML = currentPins.map(p => `
+                    <div class="pin-item">
+                        <span>📌 ${p.content.substring(0, 25)}...</span>
+                        <span onclick="unpinMessage('${p.id}')" style="font-size:10px; opacity:0.6;">✕</span>
+                    </div>
+                `).join('');
+            } else {
+                pinBar.style.display = 'none';
+            }
+        };
+
+        // --- HELPERS ---
         window.copyToClipboard = (text) => {
             const el = document.createElement('textarea');
             el.value = text;
@@ -59,13 +123,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             el.select();
             document.execCommand('copy');
             document.body.removeChild(el);
-            document.getElementById('chat-overlay').style.display = 'none';
-        };
-
-        window.pinMessage = (content) => {
-            const pinBar = document.getElementById('pinned-bar');
-            pinBar.innerHTML = `📌 <b>Pinned:</b> ${content.substring(0, 30)}...`;
-            pinBar.style.display = 'block';
             document.getElementById('chat-overlay').style.display = 'none';
         };
 
@@ -102,12 +159,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         window.cancelReply = () => { replyingTo = null; document.getElementById('reply-preview')?.remove(); };
 
+        // INITIAL LOAD
         const { data: history } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: true });
         history?.forEach(displayMessage);
+        loadPins();
 
         supabaseClient.channel('messages').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
             if (payload.eventType === 'INSERT') displayMessage(payload.new);
-            else if (payload.eventType === 'DELETE') location.reload();
+            else if (payload.eventType === 'UPDATE' || payload.eventType === 'DELETE') location.reload();
         }).subscribe();
 
         const handleSend = async () => {
@@ -127,4 +186,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         msgInput.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };
     }
 });
-    
+                    

@@ -17,24 +17,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         localStorage.setItem('ghost-theme', themeName);
     };
 
-    // 2. HELP & CREDITS MODAL CONTENT
+    // 2. HELP & CREDITS (Refined to be a clean paragraph)
     window.openHelp = () => {
         const helpHTML = `
-            <div class="ghost-modal-tile" style="width: 85vw; max-height: 80vh; overflow-y: auto;">
-                <h3 style="color: #32D74B;">😎 How to get started</h3>
-                <ul style="font-size: 13px; line-height: 1.6; padding-left: 20px;">
-                    <li><b>Networking:</b> Go to "Chat Requests" to search usernames and send an invite.</li>
-                    <li><b>Customization:</b> Tap "Profile" or "Theme" to swap alias or wallpapers.</li>
-                    <li><b>Visuals:</b> Long-press messages to pop the menu and set pins.</li>
-                    <li><b>Pins:</b> Max 2 pins allowed. Unpin one to add a new one.</li>
-                </ul>
-                <hr style="opacity: 0.1; margin: 20px 0;">
-                <p style="font-size: 12px; opacity: 0.9;">
-                    <b>Just•Abacha😎</b> was created by <b>Phestone</b> on January 16, 2026.<br><br>
-                    <b>Purpose:</b> To provide a secure, ephemeral "Inner Circle" where conversations breathe and vanish.<br><br>
+            <div class="ghost-modal-tile large-tile">
+                <h3 class="modal-title">😎 How to get started</h3>
+                <div class="help-steps">
+                    <div class="step-item"><span>1️⃣</span> Networking: Go to "Chat Requests" to search usernames and send an invite.</div>
+                    <div class="step-item"><span>2️⃣</span> Customization: Tap "Profile" or "Theme" to swap alias or wallpapers.</div>
+                    <div class="step-item"><span>3️⃣</span> Visuals: Long-press messages to pop the menu and set pins.</div>
+                    <div class="step-item"><span>4️⃣</span> Pins: Max 2 pins allowed. Unpin one to add a new one.</div>
+                </div>
+                <hr class="divider">
+                <p class="credit-para">
+                    Just•Abacha😎 was created by Phestone on January 16, 2026, to provide a secure, ephemeral "Inner Circle" where conversations breathe and vanish, giving users a high-end "Ghost Layer" experience that prioritizes privacy and peak aesthetics. <br><br>
                     <i>“Design is not just what it looks like; it’s how it works in the shadows.”</i> — <b>Mr. Nice Guy</b>
                 </p>
-                <button class="modal-btn btn-no" onclick="closeModal()" style="width: 100%; margin-top: 10px;">Close</button>
+                <button class="metamorphism-green-btn" onclick="closeModal()">Close</button>
             </div>
         `;
         showGlobalModal(helpHTML);
@@ -48,26 +47,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <p style="font-size: 14px;">WhatsApp: +254768946798<br>Email: its.phestone@gmail.com</p>
                 <div class="modal-header" style="margin-top:20px;">Directline Just•Abacha</div>
                 <p style="font-size: 14px;">Email: just1abacha@gmail.com</p>
-                <button class="modal-btn btn-no" onclick="closeModal()" style="width: 100%; margin-top: 15px;">Back</button>
+                <button class="metamorphism-green-btn" onclick="closeModal()">Back</button>
             </div>
         `;
         showGlobalModal(contactHTML);
     };
 
-    // 4. STORAGE LOGIC
+    // 4. STORAGE LOGIC (Spaced Large Tiles)
     window.openStorage = () => {
         const storageHTML = `
-            <div class="ghost-modal-tile">
+            <div class="ghost-modal-tile large-tile">
                 <div class="modal-header">Storage Timer</div>
-                <div class="pin-options-list">
-                    <div class="pin-opt" onclick="setPurge(24)">24 Hours</div>
-                    <div class="pin-opt" onclick="setPurge(168)">7 Days</div>
-                    <div class="pin-opt" onclick="setPurge(720)">30 Days</div>
+                <div class="storage-options">
+                    <div class="time-tile" onclick="setPurge(24)">24 Hours</div>
+                    <div class="time-tile" onclick="setPurge(168)">7 Days</div>
+                    <div class="time-tile" onclick="setPurge(720)">30 Days</div>
                 </div>
-                <p style="color: #FF3B30; font-size: 10px; margin-top: 20px; text-align: center; font-weight: bold;">
-                    🚨 Messages are permanently deleted from the database every 30-day cycle.
-                </p>
-                <button class="modal-btn btn-no" onclick="closeModal()" style="width: 100%; margin-top: 10px;">Close</button>
+                <div class="soft-red-warning">
+                    ⚠️ Messages are permanently deleted from the database every 30-day cycle.
+                </div>
+                <button class="metamorphism-green-btn" onclick="closeModal()">Close</button>
             </div>
         `;
         showGlobalModal(storageHTML);
@@ -92,14 +91,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     window.closeModal = () => {
-        document.getElementById('global-modal-overlay').style.display = 'none';
+        const overlay = document.getElementById('global-modal-overlay');
+        if(overlay) overlay.style.display = 'none';
     };
 
-    // LOGOUT LOGIC
-    window.showLogoutModal = () => { document.getElementById('logout-modal').style.display = 'flex'; };
+    // LOGOUT LOGIC (Yes/No color variations)
+    window.showLogoutModal = () => {
+        const logoutHTML = `
+            <div class="ghost-modal-tile">
+                <div class="modal-header">Just•Abacha😎</div>
+                <p>Do you want to logout?</p>
+                <div class="modal-btns-row">
+                    <button class="btn-logout-yes" onclick="executeLogout()">Yes, Logout</button>
+                    <button class="btn-logout-no" onclick="closeModal()">No, Stay</button>
+                </div>
+            </div>
+        `;
+        showGlobalModal(logoutHTML);
+    };
+
     window.closeLogoutModal = () => { document.getElementById('logout-modal').style.display = 'none'; };
+    
     window.executeLogout = async () => {
         await supabaseClient.auth.signOut();
         window.location.href = 'index.html';
     };
 });
+                          

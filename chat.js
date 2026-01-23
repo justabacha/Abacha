@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentPins = [];
 
     if (chatBox && user) {
-        // --- DISPLAY LOGIC ---
+        // --- 1. MESSAGE DISPLAY (REPLY UI) ---
         const displayMessage = (msg) => {
             const isMe = msg.sender_email === user.email;
             const bubble = document.createElement('div');
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             chatBox.scrollTop = chatBox.scrollHeight;
         };
 
-        // --- ACTION MENU ---
+        // --- 2. ACTION MENU (PIN/UNPIN LOGIC) ---
         const showActionMenu = (msg, clonedBubble) => {
             const overlay = document.getElementById('chat-overlay');
             const menuContainer = document.getElementById('menu-content');
@@ -61,10 +61,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             overlay.style.display = 'flex';
         };
 
-        // --- PIN LOGIC (The SURGERY) ---
+        // --- 3. PINNING SYSTEM (2-PIN LIMIT) ---
         window.openPinModal = (id, content) => {
             if (currentPins.length >= 2) {
-                alert("Ghost Layer Limit: Only 2 pins allowed.");
+                alert("Ghost Layer Limit: Unpin a message first to add another.");
                 document.getElementById('chat-overlay').style.display = 'none';
                 return;
             }
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 .eq('id', pendingPinMsg.id);
             
             document.getElementById('pin-modal').style.display = 'none';
-            loadPins(); // Refresh bar
+            loadPins(); 
         };
 
         window.unpinMessage = async (id) => {
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 pinBar.innerHTML = currentPins.map(p => `
                     <div class="pin-item">
                         <span>📌 ${p.content.substring(0, 25)}...</span>
-                        <span onclick="unpinMessage('${p.id}')" style="font-size:10px; opacity:0.6;">✕</span>
+                        <span onclick="unpinMessage('${p.id}')" style="font-size:12px; font-weight:bold; padding: 5px;">✕</span>
                     </div>
                 `).join('');
             } else {
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         };
 
-        // --- HELPERS ---
+        // --- 4. HELPERS (COPY, DELETE, REPLY) ---
         window.copyToClipboard = (text) => {
             const el = document.createElement('textarea');
             el.value = text;
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         window.cancelReply = () => { replyingTo = null; document.getElementById('reply-preview')?.remove(); };
 
-        // INITIAL LOAD
+        // --- 5. INITIAL LOAD & REALTIME ---
         const { data: history } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: true });
         history?.forEach(displayMessage);
         loadPins();
@@ -186,4 +186,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         msgInput.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };
     }
 });
-                    
+            

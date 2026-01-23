@@ -19,9 +19,19 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     display: flex; 
     align-items: center; 
     padding: 15px;
-    background: transparent; /* No more black bar */
+    background: transparent;
     border-bottom: 1px solid rgba(255,255,255,0.1);
     z-index: 100;
+}
+
+#pinned-bar {
+    display: none;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    font-size: 12px;
+    color: #FFD700;
+    backdrop-filter: blur(5px);
 }
 
 #chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
@@ -32,7 +42,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 
 /* --- BLUE REPLY DISTINCTION --- */
 .reply-quote {
-    background: rgba(0, 122, 255, 0.2); /* Subtle Ghost Blue contrast */
+    background: rgba(0, 122, 255, 0.2);
     border-left: 3px solid #007AFF; 
     padding: 8px;
     border-radius: 8px;
@@ -47,12 +57,12 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 .input-tile input { flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 16px; }
 .input-tile button { background: transparent; border: none; font-size: 24px; }
 
-/* --- LONG PRESS OVERLAY (LIGHTER BLUR FIX) --- */
+/* --- LONG PRESS OVERLAY --- */
 .message-overlay {
     position: fixed;
     top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(0, 0, 0, 0.45); /* Lighter shadow */
-    backdrop-filter: blur(8px); /* Reduced blur as requested */
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     display: none; 
     z-index: 9999;
@@ -61,23 +71,40 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     flex-direction: column;
 }
 
-.popped-message {
-    transform: scale(1.1);
-    margin-bottom: 25px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+/* --- GHOST MODAL (METAMORPHISM GLASS) --- */
+.ghost-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(10px);
+    display: none; z-index: 10000;
+    justify-content: center; align-items: center;
 }
 
-.action-tile {
-    background: rgba(45, 45, 45, 0.9);
-    border-radius: 22px; width: 260px;
-    border: 1px solid rgba(255,255,255,0.1);
-    overflow: hidden;
+.ghost-modal-tile {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 25px;
+    width: 280px;
+    padding: 25px;
+    text-align: center;
+    color: white;
 }
 
-.action-item {
-    padding: 16px; color: white; display: flex;
-    justify-content: space-between; font-size: 17px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+.modal-header { font-weight: bold; font-size: 14px; margin-bottom: 15px; opacity: 0.8; letter-spacing: 1px; }
+
+.modal-btns { display: flex; justify-content: space-between; gap: 15px; margin-top: 10px; }
+
+.modal-btn {
+    flex: 1; padding: 12px; border-radius: 15px; border: none; font-weight: bold; font-size: 14px;
 }
+.btn-yes { background: #FF3B30; color: white; }
+.btn-no { background: #32D74B; color: white; }
+
+.popped-message { transform: scale(1.1); margin-bottom: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); }
+.action-tile { background: rgba(45, 45, 45, 0.9); border-radius: 22px; width: 260px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; }
+.action-item { padding: 16px; color: white; display: flex; justify-content: space-between; font-size: 17px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.action-item:last-child { border: none; }
 .action-item.delete { color: #FF3B30; }
-        
+                   

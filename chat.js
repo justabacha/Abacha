@@ -250,3 +250,42 @@ document.addEventListener('DOMContentLoaded', () => {
     checkAcceptedVibes();
 });
                                                                    
+// --- INSTANT VIBE NOTIFICATION (REALTIME) ---
+
+const subscribeToVibes = async () => {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    const vibeSubscription = supabaseClient
+        .channel('vibe-updates')
+        .on(
+            'postgres_changes', 
+            { 
+                event: 'UPDATE', 
+                schema: 'public', 
+                table: 'friendships',
+                filter: `sender_id=eq.${user.id}` 
+            }, 
+            async (payload) => {
+                // If the status changed to accepted
+                if (payload.new.status === 'accepted') {
+                    // Fetch the username of the person who accepted
+                    const { data: receiver } = await supabaseClient
+                        .from('profiles')
+                        .select('username')
+                        .eq('id', payload.new.receiver_id)
+                        .single();
+
+                    if (receiver) {
+                        showVibeNotification(`@${receiver.username} accepted your vibe just now! 🤓`);
+                    }
+                }
+            }
+        )
+        .subscribe();
+};
+
+// Start listening when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    subscribeToVibes();
+});
+    

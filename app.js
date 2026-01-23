@@ -10,19 +10,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Get the current user session
     const { data: { user } } = await supabaseClient.auth.getUser();
 
-    // --- LOGIN LOGIC (Fixed for Index.html) ---
-    const loginForm = document.getElementById('login-form');
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+        // --- LOGIN & SIGNUP LOGIC (Fixed for your Button IDs) ---
+    const loginBtn = document.getElementById('login-btn');
+    const signupBtn = document.getElementById('signup-btn');
+
+    if (loginBtn) {
+        loginBtn.addEventListener('click', async () => {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            
+            console.log("Attempting Login...");
             const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) alert(error.message);
+            
+            if (error) alert("Login Error: " + error.message);
             else window.location.href = 'hub.html';
         });
     }
 
+    if (signupBtn) {
+        signupBtn.addEventListener('click', async () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            console.log("Creating new Ghost account...");
+            const { error } = await supabaseClient.auth.signUp({ email, password });
+            
+            if (error) alert("Signup Error: " + error.message);
+            else alert("Ghost Account Created! Check your email for the link.");
+        });
+                                  }
+    
     // --- HUB ROOM: (Weather & Clock) ---
     if (document.getElementById('time')) {
         setInterval(() => {

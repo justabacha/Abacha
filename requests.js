@@ -3,19 +3,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const discoveryList = document.getElementById('discovery-list');
     const requestsList = document.getElementById('requests-list');
 
-    // 1. GET CURRENT USER DATA
     const currentUser = (await supabaseClient.auth.getUser()).data.user;
 
-    // 2. LOAD DISCOVERY LIST (With Live Search)
     const loadDiscovery = async (searchTerm = '') => {
         let query = supabaseClient.from('profiles').select('*').neq('id', currentUser.id);
-
-        if (searchTerm) {
-            query = query.ilike('username', `%${searchTerm}%`);
-        }
-
-        const { data: users, error } = await query.limit(20);
-
+        if (searchTerm) { query = query.ilike('username', `%${searchTerm}%`); }
+        const { data: users } = await query.limit(20);
         if (users) {
             discoveryList.innerHTML = users.map(user => `
                 <div class="user-tile">
@@ -23,32 +16,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="user-name">@${user.username}</div>
                         <div class="user-bio">${user.bio || 'Silence is gold in the Ghost Layer.'}</div>
                     </div>
-                    <button class="request-btn" onclick="sendVibeRequest('${user.id}', '${user.username}', this)">
-                        Connect
-                    </button>
+                    <button class="request-btn" onclick="sendVibeRequest('${user.id}', '${user.username}', this)">Connect</button>
                 </div>
             `).join('');
         }
     };
 
-    // 3. LOAD INCOMING REQUESTS
     const loadRequests = async () => {
-        const { data: reqs, error } = await supabaseClient
+        const { data: reqs } = await supabaseClient
             .from('friendships')
-            .select(`
-                id,
-                sender_id,
-                profiles!friendships_sender_id_fkey (username)
-            `)
+            .select(`id, sender_id, profiles!friendships_sender_id_fkey (username)`)
             .eq('receiver_id', currentUser.id)
             .eq('status', 'pending');
 
         if (reqs && reqs.length > 0) {
             requestsList.innerHTML = reqs.map(r => `
                 <div class="vibe-card">
-                    <div class="vibe-msg">
-                        🤓 yoow this is <b>@${r.profiles.username}</b> I want to start a vibe add me to ur inner circle.
-                    </div>
+                    <div class="vibe-msg">🤓 yoow this is <b>@${r.profiles.username}</b> I want to start a vibe add me to ur inner circle.</div>
                     <div class="vibe-footer">...Just•Abacha😎...</div>
                     <div class="action-row">
                         <button class="btn-deny" onclick="handleVibe('${r.id}', 'deny')">Deny</button>
@@ -61,17 +45,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // 4. ACTION FUNCTIONS (UPDATED WITH ANIMATION)
     window.sendVibeRequest = async (targetId, targetName, btnElement) => {
-        const originalText = btnElement.innerText;
         btnElement.innerText = "Sending...";
         btnElement.style.opacity = "0.5";
         btnElement.disabled = true;
-
-        const { error } = await supabaseClient
-            .from('friendships')
-            .insert([{ sender_id: currentUser.id, receiver_id: targetId, status: 'pending' }]);
-
+        const { error } = await supabaseClient.from('friendships').insert([{ sender_id: currentUser.id, receiver_id: targetId, status: 'pending' }]);
         if (error) {
             btnElement.innerText = "Already Sent";
             btnElement.style.color = "#FF3B30";
@@ -87,32 +65,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.handleVibe = async (requestId, action) => {
         if (action === 'accept') {
-            await supabaseClient.from('friendships').update({ 
-                status: 'accepted',
-                updated_at: new Date().toISOString() 
-            }).eq('id', requestId);
-            
-            // CUSTOM UI FOR THE RECEIVER
+            await supabaseClient.from('friendships').update({ status: 'accepted', updated_at: new Date().toISOString() }).eq('id', requestId);
             const successHTML = `
                 <div class="ghost-modal-tile" style="text-align: center;">
                     <p style="font-size: 16px; margin-bottom: 20px;">✅ You just accepted the request.</p>
-                    <button class="metamorphism-blue-btn" style="width: 100%; padding: 15px;" onclick="window.location.href='chat.html'">
-                        Send a Vibe
-                    </button>
+                    <button class="metamorphism-blue-btn" style="width: 100%; padding: 15px;" onclick="window.location.href='chat.html'">Send a Vibe</button>
                 </div>
             `;
             showGlobalModal(successHTML);
         } else {
             await supabaseClient.from('friendships').delete().eq('id', requestId);
-            closeModal();
             loadRequests();
             loadDiscovery();
         }
     };
 
-    // 5. INITIALIZE & LISTENERS
+    // --- HELPER FUNCTIONS FOR MODALS ---
+    window.showGlobalModal = (html) => {
+        const overlay = document.getElementById('global-modal-overlay');
+        overlay.innerHTML = html;
+        overlay.style.display = 'flex';
+    };
+
+    window.closeModal = () => {
+        document.getElementById('global-modal-overlay').style.display = 'none';
+    };
+
     searchInput.addEventListener('input', (e) => loadDiscovery(e.target.value));
     loadDiscovery();
     loadRequests();
 });
-        
+            

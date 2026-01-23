@@ -5,6 +5,9 @@
     
     /* CHAT WALLPAPER */
     --chat-bg: url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2000'); 
+
+    /* LOGIN WALLPAPER - Based on your new design link */
+    --login-bg: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000');
     
     --accent: #007AFF;
     --whatsapp-green: rgba(50, 215, 75, 0.7);
@@ -12,7 +15,85 @@
 
 /* GLOBAL RESET */
 * { box-sizing: border-box; }
-body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+/* ----------------------------------
+   NEW: GHOST LOGIN STYLES 
+---------------------------------- */
+.login-page {
+    background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), var(--login-bg) no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+}
+
+#login-screen {
+    background: transparent; /* Makes the card vanish, leaving floating tiles */
+    width: 85%;
+    max-width: 380px;
+    text-align: center;
+}
+
+#login-screen h2 {
+    color: white;
+    font-size: 32px;
+    margin-bottom: 10px;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+#login-screen p {
+    color: white;
+    margin-bottom: 30px;
+}
+
+/* The Floating Input Tiles */
+.login-page input {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    padding: 18px;
+    color: white;
+    width: 100% !important;
+    margin-bottom: 15px;
+    outline: none;
+    font-size: 16px;
+}
+
+.login-page input::placeholder { color: rgba(255,255,255,0.6); }
+
+/* Ghost Buttons */
+#login-btn {
+    background: white;
+    color: black;
+    border: none;
+    border-radius: 18px;
+    padding: 16px;
+    width: 100%;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+#signup-btn {
+    background: transparent;
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 18px;
+    padding: 16px;
+    width: 100%;
+    font-weight: 600;
+    margin-top: 12px;
+    cursor: pointer;
+}
+
+/* ----------------------------------
+   REMAINING STYLES (HUB & CHAT)
+---------------------------------- */
 
 /* DASHBOARD WALLPAPER */
 .hub-page {
@@ -30,7 +111,6 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
 
 /* DASHBOARD TILES */
 #weather-widget {
-    /* 1. Link the Nature background directly here */
     background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), 
                 url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1000');
     background-size: cover; 
@@ -42,24 +122,11 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    /* 2. Text Shadow makes the white stand out against the mountains */
     text-shadow: 0px 2px 10px rgba(0,0,0,0.8);
 }
 
-#weather-widget h1 { 
-    font-size: 36px; 
-    margin: 0; 
-    color: #ffffff !important; 
-    font-weight: 700;
-}
-
-#weather-widget p { 
-    font-size: 14px; 
-    margin: 5px 0; 
-    color: #ffffff !important; 
-    font-weight: 500;
-    opacity: 0.9;
-}
+#weather-widget h1 { font-size: 36px; margin: 0; color: #ffffff !important; font-weight: 700; }
+#weather-widget p { font-size: 14px; margin: 5px 0; color: #ffffff !important; font-weight: 500; opacity: 0.9; }
 
 .nav-tile {
     background: rgba(255, 255, 255, 0.1);
@@ -72,23 +139,22 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
 /* CHAT COMPONENTS */
 .chat-header {
     display: flex; align-items: center; padding: 15px;
-    background: var(--chat-bg) no-repeat center top fixed; /* The 'Vanishing' trick */
+    background: var(--chat-bg) no-repeat center top fixed; 
     background-size: cover; z-index: 100;
     border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
 #chat-box {
-    flex: 1; /* This pushes the input tile UP so it is visible */
+    flex: 1; 
     overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px;
 }
 
 .message.sent { align-self: flex-end; background: var(--whatsapp-green); color: white; border-radius: 18px 18px 2px 18px; padding: 12px; }
 .message.received { align-self: flex-start; background: rgba(20, 20, 20, 0.8); color: white; border-radius: 18px 18px 18px 2px; padding: 12px; }
 
-/* THE FLOATING INPUT FIX */
 .floating-input-container {
     padding: 20px;
-    padding-bottom: 30px; /* Space for iPhone home bar */
+    padding-bottom: 30px; 
     background: transparent;
 }
 
@@ -97,4 +163,5 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
     backdrop-filter: blur(20px);
     border-radius: 30px; padding: 10px 20px;
     display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.1);
-}
+    }
+    

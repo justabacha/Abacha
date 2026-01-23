@@ -186,4 +186,67 @@ document.addEventListener('DOMContentLoaded', async () => {
         msgInput.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };
     }
 });
-            
+     // --- SENDER NOTIFICATION SYSTEM ---
+
+const checkAcceptedVibes = async () => {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    // Look for vibes you sent that were recently accepted
+    const { data: vibes, error } = await supabaseClient
+        .from('friendships')
+        .select(`
+            updated_at,
+            profiles!friendships_receiver_id_fkey (username)
+        `)
+        .eq('sender_id', user.id)
+        .eq('status', 'accepted')
+        .order('updated_at', { ascending: false })
+        .limit(1);
+
+    if (vibes && vibes.length > 0) {
+        const vibe = vibes[0];
+        const acceptTime = new Date(vibe.updated_at);
+        
+        // Only show if it happened in the last 24 hours to avoid old spam
+        const hoursDiff = (new Date() - acceptTime) / (1000 * 60 * 60);
+        if (hoursDiff < 24) {
+            const timeAgo = formatTimeAgo(acceptTime);
+            showVibeNotification(`@${vibe.profiles.username} accepted your vibe ${timeAgo}`);
+        }
+    }
+};
+
+// HELPER: CALCULATE EXACT TIME
+const formatTimeAgo = (date) => {
+    const seconds = Math.floor((new Date() - date) / 1000);
+    
+    if (seconds < 60) return `just now`;
+    
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    
+    return `recently`;
+};
+
+// UI: POP THE GLOWING NOTIFICATION
+const showVibeNotification = (text) => {
+    const notify = document.createElement('div');
+    notify.className = 'vibe-notification-glow';
+    notify.innerHTML = `<span>🤓</span> ${text}`;
+    document.body.appendChild(notify);
+    
+    // Auto-dissolve after 6 seconds
+    setTimeout(() => {
+        notify.classList.add('fade-out');
+        setTimeout(() => notify.remove(), 1500);
+    }, 6000);
+};
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    checkAcceptedVibes();
+});
+                                                                   

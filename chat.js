@@ -6,12 +6,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     let replyingTo = null;
 
     if (chatBox && user) {
+        // --- UPDATED DISPLAY LOGIC (WITH BLUE REPLY QUOTE) ---
         const displayMessage = (msg) => {
             const isMe = msg.sender_email === user.email;
             const bubble = document.createElement('div');
             bubble.className = `message ${isMe ? 'sent' : 'received'}`;
-            bubble.innerText = msg.content;
 
+            // Check if message is a reply to style it with the blue distinction
+            if (msg.content.includes("↳ [Replying to")) {
+                const parts = msg.content.split(']\n');
+                const replyHeader = parts[0].replace('↳ [', '');
+                const actualMessage = parts[1] || "";
+
+                bubble.innerHTML = `
+                    <div class="reply-quote">${replyHeader}</div>
+                    <div>${actualMessage}</div>
+                `;
+            } else {
+                bubble.innerText = msg.content;
+            }
+
+            // --- LONG PRESS LOGIC ---
             let pressTimer;
             bubble.addEventListener('touchstart', () => {
                 pressTimer = setTimeout(() => showActionMenu(msg, bubble.cloneNode(true)), 600);
@@ -23,6 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             chatBox.scrollTop = chatBox.scrollHeight;
         };
 
+        // --- UPDATED ACTION MENU (COPY & PIN LOGIC) ---
         const showActionMenu = (msg, clonedBubble) => {
             const overlay = document.getElementById('chat-overlay');
             const menuContainer = document.getElementById('menu-content');
@@ -33,14 +49,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             const tile = document.createElement('div');
             tile.className = 'action-tile';
             tile.innerHTML = `
-                <div class="action-item" onclick="navigator.clipboard.writeText('${msg.content}'); alert('Copied!')">Copy <span>📑</span></div>
-                <div class="action-item" onclick="setReply('${msg.sender_email}', '${msg.content}')">Reply <span>✍️</span></div>
+                <div class="action-item" onclick="copyToClipboard('${msg.content.replace(/'/g, "\\'")}')">Copy <span>📑</span></div>
+                <div class="action-item" onclick="setReply('${msg.sender_email}', '${msg.content.replace(/'/g, "\\'")}')">Reply <span>✍️</span></div>
                 <div class="action-item">Forward <span>📤</span></div>
-                <div class="action-item">Pin <span>📌</span></div>
+                <div class="action-item" onclick="pinMessage('${msg.id}')">Pin <span>📌</span></div>
                 <div class="action-item delete" onclick="deleteMessage('${msg.id}')">Delete <span>🗑️</span></div>
             `;
             menuContainer.appendChild(tile);
             overlay.style.display = 'flex';
+        };
+
+        // --- CLIPBOARD & PIN HELPERS ---
+        window.copyToClipboard = (text) => {
+            navigator.clipboard.writeText(text);
+            // Optional: You can add a Ghost-style toast notification here later
+            document.getElementById('chat-overlay').style.display = 'none';
+        };
+
+        window.pinMessage = (id) => {
+            console.log("Pinning message:", id);
+            // This will link to your Hub Dashboard Pin logic later
+            alert("Message pinned to Ghost Hub");
+            document.getElementById('chat-overlay').style.display = 'none';
         };
 
         window.setReply = (sender, content) => {
@@ -70,7 +100,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             const message = msgInput.value.trim();
             if (message !== "") {
                 let content = message;
-                if (replyingTo) { content = `↳ [Replying to ${replyingTo.sender}: ${replyingTo.content}]\n${message}`; cancelReply(); }
+                if (replyingTo) { 
+                    content = `↳ [Replying to ${replyingTo.sender}: ${replyingTo.content}]\n${message}`; 
+                    cancelReply(); 
+                }
                 await supabaseClient.from('messages').insert([{ content, sender_email: user.email }]);
                 msgInput.value = "";
             }
@@ -87,4 +120,4 @@ const deleteMessage = async (id) => {
         location.reload();
     }
 };
-            
+                

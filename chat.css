@@ -96,4 +96,49 @@
 .input-tile button:active {
     transform: scale(0.9);
   }
-  
+/* --- LONG PRESS OVERLAY --- */
+.message-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    display: none; /* Hidden by default */
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+/* The message bubble when it "pops" */
+.popped-message {
+    max-width: 80%;
+    padding: 15px;
+    border-radius: 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+/* The Action Tile */
+.action-tile {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    width: 250px;
+    border: 1px solid rgba(255,255,255,0.15);
+    overflow: hidden;
+}
+
+.action-item {
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    color: white;
+    font-size: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.action-item:last-child { border: none; }
+.action-item:active { background: rgba(255,255,255,0.1); }
+.action-item.delete { color: #FF3B30; } /* Red for delete */
+    

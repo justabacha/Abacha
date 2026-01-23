@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Just•Abacha | Discovery</title>
+    <link rel="stylesheet" href="settings.css">
+    <style>
+        .search-container {
+            margin-top: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding-bottom: 10px;
+        }
+
+        .ghost-search-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            padding: 18px;
+            color: white;
+            font-size: 16px;
+            backdrop-filter: blur(15px);
+            outline: none;
+        }
+
+        .section-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #32D74B;
+            margin: 25px 0 15px 5px;
+            font-weight: bold;
+        }
+
+        /* VIBE REQUEST CARD */
+        .vibe-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 22px;
+            padding: 22px;
+            margin-bottom: 15px;
+        }
+
+        .vibe-msg {
+            font-size: 15px;
+            line-height: 1.5;
+            color: #fff;
+        }
+
+        .vibe-footer {
+            text-align: right;
+            font-size: 11px;
+            opacity: 0.5;
+            margin-top: 12px;
+            font-style: italic;
+        }
+
+        /* DISCOVERY TILES */
+        .user-tile {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .user-info { flex: 1; }
+        .user-name { font-weight: bold; font-size: 16px; margin-bottom: 4px; }
+        .user-bio { font-size: 12px; opacity: 0.6; }
+
+        .request-btn {
+            background: rgba(50, 215, 75, 0.15);
+            color: #32D74B;
+            border: 1px solid rgba(50, 215, 75, 0.3);
+            padding: 10px 15px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn-deny {
+            flex: 1;
+            background: rgba(255, 59, 48, 0.2);
+            color: #FF3B30;
+            border: 1px solid #FF3B30;
+            padding: 14px;
+            border-radius: 15px;
+            font-weight: bold;
+        }
+
+        .btn-accept {
+            flex: 1;
+            background: rgba(0, 122, 255, 0.15);
+            color: #007AFF;
+            border: 1px solid #007AFF;
+            padding: 14px;
+            border-radius: 15px;
+            font-weight: bold;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="settings-page">
+    <div class="hero-bg-overlay"></div>
+    
+    <div class="settings-container">
+        <div class="search-container">
+            <input type="text" id="user-search" class="ghost-search-input" placeholder="Search Ghost Alias...">
+        </div>
+
+        <div id="pending-vibe-section">
+            <div class="section-label">Pending Vibes</div>
+            <div id="requests-list">
+                </div>
+        </div>
+
+        <div id="discovery-section">
+            <div class="section-label">Inner Circle Discovery</div>
+            <div id="discovery-list">
+                </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+    <script src="requests.js"></script>
+</body>
+  </html>
+  

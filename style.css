@@ -1,9 +1,26 @@
 /* 1. THE VARIABLES */
 :root {
-    --login-bg: url('YOUR_PHOTO_URL_HERE');
-    --hub-bg: url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2000');
-    --nature-tile: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1000');
-    --accent: #007AFF;
+    /* ... your other variables ... */
+    /* ADD THIS DEFAULT CHAT WALLPAPER */
+    --chat-bg: url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2000'); 
+}
+
+.chat-page {
+    background: #121212 var(--chat-bg) no-repeat center center fixed; /* Added #121212 as a backup color */
+    background-size: cover;
+    height: 100vh;
+    width: 100vw;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Fix the Input Container visibility */
+.floating-input-container {
+    padding: 20px;
+    background: transparent;
+    z-index: 10; /* Ensures it stays above the wallpaper */
 }
 
 /* 2. PAGE LABELS */

@@ -1,0 +1,43 @@
+/* BLUE METAMORPHISM BUTTON */
+.metamorphism-blue-btn {
+    background: rgba(0, 122, 255, 0.15);
+    color: #007AFF;
+    border: 1px solid #007AFF;
+    border-radius: 15px;
+    font-weight: bold;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.metamorphism-blue-btn:active {
+    transform: scale(0.95);
+    background: rgba(0, 122, 255, 0.3);
+}
+
+/* SENDER NOTIFICATION GLOW */
+.vibe-notification-glow {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 122, 255, 0.1);
+    border: 1px solid rgba(0, 122, 255, 0.3);
+    color: #fff;
+    padding: 14px 24px;
+    border-radius: 50px;
+    font-size: 13px;
+    backdrop-filter: blur(20px);
+    z-index: 99999;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    animation: slideDown 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translate(-50%, -30px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.fade-out {
+    opacity: 0;
+    transition: opacity 1.5s ease;
+}

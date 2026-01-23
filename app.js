@@ -30,7 +30,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
-    // --- 🟢 END DYNAMIC COLORS ---
 
     // --- LOGIN & SIGNUP WITH CUSTOM GHOST ALERTS ---
     const loginBtn = document.getElementById('login-btn');
@@ -40,13 +39,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         loginBtn.addEventListener('click', async () => {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            
             const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            
             if (error) {
                 alert("Ghost Access Denied: " + error.message);
             } else {
-                // YOUR CUSTOM LOGIN SUCCESS MESSAGE
                 alert("login successful 👌_phestone welcome you to Just•Abacha😎");
                 window.location.href = 'hub.html';
             }
@@ -57,13 +53,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         signupBtn.addEventListener('click', async () => {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            
             const { error } = await supabaseClient.auth.signUp({ email, password });
-            
             if (error) {
                 alert("Signup Error: " + error.message);
             } else {
-                // YOUR CUSTOM SIGNUP WELCOME MESSAGE
                 alert("Welcome To Just•Abacha verify ur email to login");
             }
         });
@@ -80,3 +73,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('condition').innerText = "Clear Skies";
         document.getElementById('daily-quote').innerText = "“Ghost Layer: Built by Phestone.”";
     }
+
+    // --- SETTINGS LOGIC (Logout) ---
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.onclick = async () => {
+            await supabaseClient.auth.signOut();
+            window.location.href = 'index.html';
+        };
+    }
+});
+            

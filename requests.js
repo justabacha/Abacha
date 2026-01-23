@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="user-name">@${user.username}</div>
                         <div class="user-bio">${user.bio || 'Silence is gold in the Ghost Layer.'}</div>
                     </div>
-                    <button class="request-btn" onclick="sendVibeRequest('${user.id}', '${user.username}')">
+                    <button class="request-btn" onclick="sendVibeRequest('${user.id}', '${user.username}', this)">
                         Connect
                     </button>
                 </div>
@@ -61,16 +61,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // 4. ACTION FUNCTIONS
-    window.sendVibeRequest = async (targetId, targetName) => {
+    // 4. ACTION FUNCTIONS (UPDATED WITH ANIMATION)
+    window.sendVibeRequest = async (targetId, targetName, btnElement) => {
+        // 1. Visual Feedback - Button turns into a "Sending" state
+        const originalText = btnElement.innerText;
+        btnElement.innerText = "Sending...";
+        btnElement.style.opacity = "0.5";
+        btnElement.disabled = true;
+
         const { error } = await supabaseClient
             .from('friendships')
             .insert([{ sender_id: currentUser.id, receiver_id: targetId, status: 'pending' }]);
 
         if (error) {
-            alert("Vibe already sent or connection exists.");
+            btnElement.innerText = "Already Sent";
+            btnElement.style.color = "#FF3B30";
+            btnElement.style.opacity = "1";
         } else {
-            alert(`Vibe sent to @${targetName}! 🤓`);
+            // 2. Success Animation
+            btnElement.innerText = "Vibe Sent 🤓";
+            btnElement.style.background = "rgba(50, 215, 75, 0.4)";
+            btnElement.style.color = "#fff";
+            btnElement.style.opacity = "1";
+            btnElement.style.border = "1px solid #32D74B";
         }
     };
 
@@ -91,4 +104,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadDiscovery();
     loadRequests();
 });
-                                                
+        

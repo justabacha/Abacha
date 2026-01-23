@@ -44,42 +44,52 @@ document.addEventListener('DOMContentLoaded', async () => {
             requestsList.innerHTML = '<p style="opacity:0.3; font-size:12px; padding:10px;">No pending vibes...</p>';
         }
     };
+window.sendVibeRequest = async (targetId, targetName, btnElement) => {
+    // PREVENT MULTIPLE CLICKS IMMEDIATELY
+    if (btnElement.disabled) return; 
+    btnElement.disabled = true;
+    btnElement.innerText = "Connecting...";
+    btnElement.style.opacity = "0.5";
 
-    window.sendVibeRequest = async (targetId, targetName, btnElement) => {
-        btnElement.innerText = "Sending...";
-        btnElement.style.opacity = "0.5";
-        btnElement.disabled = true;
-        const { error } = await supabaseClient.from('friendships').insert([{ sender_id: currentUser.id, receiver_id: targetId, status: 'pending' }]);
-        if (error) {
-            btnElement.innerText = "Already Sent";
-            btnElement.style.color = "#FF3B30";
-            btnElement.style.opacity = "1";
-        } else {
-            btnElement.innerText = "Vibe Sent 🤓";
-            btnElement.style.background = "rgba(50, 215, 75, 0.4)";
-            btnElement.style.color = "#fff";
-            btnElement.style.opacity = "1";
-            btnElement.style.border = "1px solid #32D74B";
-        }
-    };
+    const { error } = await supabaseClient
+        .from('friendships')
+        .insert([{ sender_id: currentUser.id, receiver_id: targetId, status: 'pending' }]);
 
-    window.handleVibe = async (requestId, action) => {
-        if (action === 'accept') {
-            await supabaseClient.from('friendships').update({ status: 'accepted', updated_at: new Date().toISOString() }).eq('id', requestId);
-            const successHTML = `
+    if (error) {
+        btnElement.innerText = "Limit Reached";
+        btnElement.style.color = "#FF3B30";
+        btnElement.disabled = false; // Let them try again if it was just a glitch
+    } else {
+        btnElement.innerText = "Vibe Sent 🤓";
+        btnElement.style.background = "rgba(50, 215, 75, 0.4)";
+    }
+};
+
+window.handleVibe = async (requestId, action) => {
+    // SHOW LOADING IMMEDIATELY
+    const overlay = document.getElementById('global-modal-overlay');
+    overlay.style.display = 'flex';
+    overlay.innerHTML = '<div class="ghost-modal-tile">Processing...</div>';
+
+    if (action === 'accept') {
+        const { error } = await supabaseClient.from('friendships').update({ 
+            status: 'accepted',
+            updated_at: new Date().toISOString() 
+        }).eq('id', requestId);
+
+        if (!error) {
+            overlay.innerHTML = `
                 <div class="ghost-modal-tile" style="text-align: center;">
                     <p style="font-size: 16px; margin-bottom: 20px;">✅ You just accepted the request.</p>
                     <button class="metamorphism-blue-btn" style="width: 100%; padding: 15px;" onclick="window.location.href='chat.html'">Send a Vibe</button>
-                </div>
-            `;
-            showGlobalModal(successHTML);
-        } else {
-            await supabaseClient.from('friendships').delete().eq('id', requestId);
-            loadRequests();
-            loadDiscovery();
+                </div>`;
         }
-    };
-
+    } else {
+        await supabaseClient.from('friendships').delete().eq('id', requestId);
+        location.reload(); // Hard refresh to clear the list quickly
+    }
+};
+    
     // --- HELPER FUNCTIONS FOR MODALS ---
     window.showGlobalModal = (html) => {
         const overlay = document.getElementById('global-modal-overlay');

@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ghost Chat</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="chat.css">
 </head>
-    <body class="chat-page">
+<body class="chat-page">
     <div class="chat-header">
         <a href="hub.html" style="text-decoration:none; color:white; font-size:24px; margin-right:15px;">‹</a>
         <div style="width:40px; height:40px; border-radius:50%; background: #333; margin-right:10px;"></div>
@@ -18,9 +19,13 @@
 
     <div class="floating-input-container">
         <div class="input-tile">
-            <input type="text" id="msg-input" placeholder="Rada?..." style="flex:1; background:transparent; border:none; color:white; outline:none;">
-            <button id="send-btn" style="background:transparent; border:none; font-size:20px;">🚀</button>
+            <input type="text" id="msg-input" placeholder="Rada?..." autocomplete="off">
+            <button id="send-btn">🚀</button>
         </div>
     </div>
-    </body>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+    <script src="chat.js"></script>
+</body>
 </html>

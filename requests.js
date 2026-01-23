@@ -63,7 +63,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 4. ACTION FUNCTIONS (UPDATED WITH ANIMATION)
     window.sendVibeRequest = async (targetId, targetName, btnElement) => {
-        // 1. Visual Feedback - Button turns into a "Sending" state
         const originalText = btnElement.innerText;
         btnElement.innerText = "Sending...";
         btnElement.style.opacity = "0.5";
@@ -78,7 +77,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             btnElement.style.color = "#FF3B30";
             btnElement.style.opacity = "1";
         } else {
-            // 2. Success Animation
             btnElement.innerText = "Vibe Sent 🤓";
             btnElement.style.background = "rgba(50, 215, 75, 0.4)";
             btnElement.style.color = "#fff";
@@ -89,14 +87,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.handleVibe = async (requestId, action) => {
         if (action === 'accept') {
-            await supabaseClient.from('friendships').update({ status: 'accepted' }).eq('id', requestId);
-            alert("Vibe Accepted. Inner Circle expanded.");
+            await supabaseClient.from('friendships').update({ 
+                status: 'accepted',
+                updated_at: new Date().toISOString() 
+            }).eq('id', requestId);
+            
+            // CUSTOM UI FOR THE RECEIVER
+            const successHTML = `
+                <div class="ghost-modal-tile" style="text-align: center;">
+                    <p style="font-size: 16px; margin-bottom: 20px;">✅ You just accepted the request.</p>
+                    <button class="metamorphism-blue-btn" style="width: 100%; padding: 15px;" onclick="window.location.href='chat.html'">
+                        Send a Vibe
+                    </button>
+                </div>
+            `;
+            showGlobalModal(successHTML);
         } else {
             await supabaseClient.from('friendships').delete().eq('id', requestId);
-            alert("Vibe Denied.");
+            closeModal();
+            loadRequests();
+            loadDiscovery();
         }
-        loadRequests();
-        loadDiscovery();
     };
 
     // 5. INITIALIZE & LISTENERS

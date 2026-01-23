@@ -71,16 +71,18 @@
 }
 
 .settings-tile {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    /* Updated for Theme Engine variables */
+    background: var(--glass-bg, rgba(255, 255, 255, 0.08));
+    backdrop-filter: blur(var(--blur-amount, 20px));
+    -webkit-backdrop-filter: blur(var(--blur-amount, 20px));
+    
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 20px;
     padding: 18px 22px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: transform 0.2s ease;
+    transition: transform 0.2s ease, background 0.3s ease, backdrop-filter 0.3s ease;
 }
 
 .settings-tile:active { transform: scale(0.97); }
@@ -132,4 +134,5 @@
     width: 280px;
     padding: 30px;
     text-align: left;
-}
+              }
+        

@@ -10,7 +10,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Get the current user session
     const { data: { user } } = await supabaseClient.auth.getUser();
 
-            // --- LOGIN & SIGNUP WITH CUSTOM GHOST ALERTS ---
+    // --- 🟢 DYNAMIC BUTTON COLORS LOGIC ---
+    const passwordInput = document.getElementById('password');
+    const loginButton = document.getElementById('login-btn');
+    const signupButton = document.getElementById('signup-btn');
+
+    if (passwordInput) {
+        passwordInput.addEventListener('input', () => {
+            if (passwordInput.value.length >= 6) { 
+                loginButton.style.background = "#32D74B"; // Green
+                loginButton.style.color = "white";
+                signupButton.style.background = "#007AFF"; // Blue
+                signupButton.style.border = "none";
+            } else {
+                loginButton.style.background = "white";
+                loginButton.style.color = "black";
+                signupButton.style.background = "transparent";
+                signupButton.style.border = "1px solid rgba(255,255,255,0.4)";
+            }
+        });
+    }
+    // --- 🟢 END DYNAMIC COLORS ---
+
+    // --- LOGIN & SIGNUP WITH CUSTOM GHOST ALERTS ---
     const loginBtn = document.getElementById('login-btn');
     const signupBtn = document.getElementById('signup-btn');
 

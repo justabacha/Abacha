@@ -17,27 +17,35 @@
 /* SENDER NOTIFICATION GLOW */
 .vibe-notification-glow {
     position: fixed;
-    top: 20px;
+    top: 30px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(0, 122, 255, 0.1);
-    border: 1px solid rgba(0, 122, 255, 0.3);
+    background: rgba(0, 122, 255, 0.15);
+    border: 1px solid rgba(0, 122, 255, 0.4);
     color: #fff;
-    padding: 14px 24px;
+    padding: 14px 22px;
     border-radius: 50px;
     font-size: 13px;
+    font-weight: 500;
     backdrop-filter: blur(20px);
-    z-index: 99999;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    animation: slideDown 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 10000;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    animation: vibeSlideIn 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
-@keyframes slideDown {
-    from { opacity: 0; transform: translate(-50%, -30px); }
+.vibe-notification-glow span {
+    color: #32D74B;
+    margin-right: 10px;
+}
+
+@keyframes vibeSlideIn {
+    from { opacity: 0; transform: translate(-50%, -40px); }
     to { opacity: 1; transform: translate(-50%, 0); }
 }
 
 .fade-out {
     opacity: 0;
-    transition: opacity 1.5s ease;
+    transform: translate(-50%, -10px);
+    transition: all 1.5s ease;
 }

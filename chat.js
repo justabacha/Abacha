@@ -4,29 +4,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sendBtn = document.getElementById('send-btn');
     const msgInput = document.getElementById('msg-input');
     let replyingTo = null;
+    let messageToDelete = null;
 
     if (chatBox && user) {
-        // --- UPDATED DISPLAY LOGIC (WITH BLUE REPLY QUOTE) ---
         const displayMessage = (msg) => {
             const isMe = msg.sender_email === user.email;
             const bubble = document.createElement('div');
             bubble.className = `message ${isMe ? 'sent' : 'received'}`;
 
-            // Check if message is a reply to style it with the blue distinction
             if (msg.content.includes("↳ [Replying to")) {
                 const parts = msg.content.split(']\n');
                 const replyHeader = parts[0].replace('↳ [', '');
                 const actualMessage = parts[1] || "";
-
-                bubble.innerHTML = `
-                    <div class="reply-quote">${replyHeader}</div>
-                    <div>${actualMessage}</div>
-                `;
+                bubble.innerHTML = `<div class="reply-quote">${replyHeader}</div><div>${actualMessage}</div>`;
             } else {
                 bubble.innerText = msg.content;
             }
 
-            // --- LONG PRESS LOGIC ---
             let pressTimer;
             bubble.addEventListener('touchstart', () => {
                 pressTimer = setTimeout(() => showActionMenu(msg, bubble.cloneNode(true)), 600);
@@ -38,7 +32,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             chatBox.scrollTop = chatBox.scrollHeight;
         };
 
-        // --- UPDATED ACTION MENU (COPY & PIN LOGIC) ---
         const showActionMenu = (msg, clonedBubble) => {
             const overlay = document.getElementById('chat-overlay');
             const menuContainer = document.getElementById('menu-content');
@@ -52,25 +45,46 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="action-item" onclick="copyToClipboard('${msg.content.replace(/'/g, "\\'")}')">Copy <span>📑</span></div>
                 <div class="action-item" onclick="setReply('${msg.sender_email}', '${msg.content.replace(/'/g, "\\'")}')">Reply <span>✍️</span></div>
                 <div class="action-item">Forward <span>📤</span></div>
-                <div class="action-item" onclick="pinMessage('${msg.id}')">Pin <span>📌</span></div>
+                <div class="action-item" onclick="pinMessage('${msg.content.replace(/'/g, "\\'")}')">Pin <span>📌</span></div>
                 <div class="action-item delete" onclick="deleteMessage('${msg.id}')">Delete <span>🗑️</span></div>
             `;
             menuContainer.appendChild(tile);
             overlay.style.display = 'flex';
         };
 
-        // --- CLIPBOARD & PIN HELPERS ---
         window.copyToClipboard = (text) => {
-            navigator.clipboard.writeText(text);
-            // Optional: You can add a Ghost-style toast notification here later
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
             document.getElementById('chat-overlay').style.display = 'none';
         };
 
-        window.pinMessage = (id) => {
-            console.log("Pinning message:", id);
-            // This will link to your Hub Dashboard Pin logic later
-            alert("Message pinned to Ghost Hub");
+        window.pinMessage = (content) => {
+            const pinBar = document.getElementById('pinned-bar');
+            pinBar.innerHTML = `📌 <b>Pinned:</b> ${content.substring(0, 30)}...`;
+            pinBar.style.display = 'block';
             document.getElementById('chat-overlay').style.display = 'none';
+        };
+
+        window.deleteMessage = (id) => {
+            messageToDelete = id;
+            document.getElementById('delete-modal').style.display = 'flex';
+            document.getElementById('chat-overlay').style.display = 'none';
+        };
+
+        window.confirmGhostDelete = async () => {
+            if (messageToDelete) {
+                await supabaseClient.from('messages').delete().eq('id', messageToDelete);
+                location.reload();
+            }
+        };
+
+        window.closeGhostModal = () => {
+            document.getElementById('delete-modal').style.display = 'none';
+            messageToDelete = null;
         };
 
         window.setReply = (sender, content) => {
@@ -113,11 +127,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         msgInput.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };
     }
 });
-
-const deleteMessage = async (id) => {
-    if (confirm("Wipe this message from the Ghost Layer?")) {
-        await supabaseClient.from('messages').delete().eq('id', id);
-        location.reload();
-    }
-};
-                
+    

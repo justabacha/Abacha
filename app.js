@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Get the current user session
     const { data: { user } } = await supabaseClient.auth.getUser();
 
-        // --- LOGIN & SIGNUP LOGIC (Fixed for your Button IDs) ---
+            // --- LOGIN & SIGNUP WITH CUSTOM GHOST ALERTS ---
     const loginBtn = document.getElementById('login-btn');
     const signupBtn = document.getElementById('signup-btn');
 
@@ -19,11 +19,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             
-            console.log("Attempting Login...");
             const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
             
-            if (error) alert("Login Error: " + error.message);
-            else window.location.href = 'hub.html';
+            if (error) {
+                alert("Ghost Access Denied: " + error.message);
+            } else {
+                // YOUR CUSTOM LOGIN SUCCESS MESSAGE
+                alert("login successful 👌_phestone welcome you to Just•Abacha😎");
+                window.location.href = 'hub.html';
+            }
         });
     }
 
@@ -32,13 +36,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             
-            console.log("Creating new Ghost account...");
             const { error } = await supabaseClient.auth.signUp({ email, password });
             
-            if (error) alert("Signup Error: " + error.message);
-            else alert("Ghost Account Created! Check your email for the link.");
+            if (error) {
+                alert("Signup Error: " + error.message);
+            } else {
+                // YOUR CUSTOM SIGNUP WELCOME MESSAGE
+                alert("Welcome To Just•Abacha verify ur email to login");
+            }
         });
-                                  }
+    }
     
     // --- HUB ROOM: (Weather & Clock) ---
     if (document.getElementById('time')) {

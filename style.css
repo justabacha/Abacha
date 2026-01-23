@@ -1,3 +1,16 @@
+/* Disable text selection across the whole app */
+* {
+    -webkit-user-select: none; /* Safari/iOS */
+    -webkit-touch-callout: none; /* Disable system context menu */
+    user-select: none; 
+}
+
+/* Re-enable it ONLY for the input box so you can still type */
+input, textarea {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
 :root {
     /* WALLPAPERS */
     --hub-bg: url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2000');

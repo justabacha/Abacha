@@ -6,28 +6,26 @@
     <title>Ghost Chat</title>
     <link rel="stylesheet" href="style.css">
 </head>
-    <body class="chat-page">
+<body class="chat-page">
 
     <div class="chat-header">
         <a href="hub.html" style="text-decoration:none; color:white; font-size:24px; margin-right:15px;">‹</a>
-        <div style="width:40px; height:40px; border-radius:50%; background: grey; margin-right:10px; overflow:hidden;">
-            <img src="YOUR_PROFILE_PIC_URL" style="width:100%; height:100%; object-fit:cover;">
-        </div>
+        <div style="width:40px; height:40px; border-radius:50%; background: #333; margin-right:10px;"></div>
         <div>
-            <h4 style="margin:0; font-size:16px;">Inner Circle</h4>
+            <h4 style="margin:0; font-size:16px; color: white;">Inner Circle</h4>
             <p style="margin:0; font-size:10px; color:#32D74B;">Online</p>
         </div>
     </div>
 
-    <div id="chat-box">
+    <div id="chat-box" style="flex: 1; overflow-y: auto; padding: 20px;">
         </div>
 
     <div class="floating-input-container">
-        <div class="input-tile">
+        <div class="input-tile" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(20px); border-radius: 30px; padding: 10px 20px; display: flex;">
             <input type="text" id="msg-input" placeholder="Type a message..." style="flex:1; background:transparent; border:none; color:white; outline:none;">
-            <button id="send-btn" style="background:transparent; border:none; font-size:20px;">🚀</button>
+            <button id="send-btn" style="background:transparent; border:none; font-size:20px; cursor:pointer;">🚀</button>
         </div>
     </div>
 
-    </body>
+</body>
 </html>

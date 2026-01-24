@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
     
-    // --- 2. LOAD ACTIVE CHATS (The Tunnel Access) ---
+        // --- 2. LOAD ACTIVE CHATS (The Tunnel Access) ---
     const loadActive = async () => {
         const { data: friends } = await supabaseClient
             .from('friendships')
@@ -57,26 +57,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         container.innerHTML = friends?.length ? '' : '<p style="color:gray; font-size:12px;">Find someone to chat with!</p>';
 
+        // Create a Set to track IDs we've already displayed to prevent double-rows
+        const displayedIDs = new Set();
+
         friends?.forEach(f => {
-            // Determine who the other person is
+            // FIX 1: Correctly identify the OTHER person
             const friend = f.sender_id === user.id ? f.receiver : f.sender;
-            const card = document.createElement('div');
-            card.className = 'user-card';
-            
-            // Tunneling logic: sends you to chat.html with the friend's ID
-            card.onclick = () => window.location.href = `chat.html?friend_id=${friend.id}`;
-            
-            card.innerHTML = `
-                <div class="user-avatar" style="background-image: url(${friend.avatar_url || 'default-avatar.png'})"></div>
-                <div class="user-info">
-                    <h4>${friend.username}</h4>
-                    <p>Tap to enter tunnel</p>
-                </div>
-            `;
-            container.appendChild(card);
+
+            // FIX 2: Check if we already showed this friend (Prevents the Double Row)
+            if (friend && !displayedIDs.has(friend.id)) {
+                displayedIDs.add(friend.id);
+
+                const card = document.createElement('div');
+                card.className = 'user-card';
+                card.onclick = () => window.location.href = `chat.html?friend_id=${friend.id}`;
+                
+                card.innerHTML = `
+                    <div class="user-avatar" style="background-image: url(${friend.avatar_url || 'default-avatar.png'})"></div>
+                    <div class="user-info">
+                        <h4>${friend.username || 'Ghost'}</h4>
+                        <p>Tap to enter tunnel</p>
+                    </div>
+                `;
+                container.appendChild(card);
+            }
         });
     };
-
+    
     // --- 3. SEARCH LOGIC (Finding New Ghosts) ---
     const searchInput = document.getElementById('search-ghost');
     const searchResults = document.getElementById('search-results');

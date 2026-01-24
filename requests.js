@@ -19,13 +19,20 @@ const initializeDiscovery = async () => {
         const discoveryList = document.getElementById('discovery-list');
         const requestsList = document.getElementById('requests-list');
 
+        // ✨ FIX 1: IMMEDIATE FEEDBACK (Line 22-23)
+        // This stops the "blank screen" lag on your phone
+        discoveryList.innerHTML = '<p style="color: #32D74B; font-size: 12px; padding: 10px;">Searching the Ghost Layer... 🤓</p>';
+        requestsList.innerHTML = '<p style="color: #fff; opacity: 0.3; font-size: 10px; padding: 10px;">Checking vibes...</p>';
+
         // 1. LOAD DISCOVERY (Optimized for Mobile)
         const loadDiscovery = async (searchTerm = '') => {
             let query = supabaseClient.from('profiles').select('*').neq('id', currentUser.id);
             if (searchTerm) { query = query.ilike('username', `%${searchTerm}%`); }
             
             const { data: users } = await query.limit(15);
-            if (users) {
+            
+            // ✨ FIX 2: FALLBACK FOR EMPTY PROFILES
+            if (users && users.length > 0) {
                 discoveryList.innerHTML = users.map(user => `
                     <div class="user-tile">
                         <div class="user-info">
@@ -35,6 +42,8 @@ const initializeDiscovery = async () => {
                         <button class="request-btn" onclick="sendVibeRequest('${user.id}', '${user.username}', this)">Connect</button>
                     </div>
                 `).join('');
+            } else {
+                discoveryList.innerHTML = '<p style="opacity:0.4; font-size:12px; padding:20px;">No ghosts found. Create a profile to start the vibe! 👻</p>';
             }
         };
 
@@ -58,7 +67,7 @@ const initializeDiscovery = async () => {
                     </div>
                 `).join('');
             } else {
-                requestsList.innerHTML = '<p style="opacity:0.3; font-size:11px;">No pending vibes.</p>';
+                requestsList.innerHTML = '<p style="opacity:0.3; font-size:11px; padding:10px;">No pending vibes.</p>';
             }
         };
 
@@ -105,3 +114,4 @@ const initializeDiscovery = async () => {
 };
 
 document.addEventListener('DOMContentLoaded', initializeDiscovery);
+            

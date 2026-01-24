@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         localStorage.setItem('ghost-theme', themeName);
     };
+    
 window.openProfileEdit = async () => {
     // 1. Fetch current data from Supabase
     const { data: profile } = await supabaseClient
@@ -45,6 +46,23 @@ window.openProfileEdit = async () => {
         </div>
     `;
     showGlobalModal(profileHTML);
+};
+  window.saveProfile = async () => {
+    const newUsername = document.getElementById('edit-username').value;
+    const newBio = document.getElementById('edit-bio').value;
+    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    const { error } = await supabaseClient
+        .from('profiles')
+        .update({ username: newUsername, bio: newBio })
+        .eq('id', user.id);
+
+    if (error) {
+        alert("Update Failed: " + error.message);
+    } else {
+        alert("Identity Updated 👌");
+        location.reload(); // Refresh to show your new Ghost Alias
+    }
 };
     
     // 3. HELP & CREDITS (Restored Phestone's Jan 16 Quote)

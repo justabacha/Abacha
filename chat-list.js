@@ -16,12 +16,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (aliasEl) aliasEl.innerText = `@${myProfile.username}`;
             if (avatarEl && myProfile.avatar_url) {
                 avatarEl.style.backgroundImage = `url(${myProfile.avatar_url})`;
+                avatarEl.style.backgroundSize = 'cover';
+                avatarEl.style.backgroundPosition = 'center';
             }
         }
     };
     syncMyHeader(); 
 
-    // --- 1. LOAD PENDING VIBES (Restored exactly from yours) ---
+    // --- 1. LOAD PENDING VIBES (Basin Style Integrated) ---
     const loadPending = async () => {
         const { data: requests, error } = await supabaseClient
             .from('friendships')
@@ -45,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         requests?.forEach(req => {
             const card = document.createElement('div');
-            card.className = 'user-card-wrapper'; // New Basin Wrapper
+            card.className = 'user-card-wrapper'; 
             const sender = req.profiles;
             card.innerHTML = `
                 <div class="user-card read-vibe">
@@ -61,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
     
-    // --- 2. LOAD ACTIVE CHATS (With Tunnel Logic + Basin Fix) ---
+    // --- 2. LOAD ACTIVE CHATS (The Tunnel Logic + Basin Fix) ---
     const loadActive = async () => {
         const { data: friends } = await supabaseClient
             .from('friendships')
@@ -97,8 +99,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const isUnread = lastMsg && lastMsg.receiver_id === user.id && !lastMsg.is_read;
                 const statusClass = isUnread ? 'unread-vibe' : 'read-vibe';
-                const time = lastMsg ? new Date(lastMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-                const msgPreview = lastMsg ? lastMsg.content.substring(0, 25) + '...' : 'Tap to enter tunnel';
+                
+                // Format time properly (HH:MM)
+                const time = lastMsg ? new Date(lastMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+                const msgPreview = lastMsg ? lastMsg.content.substring(0, 25) + (lastMsg.content.length > 25 ? '...' : '') : 'Tap to enter tunnel';
 
                 const wrapper = document.createElement('div');
                 wrapper.className = 'user-card-wrapper';
@@ -116,13 +120,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 container.appendChild(wrapper);
                 
                 // Attach Long Press and Swipe Logic
-                addLongPress(document.getElementById(`card-${friend.id}`), friend.id);
-                addSwipeLogic(wrapper);
+                const cardEl = document.getElementById(`card-${friend.id}`);
+                if (cardEl) {
+                    addLongPress(cardEl, friend.id);
+                    addSwipeLogic(wrapper);
+                }
             }
         }
     };
     
-    // --- 3. SEARCH LOGIC (Restored exactly) ---
+    // --- 3. SEARCH LOGIC (Basin Style Integrated) ---
     const searchInput = document.getElementById('search-ghost');
     const searchResults = document.getElementById('search-results');
 
@@ -162,8 +169,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isLocked = localStorage.getItem(`locked_${friendId}`);
         if (isLocked) {
             const pin = prompt("Enter 4-Digit PIN:");
-            if (pin === "1234") window.location.href = `chat.html?friend_id=${friendId}`;
-            else alert("Access Denied 💀");
+            if (pin === "1234") {
+                window.location.href = `chat.html?friend_id=${friendId}`;
+            } else {
+                alert("Access Denied 💀");
+            }
         } else {
             window.location.href = `chat.html?friend_id=${friendId}`;
         }
@@ -173,7 +183,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         let timer;
         el.addEventListener('touchstart', () => {
             timer = setTimeout(() => {
-                if(confirm("Lock this chat tunnel?")) localStorage.setItem(`locked_${id}`, 'true');
+                if(confirm("Lock this chat tunnel?")) {
+                    localStorage.setItem(`locked_${id}`, 'true');
+                    alert("Tunnel Locked 🔐");
+                }
             }, 800);
         });
         el.addEventListener('touchend', () => clearTimeout(timer));
@@ -182,14 +195,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     const addSwipeLogic = (wrapper) => {
         let startX;
         const card = wrapper.querySelector('.user-card');
-        card.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+        card.addEventListener('touchstart', e => {
+            startX = e.touches[0].clientX;
+        });
         card.addEventListener('touchmove', e => {
             let diff = e.touches[0].clientX - startX;
-            if (diff < -50) card.style.transform = 'translateX(-80px)'; // Reveal Delete
-            if (diff > 50) card.style.transform = 'translateX(80px)'; // Reveal Pin
+            // Prevent scrolling page while swiping
+            if (Math.abs(diff) > 10) {
+                if (diff < -50) card.style.transform = 'translateX(-80px)'; // Reveal Delete
+                if (diff > 50) card.style.transform = 'translateX(80px)'; // Reveal Pin
+            }
         });
         card.addEventListener('touchend', () => {
-            setTimeout(() => card.style.transform = 'translateX(0)', 2500); // Reset
+            // Reset position after a delay
+            setTimeout(() => {
+                card.style.transform = 'translateX(0)';
+            }, 2500);
         });
     };
 
@@ -214,4 +235,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     Promise.all([loadPending(), loadActive()]);
 });
-            
+                    

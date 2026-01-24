@@ -206,34 +206,40 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // --- FIXED: THE HANDLESEND FUNCTION ---
         const handleSend = async () => {
-            const message = msgInput.value.trim();
-            if (message !== "" && friendID) {
-                let content = message;
-                if (replyingTo) { 
-                    content = `↳ [Replying to ${replyingTo.sender}: ${replyingTo.content}]\n${message}`; 
-                    cancelReply(); 
-                }
-                
-                const { error } = await supabaseClient
-                    .from('messages')
-                    .insert([{ 
-                        content, 
-                        sender_id: user.id, 
-                        receiver_id: friendID,
-                        sender_email: user.email 
-                    }]);
+    const message = msgInput.value.trim();
+    
+    // 1. Safety Check: Do we have a message and a receiver?
+    if (message !== "" && friendID) {
+        let content = message;
+        
+        // 2. Handle Reply Logic (Keeping your style)
+        if (replyingTo) { 
+            content = `↳ [Replying to ${replyingTo.sender}: ${replyingTo.content}]\n${message}`; 
+            cancelReply(); 
+        }
+        
+        // 3. The Data Packet (Must match your new SQL columns!)
+        const { error } = await supabaseClient
+            .from('messages')
+            .insert([{ 
+                content: content, 
+                sender_id: user.id,      // Updated to use ID
+                receiver_id: friendID,   // The ghost you're talking to
+                sender_email: user.email // Kept for legacy display
+            }]);
 
-                if (error) {
-                    console.error("Ghost Layer Sync Error:", error.message);
-                    alert("Message failed: " + error.message);
-                } else {
-                    msgInput.value = "";
-                }
-            } else if (!friendID) {
-                alert("Ghost Warning: No receiver selected. Go to Vibe List first.");
-            }
-        };
-
+        if (error) {
+            console.error("Ghost Engine Failure:", error.message);
+            alert("Error: " + error.message);
+        } else {
+            msgInput.value = ""; // Clear input on success
+            console.log("Message synced to Ghost Layer 🚀");
+        }
+    } else if (!friendID) {
+        alert("Ghost Warning: No receiver detected in URL. Please go back to Vibes.");
+    }
+};
+        
         sendBtn.onclick = handleSend;
         msgInput.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };
     }

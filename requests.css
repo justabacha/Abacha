@@ -43,7 +43,12 @@
     from { opacity: 0; transform: translate(-50%, -40px); }
     to { opacity: 1; transform: translate(-50%, 0); }
 }
-
+@keyframes pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+    }
+    
 .fade-out {
     opacity: 0;
     transform: translate(-50%, -10px);

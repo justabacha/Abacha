@@ -23,11 +23,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             if (!user) return;
             const { data: profile, error } = await supabaseClient
-                .from('profiles')
-                .select('avatar_url, username')
-                .eq('id', user.id)
-                .maybeSingle(); // maybeSingle is safer than .single()
-
+    .from('profiles')
+    .select('avatar_url, username')
+    .eq('id', user.id)
+    .maybeSingle(); // Changing .single() to .maybeSingle() stops the crash!
+                
             if (error) console.error("Identity Sync Error:", error.message);
 
             if (profile) {
@@ -256,10 +256,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 };
-        
-        sendBtn.onclick = handleSend;
-        msgInput.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };
-    }
+            // Ensure the button is actually found in the HTML
+        if (sendBtn) {
+            sendBtn.onclick = handleSend;
+            msgInput.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };
+            console.log("Send Button Listener: ATTACHED 🚀");
+        } else {
+            console.error("Send Button NOT FOUND in HTML. Check your ID!");
+        }
+    } // This is the bracket on line 263 that closes (chatBox && user)
 });
 
 // --- 6. VIBE NOTIFICATION SYSTEM ---

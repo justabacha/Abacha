@@ -1,64 +1,52 @@
-// 1. Connection Keys
-const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
-const SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// --- NEW: Get the Friend ID from the URL (from Chat List) ---
+// --- 1. GLOBALS & TUNNELING ---
 const urlParams = new URLSearchParams(window.location.search);
 const friendID = urlParams.get('friend_id');
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Relying on the supabaseClient initialized in app.js
     const { data: { user } } = await supabaseClient.auth.getUser();
     const chatBox = document.getElementById('chat-box');
     const sendBtn = document.getElementById('send-btn');
     const msgInput = document.getElementById('msg-input');
     
+    if (!user) return;
+
     let replyingTo = null;
     let messageToDelete = null;
     let pendingPinMsg = null;
     let currentPins = [];
 
-    // --- NEW: IDENTITY SYNC BLOCK (Maintains Sync across App) ---
-        const syncChatIdentity = async () => {
+    // --- 2. IDENTITY SYNC (CRASH-PROOF) ---
+    const syncChatIdentity = async () => {
         try {
-            if (!user) return;
-            const { data: profile, error } = await supabaseClient
-    .from('profiles')
-    .select('avatar_url, username')
-    .eq('id', user.id)
-    .maybeSingle(); // Changing .single() to .maybeSingle() stops the crash!
-                
-            if (error) console.error("Identity Sync Error:", error.message);
+            const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('avatar_url, username')
+                .eq('id', user.id)
+                .maybeSingle(); // Stops the 'Inner Circle' stall
 
             if (profile) {
-                // Update Pfps
-                const pfpElements = document.querySelectorAll('.chat-avatar, .nav-avatar, .avatar-circle');
-                pfpElements.forEach(el => {
+                document.querySelectorAll('.chat-avatar, .nav-avatar, .avatar-circle').forEach(el => {
                     if (profile.avatar_url) {
                         el.style.backgroundImage = `url(${profile.avatar_url})`;
                         el.style.backgroundSize = 'cover';
                         el.style.backgroundPosition = 'center';
                     }
                 });
-                // Update Names
-                const nameElements = document.querySelectorAll('.chat-user-name, .ghost-alias-text, #display-username');
-                nameElements.forEach(el => {
+                document.querySelectorAll('.chat-user-name, .ghost-alias-text, #display-username').forEach(el => {
                     if (profile.username) el.innerText = profile.username;
                 });
                 console.log("Ghost Identity Synced: ", profile.username);
             }
-        } catch (err) {
-            console.error("Critical Sync Crash:", err);
-        }
+        } catch (err) { console.error("Identity Stall:", err); }
     };
     
     syncChatIdentity();
 
-    if (chatBox && user) {
-        // --- 1. MESSAGE DISPLAY (REPLY UI) ---
+    if (chatBox) {
+        // --- 3. MESSAGE DISPLAY & UI ---
         const displayMessage = (msg) => {
-            // Updated to check sender_id for "isMe"
-            const isMe = msg.sender_id === user.id || msg.sender_email === user.email;
+            const isMe = msg.sender_id === user.id;
             const bubble = document.createElement('div');
             bubble.className = `message ${isMe ? 'sent' : 'received'}`;
 
@@ -71,18 +59,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 bubble.innerText = msg.content;
             }
 
+            // Mobile-Friendly Long Press
             let pressTimer;
             bubble.addEventListener('touchstart', () => {
                 pressTimer = setTimeout(() => showActionMenu(msg, bubble.cloneNode(true)), 600);
             });
             bubble.addEventListener('touchend', () => clearTimeout(pressTimer));
-            bubble.addEventListener('touchmove', () => clearTimeout(pressTimer));
+            
+            // Desktop Context Menu
+            bubble.oncontextmenu = (e) => {
+                e.preventDefault();
+                showActionMenu(msg, bubble.cloneNode(true));
+            };
 
             chatBox.appendChild(bubble);
             chatBox.scrollTop = chatBox.scrollHeight;
         };
 
-        // --- 2. ACTION MENU (PIN/UNPIN LOGIC) ---
+        // --- 4. ACTION MENUS (PIN/DELETE/REPLY) ---
         window.showActionMenu = (msg, clonedBubble) => {
             const overlay = document.getElementById('chat-overlay');
             const menuContainer = document.getElementById('menu-content');
@@ -96,8 +90,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             tile.className = 'action-tile';
             tile.innerHTML = `
                 <div class="action-item" onclick="copyToClipboard('${msg.content.replace(/'/g, "\\'")}')">Copy <span>📑</span></div>
-                <div class="action-item" onclick="setReply('${msg.sender_email}', '${msg.content.replace(/'/g, "\\'")}')">Reply <span>✍️</span></div>
-                <div class="action-item">Forward <span>📤</span></div>
+                <div class="action-item" onclick="setReply('${msg.sender_email || 'Ghost'}', '${msg.content.replace(/'/g, "\\'")}')">Reply <span>✍️</span></div>
                 <div class="action-item" onclick="${isPinned ? `unpinMessage('${msg.id}')` : `openPinModal('${msg.id}', '${msg.content.replace(/'/g, "\\'")}')`}">
                     ${isPinned ? 'Unpin' : 'Pin'} <span>📌</span>
                 </div>
@@ -107,11 +100,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             overlay.style.display = 'flex';
         };
 
-        // --- 3. PINNING SYSTEM (2-PIN LIMIT) ---
+        // --- 5. PINNING SYSTEM ---
         window.openPinModal = (id, content) => {
             if (currentPins.length >= 2) {
-                alert("Ghost Layer Limit: Unpin a message first to add another.");
-                document.getElementById('chat-overlay').style.display = 'none';
+                alert("Ghost Layer Limit: 2 Pins max.");
                 return;
             }
             pendingPinMsg = { id, content };
@@ -143,60 +135,42 @@ document.addEventListener('DOMContentLoaded', async () => {
                 pinBar.innerHTML = currentPins.map(p => `
                     <div class="pin-item">
                         <span>📌 ${p.content.substring(0, 25)}...</span>
-                        <span onclick="unpinMessage('${p.id}')" style="font-size:12px; font-weight:bold; padding: 5px;">✕</span>
+                        <span onclick="unpinMessage('${p.id}')" style="cursor:pointer;">✕</span>
                     </div>
                 `).join('');
             } else { pinBar.style.display = 'none'; }
         };
 
-        // --- 4. HELPERS (COPY, DELETE, REPLY) ---
-        window.copyToClipboard = (text) => {
-            const el = document.createElement('textarea');
-            el.value = text;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-            document.getElementById('chat-overlay').style.display = 'none';
-        };
+        // --- 6. SEND LOGIC (The 🚀 Fix) ---
+        const handleSend = async () => {
+            const message = msgInput.value.trim();
+            if (message !== "" && friendID) {
+                let content = message;
+                if (replyingTo) { 
+                    content = `↳ [Replying to ${replyingTo.sender}: ${replyingTo.content}]\n${message}`; 
+                    cancelReply(); 
+                }
+                
+                const { error } = await supabaseClient.from('messages').insert([{ 
+                    content, 
+                    sender_id: user.id, 
+                    receiver_id: friendID 
+                }]);
 
-        window.deleteMessage = (id) => {
-            messageToDelete = id;
-            document.getElementById('delete-modal').style.display = 'flex';
-            document.getElementById('chat-overlay').style.display = 'none';
-        };
-
-        window.confirmGhostDelete = async () => {
-            if (messageToDelete) {
-                await supabaseClient.from('messages').delete().eq('id', messageToDelete);
-                location.reload();
+                if (error) alert("Error: " + error.message);
+                else msgInput.value = ""; 
+            } else if (!friendID) {
+                alert("Ghost Warning: No receiver found.");
             }
         };
 
-        window.closeGhostModal = () => {
-            document.getElementById('delete-modal').style.display = 'none';
-            messageToDelete = null;
-        };
+        if (sendBtn) {
+            sendBtn.onclick = handleSend;
+            msgInput.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };
+        }
 
-        window.setReply = (sender, content) => {
-            replyingTo = { sender, content };
-            const inputArea = document.querySelector('.floating-input-container');
-            let preview = document.getElementById('reply-preview') || document.createElement('div');
-            preview.id = 'reply-preview';
-            inputArea.prepend(preview);
-            preview.innerHTML = `<div style="background:rgba(255,255,255,0.1); padding:10px; border-left:4px solid #32D74B; font-size:12px; color:white; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-                <span>Replying to <b>${sender}</b>: "${content.substring(0, 20)}..."</span>
-                <span onclick="cancelReply()" style="color:#FF3B30; font-weight:bold; padding:5px;">✕</span>
-            </div>`;
-            document.getElementById('chat-overlay').style.display = 'none';
-        };
-
-        window.cancelReply = () => { replyingTo = null; document.getElementById('reply-preview')?.remove(); };
-
-        // --- 5. INITIAL LOAD & REALTIME (Filtered by conversation) ---
-        const { data: history } = await supabaseClient
-            .from('messages')
-            .select('*')
+        // --- 7. LOAD HISTORY & REALTIME ---
+        const { data: history } = await supabaseClient.from('messages').select('*')
             .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`)
             .order('created_at', { ascending: true });
             
@@ -205,110 +179,61 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         supabaseClient.channel('messages').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
             if (payload.eventType === 'INSERT') {
-                // Only display if it's part of THIS conversation
                 if ((payload.new.sender_id === user.id && payload.new.receiver_id === friendID) || 
                     (payload.new.sender_id === friendID && payload.new.receiver_id === user.id)) {
                     displayMessage(payload.new);
                 }
-            }
-            else if (payload.eventType === 'UPDATE' || payload.eventType === 'DELETE') location.reload();
+            } else { location.reload(); }
         }).subscribe();
-
-        // --- FIXED: THE HANDLESEND FUNCTION ---
-        const handleSend = async () => {
-    console.log("🚀 Send Button Triggered"); // Check your console (F12) for this!
-
-    const message = msgInput.value.trim();
-    
-    // 1. Critical Check: Make sure we have a receiver
-    if (!friendID) {
-        console.error("❌ No friendID found in URL");
-        alert("Select a ghost from your list first! 👻");
-        return;
     }
 
-    if (message !== "") {
-        let content = message;
-        
-        // 2. Safe Reply Logic (Prevents the 'null' crash)
-        if (replyingTo && replyingTo.sender) { 
-            content = `↳ [Replying to ${replyingTo.sender}: ${replyingTo.content}]\n${message}`; 
-            cancelReply(); 
-        }
-        
-        console.log("Attempting to sync message...");
-
-        // 3. The Insert (We omit sender_email if it's causing errors)
-        const { error } = await supabaseClient
-            .from('messages')
-            .insert([{ 
-                content: content, 
-                sender_id: user.id,
-                receiver_id: friendID
-            }]);
-
-        if (error) {
-            console.error("❌ Database Error:", error.message);
-            alert("Ghost Error: " + error.message);
-        } else {
-            msgInput.value = "";
-            console.log("✅ Message locked in!");
-        }
-    }
-};
-            // Ensure the button is actually found in the HTML
-        if (sendBtn) {
-            sendBtn.onclick = handleSend;
-            msgInput.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };
-            console.log("Send Button Listener: ATTACHED 🚀");
-        } else {
-            console.error("Send Button NOT FOUND in HTML. Check your ID!");
-        }
-    } // This is the bracket on line 263 that closes (chatBox && user)
-});
-
-// --- 6. VIBE NOTIFICATION SYSTEM ---
-const showVibeNotification = (text) => {
-    const notify = document.createElement('div');
-    notify.className = 'vibe-notification-glow';
-    notify.innerHTML = `<span>🤓</span> ${text}`;
-    document.body.appendChild(notify);
-    setTimeout(() => {
-        notify.classList.add('fade-out');
-        setTimeout(() => notify.remove(), 1500);
-    }, 6000);
-};
-
-const checkAcceptedVibes = async () => {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if(!user) return;
-    const { data: vibes } = await supabaseClient.from('friendships')
-        .select(`updated_at, profiles!friendships_receiver_id_fkey (username)`)
-        .eq('sender_id', user.id).eq('status', 'accepted').order('updated_at', { ascending: false }).limit(1);
-
-    if (vibes && vibes.length > 0) {
-        const acceptTime = new Date(vibes[0].updated_at);
-        if ((new Date() - acceptTime) / (1000 * 60 * 60) < 24) {
-            showVibeNotification(`@${vibes[0].profiles.username} accepted your vibe!`);
-        }
-    }
-};
-
-const subscribeToVibes = async () => {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if(!user) return;
-    supabaseClient.channel('vibe-updates').on('postgres_changes', 
-        { event: 'UPDATE', schema: 'public', table: 'friendships', filter: `sender_id=eq.${user.id}` }, 
-        async (payload) => {
-            if (payload.new.status === 'accepted') {
-                const { data: rcvr } = await supabaseClient.from('profiles').select('username').eq('id', payload.new.receiver_id).single();
-                if (rcvr) showVibeNotification(`@${rcvr.username} accepted your vibe just now! 🤓`);
-            }
-        }).subscribe();
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-    checkAcceptedVibes();
+    // --- 8. VIBE NOTIFICATIONS ---
+    const subscribeToVibes = () => {
+        supabaseClient.channel('vibe-updates').on('postgres_changes', 
+            { event: 'UPDATE', schema: 'public', table: 'friendships', filter: `sender_id=eq.${user.id}` }, 
+            async (payload) => {
+                if (payload.new.status === 'accepted') {
+                    const { data: rcvr } = await supabaseClient.from('profiles').select('username').eq('id', payload.new.receiver_id).maybeSingle();
+                    if (rcvr) alert(`@${rcvr.username} accepted your vibe! 🚀`);
+                }
+            }).subscribe();
+    };
     subscribeToVibes();
 });
-                    
+
+// --- GLOBAL HELPERS (Required for HTML Buttons) ---
+window.setReply = (sender, content) => {
+    replyingTo = { sender, content };
+    const inputArea = document.querySelector('.floating-input-container');
+    let preview = document.getElementById('reply-preview') || document.createElement('div');
+    preview.id = 'reply-preview';
+    inputArea.prepend(preview);
+    preview.innerHTML = `<div class="reply-preview-box">
+        <span>Replying to <b>${sender}</b></span>
+        <span onclick="cancelReply()" style="cursor:pointer; color:#FF3B30;">✕</span>
+    </div>`;
+    document.getElementById('chat-overlay').style.display = 'none';
+};
+
+window.cancelReply = () => { document.getElementById('reply-preview')?.remove(); replyingTo = null; };
+
+window.copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    document.getElementById('chat-overlay').style.display = 'none';
+};
+
+window.deleteMessage = (id) => {
+    messageToDelete = id;
+    document.getElementById('delete-modal').style.display = 'flex';
+    document.getElementById('chat-overlay').style.display = 'none';
+};
+
+window.confirmGhostDelete = async () => {
+    if (messageToDelete) {
+        await supabaseClient.from('messages').delete().eq('id', messageToDelete);
+        location.reload();
+    }
+};
+
+window.closeGhostModal = () => { document.getElementById('delete-modal').style.display = 'none'; };
+                

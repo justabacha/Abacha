@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ghost Vibes</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .vibe-list-container { padding: 20px; }
+        .section-label { color: #32D74B; font-size: 10px; letter-spacing: 2px; margin: 20px 0 10px; text-transform: uppercase; }
+        .user-card { 
+            background: rgba(255,255,255,0.05); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 20px; 
+            padding: 15px; 
+            display: flex; 
+            align-items: center; 
+            margin-bottom: 12px;
+            backdrop-filter: blur(10px);
+        }
+        .user-avatar { width: 50px; height: 50px; border-radius: 50%; background-size: cover; margin-right: 15px; border: 2px solid #32D74B; }
+        .user-info { flex-grow: 1; }
+        .user-info h4 { margin: 0; color: white; font-size: 16px; }
+        .user-info p { margin: 0; color: rgba(255,255,255,0.5); font-size: 12px; }
+        .accept-btn { background: #32D74B; border: none; padding: 8px 15px; border-radius: 12px; color: black; font-weight: bold; font-size: 12px; }
+    </style>
+</head>
+<body class="profile-page">
+    <div class="ghost-wallpaper"></div>
+    
+    <div class="top-nav-box" style="padding: 20px;">
+        <button class="ghost-back" onclick="window.location.href='hub.html'">‹</button>
+        <h1>Vibes</h1>
+    </div>
+
+    <div class="vibe-list-container">
+        <div class="section-label">Pending Requests</div>
+        <div id="pending-list"></div>
+
+        <div class="section-label">Active Chats</div>
+        <div id="active-chats"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+    <script src="chat-list.js"></script>
+</body>
+  </html>
+    

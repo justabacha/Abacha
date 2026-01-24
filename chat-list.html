@@ -17,23 +17,28 @@
             align-items: center; 
             margin-bottom: 12px;
             backdrop-filter: blur(10px);
+            cursor: pointer;
         }
-        .user-avatar { width: 50px; height: 50px; border-radius: 50%; background-size: cover; margin-right: 15px; border: 2px solid #32D74B; }
+        .user-avatar { width: 50px; height: 50px; border-radius: 50%; background-size: cover; background-position: center; margin-right: 15px; border: 2px solid #32D74B; }
         .user-info { flex-grow: 1; }
         .user-info h4 { margin: 0; color: white; font-size: 16px; }
         .user-info p { margin: 0; color: rgba(255,255,255,0.5); font-size: 12px; }
-        .accept-btn { background: #32D74B; border: none; padding: 8px 15px; border-radius: 12px; color: black; font-weight: bold; font-size: 12px; }
+        .accept-btn { background: #32D74B; border: none; padding: 8px 15px; border-radius: 12px; color: black; font-weight: bold; font-size: 12px; cursor: pointer; }
+        .search-input { width:100%; padding:15px; border-radius:20px; background:rgba(255,255,255,0.05); border:1px solid #32D74B; color:white; outline:none; box-sizing: border-box; margin-bottom: 20px; }
     </style>
 </head>
 <body class="profile-page">
     <div class="ghost-wallpaper"></div>
     
-    <div class="top-nav-box" style="padding: 20px;">
-        <button class="ghost-back" onclick="window.location.href='hub.html'">‹</button>
-        <h1>Vibes</h1>
+    <div class="top-nav-box" style="padding: 20px; display: flex; align-items: center;">
+        <button class="ghost-back" onclick="window.location.href='hub.html'" style="background:none; border:none; color:#32D74B; font-size:32px; margin-right:15px;">‹</button>
+        <h1 style="color:white; margin:0;">Vibes</h1>
     </div>
 
     <div class="vibe-list-container">
+        <input type="text" id="search-ghost" class="search-input" placeholder="Search @alias to vibe...">
+        <div id="search-results"></div>
+
         <div class="section-label">Pending Requests</div>
         <div id="pending-list"></div>
 
@@ -45,5 +50,5 @@
     <script src="app.js"></script>
     <script src="chat-list.js"></script>
 </body>
-  </html>
+    </html>
     

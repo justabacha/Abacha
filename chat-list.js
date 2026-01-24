@@ -4,24 +4,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- NEW: IDENTITY LOCK (Fixes the header swap) ---
     const syncMyHeader = async () => {
-    const { data: myProfile } = await supabaseClient
-        .from('profiles')
-        .select('username, avatar_url')
-        .eq('id', user.id) 
-        .maybeSingle();
+        const { data: myProfile } = await supabaseClient
+            .from('profiles')
+            .select('username, avatar_url')
+            .eq('id', user.id) 
+            .maybeSingle();
 
-    if (myProfile) {
-        // Targets the new unique IDs
-        const aliasEl = document.getElementById('my-own-alias');
-        const avatarEl = document.getElementById('my-own-avatar');
-        
-        if (aliasEl) aliasEl.innerText = `@${myProfile.username}`;
-        if (avatarEl && myProfile.avatar_url) {
-            avatarEl.style.backgroundImage = `url(${myProfile.avatar_url})`;
+        if (myProfile) {
+            // Targets the new unique IDs we added to chat-list.html
+            const aliasEl = document.getElementById('my-own-alias');
+            const avatarEl = document.getElementById('my-own-avatar');
+            
+            if (aliasEl) aliasEl.innerText = `@${myProfile.username}`;
+            if (avatarEl && myProfile.avatar_url) {
+                avatarEl.style.backgroundImage = `url(${myProfile.avatar_url})`;
+                avatarEl.style.backgroundSize = 'cover';
+                avatarEl.style.backgroundPosition = 'center';
+            }
         }
-    }
-};
-    syncMyHeader(); // Run this immediately
+    };
+    syncMyHeader(); 
 
     // --- 1. LOAD PENDING VIBES ---
     const loadPending = async () => {
@@ -61,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
     
-    // --- 2. LOAD ACTIVE CHATS (Fixed Double-Row & Wrong Profile) ---
+    // --- 2. LOAD ACTIVE CHATS (The Tunnel Logic Fix) ---
     const loadActive = async () => {
         const { data: friends } = await supabaseClient
             .from('friendships')
@@ -80,12 +82,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const displayedIDs = new Set();
 
+        // THIS IS THE BLOCK YOU NEEDED
         friends?.forEach(f => {
-            const friend = f.sender_id === user.id ? f.receiver : f.sender;
+            // FORCE pick the profile that DOES NOT match your ID
+            let friend = null;
+            if (f.sender_id !== user.id) {
+                friend = f.sender; // If you are the receiver, show the sender
+            } else {
+                friend = f.receiver; // If you are the sender, show the receiver
+            }
 
             if (friend && !displayedIDs.has(friend.id)) {
                 displayedIDs.add(friend.id);
-
                 const card = document.createElement('div');
                 card.className = 'user-card';
                 card.onclick = () => window.location.href = `chat.html?friend_id=${friend.id}`;
@@ -156,4 +164,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     Promise.all([loadPending(), loadActive()]);
 });
-                          
+            

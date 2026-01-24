@@ -16,27 +16,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- NEW: IDENTITY SYNC BLOCK (Maintains Sync across App) ---
     const syncChatIdentity = async () => {
-        if (!user) return;
-        const { data: profile } = await supabaseClient
-            .from('profiles')
-            .select('avatar_url, username')
-            .eq('id', user.id)
-            .single();
+    if (!user) return;
+    // Add a small retry if profile is null
+    const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('avatar_url, username')
+        .eq('id', user.id)
+        .single();
 
-        if (profile) {
-            const pfpElements = document.querySelectorAll('.chat-avatar, .nav-avatar, .avatar-circle');
-            pfpElements.forEach(el => {
-                if (profile.avatar_url) {
-                    el.style.backgroundImage = `url(${profile.avatar_url})`;
-                    el.style.backgroundSize = 'cover';
-                }
-            });
-            const nameElements = document.querySelectorAll('.chat-user-name, .ghost-alias-text, #display-username');
-            nameElements.forEach(el => {
-                if (profile.username) el.innerText = profile.username;
-            });
-        }
-    };
+    if (profile) {
+        // Target the specific classes we just added to HTML
+        const pfpElements = document.querySelectorAll('.chat-avatar, .nav-avatar, .avatar-circle');
+        pfpElements.forEach(el => {
+            if (profile.avatar_url) {
+                el.style.backgroundImage = `url(${profile.avatar_url})`;
+                el.style.backgroundSize = 'cover';
+                el.style.backgroundPosition = 'center'; // Added for centering
+            }
+        });
+        const nameElements = document.querySelectorAll('.chat-user-name, .ghost-alias-text, #display-username');
+        nameElements.forEach(el => {
+            if (profile.username) el.innerText = profile.username;
+        });
+    }
+}
     syncChatIdentity();
 
     if (chatBox && user) {

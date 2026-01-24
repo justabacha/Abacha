@@ -24,7 +24,7 @@ body {
     background: url('https://images.unsplash.com/photo-1514565131-fce0801e5785?w=1200&q=80') no-repeat center center;
     background-size: cover;
     z-index: -1;
-    transform: translateZ(0); /* Hardware acceleration */
+    transform: translateZ(0); 
     filter: brightness(0.5) contrast(1.1);
 }
 
@@ -49,7 +49,6 @@ body {
     backdrop-filter: blur(10px);
 }
 
-/* THE WRAPPER (Handles Swipe Clipping) */
 .user-card-wrapper {
     position: relative;
     overflow: hidden;
@@ -59,41 +58,40 @@ body {
 /* THE BASIN (Smooth Curve + Liquid Fill) */
 .user-card { 
     position: relative;
-    margin-left: 35px; /* Room for the Blocker Avatar */
+    margin-left: 35px; 
     min-height: 75px;
     display: flex; 
     align-items: center; 
-    padding: 10px 20px 10px 55px; /* Left padding so text doesn't touch Avatar */
+    padding: 10px 20px 10px 55px; 
     cursor: pointer;
     z-index: 2;
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     
-    /* ARCHITECTURAL BASIN LOGIC */
-    border-top: none !important;
-    border-left: none;
+    /* FIX: Standard border + Radius (No border-image) */
     border-bottom: 2px solid var(--status-glow);
     border-right: 2px solid var(--status-glow);
+    border-top: none !important;
+    border-left: none !important;
     
-    /* Capsule Curve on the right side */
+    /* Perfect Capsule Curve */
     border-radius: 0 0 40px 0; 
 
-    /* LIQUID INTENSITY (From Phestone's Sketch) */
-    /* 100% at the floor, vanishing as it goes up */
+    /* LIQUID FILL */
     background: linear-gradient(to top, 
         rgba(var(--status-rgb), 0.6) 0%,   
         rgba(var(--status-rgb), 0.2) 50%,  
         transparent 100%                   
     );
-    
-    /* Gradient makes the side border fade out at the top */
-    border-image: linear-gradient(to top, var(--status-glow) 60%, transparent) 1;
+
+    /* This makes the right-side border fade away at the top like your drawing */
+    -webkit-mask-image: linear-gradient(to top, black 80%, transparent 100%);
+    mask-image: linear-gradient(to top, black 80%, transparent 100%);
 }
 
-/* THE PROFILE BLOCKER (Left Wall of Basin) */
 .user-avatar { 
     position: absolute;
     left: -35px; 
-    bottom: -2px; /* Sits exactly on the bottom border line */
+    bottom: -2px; 
     width: 75px; 
     height: 75px; 
     border-radius: 50%; 
@@ -102,72 +100,28 @@ body {
     border: 3px solid var(--status-glow); 
     z-index: 10;
     background-color: #000;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
 }
 
-/* STATUS COLORS */
-.unread-vibe { 
-    --status-glow: #007AFF; 
-    --status-rgb: 0, 122, 255; 
-}
-.read-vibe { 
-    --status-glow: #32D74B; 
-    --status-rgb: 50, 215, 75; 
-}
+.unread-vibe { --status-glow: #007AFF; --status-rgb: 0, 122, 255; }
+.read-vibe { --status-glow: #32D74B; --status-rgb: 50, 215, 75; }
 
-/* TEXT STYLING */
-.user-info {
-    flex-grow: 1;
-}
+.user-info h4 { margin: 0; color: white; font-size: 17px; display: flex; justify-content: space-between; align-items: center; }
+.user-info p { margin: 4px 0 0 0; color: #fff; font-size: 13px; opacity: 0.9; }
+.msg-time { font-size: 11px; color: rgba(255, 255, 255, 0.6); }
 
-.user-info h4 { 
-    margin: 0; 
-    color: white; 
-    font-size: 17px; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center;
-}
-
-.user-info p { 
-    margin: 4px 0 0 0; 
-    color: #fff; 
-    font-size: 13px; 
-    opacity: 0.9;
-}
-
-.msg-time {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.6);
-    font-weight: 400;
-}
-
-/* PENDING ACCEPT BUTTON */
-.accept-btn { 
-    background: #32D74B; 
-    border: none; 
-    padding: 8px 15px; 
-    border-radius: 12px; 
-    color: black; 
-    font-weight: bold; 
-    font-size: 12px; 
-    cursor: pointer; 
-    margin-left: 10px;
-    z-index: 20;
-}
-
-/* GHOST SWIPE TRIGGERS (Background layer) */
+/* GHOST SWIPE (Removed bulky backgrounds, added white trigger) */
 .swipe-action {
     position: absolute;
-    top: 0;
-    height: 100%;
-    width: 80px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 20px;
     z-index: 1;
+    opacity: 0.5;
 }
-.swipe-delete { right: 0; color: #FF3B30; }
-.swipe-pin { left: 0; color: #FFD700; }
-    
+.swipe-delete { right: 15px; color: #FF3B30; }
+.swipe-pin { left: 15px; color: #FFD700; }

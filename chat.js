@@ -191,17 +191,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         }).subscribe();
 
         const handleSend = async () => {
-            const message = msgInput.value.trim();
-            if (message !== "") {
-                let content = message;
-                if (replyingTo) { 
-                    content = `↳ [Replying to ${replyingTo.sender}: ${replyingTo.content}]\n${message}`; 
-                    cancelReply(); 
-                }
-                await supabaseClient.from('messages').insert([{ content, sender_email: user.email }]);
-                msgInput.value = "";
-            }
-        };
+    const message = msgInput.value.trim();
+    if (message !== "") {
+        let content = message;
+        if (replyingTo) { 
+            content = `↳ [Replying to ${replyingTo.sender}: ${replyingTo.content}]\n${message}`; 
+            cancelReply(); 
+        }
+        
+        // ADDED ERROR LOGGING HERE
+        const { error } = await supabaseClient
+            .from('messages')
+            .insert([{ content, sender_email: user.email }]);
+
+        if (error) {
+            console.error("Ghost Layer Sync Error:", error.message);
+            alert("Message failed: " + error.message); // This will tell us EXACTLY why
+        } else {
+            msgInput.value = "";
+            console.log("Message locked into Ghost Layer 🚀");
+        }
+    }
+};
 
         sendBtn.onclick = handleSend;
         msgInput.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };

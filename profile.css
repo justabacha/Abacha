@@ -170,3 +170,37 @@
     transform: scale(0.97);
         }
     
+.metamorphism-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 25px;
+    padding: 20px;
+    width: 280px;
+    text-align: left;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+.modal-header-mini {
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 15px;
+}
+
+.modal-body-ghost p {
+    color: white;
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.vibe-btn {
+    width: 100%;
+    padding: 15px;
+    background: #007AFF; /* High-end Blue Tile */
+    border: none;
+    border-radius: 15px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    }
+    

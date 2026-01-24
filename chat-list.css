@@ -1,76 +1,54 @@
-/* TIME POSITION FIX */
-.user-info { position: relative; width: 100%; display: flex; flex-direction: column; height: 100%; justify-content: space-between; }
-.msg-time { 
-    position: absolute; 
-    right: 0; 
-    bottom: -5px; 
-    font-size: 10px; 
-    color: rgba(255, 255, 255, 0.5); 
+/* ALL YOUR ORIGINAL GLOBAL & BASIN CSS REMAINS UNTOUCHED */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { margin: 0; font-family: -apple-system, system-ui, sans-serif; color: white; overflow-x: hidden; }
+.ghost-wallpaper {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: url('https://images.unsplash.com/photo-1514565131-fce0801e5785?w=1200&q=80') no-repeat center center;
+    background-size: cover; z-index: -1; filter: brightness(0.5) contrast(1.1);
+}
+.vibe-list-container { padding: 20px; }
+.section-label { color: #32D74B; font-size: 10px; letter-spacing: 2px; margin: 20px 0 10px; text-transform: uppercase; }
+
+/* THE ORIGINAL BASIN GEOMETRY */
+.user-card-wrapper { position: relative; margin-bottom: 35px; padding-left: 40px; display: flex; align-items: center; }
+.user-card { 
+    position: relative; min-height: 75px; flex-grow: 1; display: flex; align-items: center; 
+    padding: 10px 20px 10px 50px; cursor: pointer; z-index: 2;
+    border-bottom: 2px solid var(--status-glow); border-right: 2px solid var(--status-glow);
+    border-top: none !important; border-left: none !important; border-radius: 0 0 40px 0; 
+    background: linear-gradient(to top, rgba(var(--status-rgb), 0.5) 0%, rgba(var(--status-rgb), 0.1) 60%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to top, black 85%, transparent 100%);
+}
+.user-avatar { 
+    position: absolute; left: -40px; bottom: -2px; width: 80px; height: 80px; 
+    border-radius: 50%; background-size: cover; background-position: center; 
+    border: 3px solid var(--status-glow); z-index: 10; background-color: #000;
 }
 
-/* GHOST MORPHISM LAYER */
+/* NEW: TIME POSITION (Furthest end, lower part) */
+.user-info { position: relative; width: 100%; }
+.msg-time { position: absolute; right: -10px; bottom: -15px; font-size: 10px; color: rgba(255, 255, 255, 0.6); }
+
+/* NEW: UNREAD BADGE */
+.unread-badge { background: #FF3B30; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 5px; }
+
+/* NEW: GHOST PAD & MORPHISM */
 .ghost-pad-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(173, 216, 230, 0.2); /* Light Blue Tint */
-    backdrop-filter: blur(25px);
-    display: none; z-index: 10000;
-    justify-content: center; align-items: center;
+    background: rgba(173, 216, 230, 0.2); backdrop-filter: blur(25px);
+    display: none; z-index: 10000; justify-content: center; align-items: center;
 }
-
 .morphism-card {
-    background: rgba(255, 255, 255, 0.1);
-    width: 90%; max-width: 350px;
-    border-radius: 40px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 30px 20px;
-    position: relative;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.1); width: 280px; border-radius: 35px;
+    border: 1px solid rgba(255, 255, 255, 0.2); padding: 25px; position: relative;
 }
+.pad-header-alias { position: absolute; top: 15px; left: 15px; font-size: 12px; font-weight: bold; }
+.pad-avatar-top { position: absolute; top: -40px; left: -10px; width: 70px; height: 70px; border-radius: 20px; border: 2px solid #32D74B; background-size: cover; }
 
-.card-alias-header {
-    position: absolute; top: 20px; left: 25px;
-    font-weight: bold; font-size: 14px; color: #fff;
-}
+.ghost-keyboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+.ghost-key { position: relative; background: none; border: none; font-size: 35px; color: white; cursor: pointer; }
+.key-num { position: absolute; top: 0; right: 5px; background: #32D74B; color: black; font-size: 10px; padding: 2px 5px; border-radius: 50%; }
 
-.pad-avatar-corner {
-    position: absolute; top: -30px; left: -10px;
-    width: 70px; height: 70px; border-radius: 20px;
-    border: 2px solid #32D74B; background-size: cover;
-    background-position: center; box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-}
-
-/* PIN DISPLAY (Masked with 👻) */
-.pin-display {
-    display: flex; justify-content: center; gap: 15px; margin: 40px 0 20px;
-    font-size: 24px; min-height: 40px;
-}
-
-/* GHOST EMOJI KEYBOARD */
-.ghost-keyboard {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;
-    padding: 10px;
-}
-
-.ghost-key {
-    position: relative; background: none; border: none;
-    font-size: 40px; cursor: pointer; transition: transform 0.1s;
-}
-.ghost-key:active { transform: scale(0.8); }
-
-.key-num {
-    position: absolute; top: 0; right: 10px;
-    background: #32D74B; color: black; font-size: 12px;
-    font-weight: bold; padding: 2px 6px; border-radius: 50%;
-}
-
-/* ACTION BUTTONS */
-.ghost-action-btn {
-    width: 100%; padding: 15px; border-radius: 20px; border: none;
-    font-weight: bold; margin-top: 20px; cursor: pointer;
-}
-.btn-checkin { background: #32D74B; color: #000; }
-.btn-confirm { background: rgba(255, 255, 255, 0.8); color: #007AFF; }
-.btn-unlock { background: #32D74B; color: #000; }
-
-.vibe-denied { color: #FF3B30; text-align: center; font-weight: bold; margin-top: 10px; font-size: 14px; }
-                           
+.btn-checkin { background: #32D74B; color: black; border: none; width: 100%; padding: 12px; border-radius: 15px; font-weight: bold; margin-top: 15px; }
+.btn-confirm { background: rgba(255, 255, 255, 0.8); color: #007AFF; border: none; width: 100%; padding: 12px; border-radius: 15px; font-weight: bold; margin-top: 15px; }
+        

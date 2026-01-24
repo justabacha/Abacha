@@ -23,8 +23,8 @@
         </div>
 
         <div class="settings-list">
-            <div class="settings-tile" onclick="openProfileEdit()">
-                <div class="tile-left">👤 <span>Profile</span></div>
+            <div class="settings-tile" onclick="openHelp()"> 
+                <div class="tile-left">👤 <span>Profile & Bio</span></div>
                 <div class="tile-right">›</div>
             </div>
 
@@ -43,8 +43,13 @@
                 <div class="tile-right">›</div>
             </div>
 
+            <div class="settings-tile" onclick="openContact()">
+                <div class="tile-left">📞 <span>Contact Us</span></div>
+                <div class="tile-right">›</div>
+            </div>
+
             <div class="settings-tile" onclick="openHelp()">
-                <div class="tile-left">🕯️ <span>Help & Credits</span></div>
+                <div class="tile-left">💡 <span>Help & Credits</span></div>
                 <div class="tile-right">›</div>
             </div>
 
@@ -55,24 +60,15 @@
         </div>
 
         <div class="logout-section">
-            <button class="logout-btn" onclick="showLogoutModal()">🚪 Logout</button>
+            <button class="logout-btn" onclick="showLogoutModal()">🔏 Logout⛓️‍💥</button>
         </div>
     </div>
 
-    <div id="logout-modal" class="ghost-modal-overlay">
-        <div class="ghost-modal-tile">
-            <div class="modal-header">Just•Abacha😎</div>
-            <p>Do you want to logout?</p>
-            <div class="modal-btns">
-                <button class="modal-btn btn-yes" onclick="executeLogout()">Yes</button>
-                <button class="modal-btn btn-no" onclick="closeLogoutModal()">No</button>
-            </div>
-        </div>
-    </div>
+    <div id="global-modal-overlay" class="ghost-modal-overlay" style="display:none;"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
     <script src="settings.js"></script>
 </body>
-    </html>
-                
+                </html>
+            

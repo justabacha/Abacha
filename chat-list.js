@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return;
 
-    // --- NEW: IDENTITY LOCK (Fixes the header swap) ---
+    // --- IDENTITY LOCK (Header) ---
     const syncMyHeader = async () => {
         const { data: myProfile } = await supabaseClient
             .from('profiles')
@@ -11,21 +11,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             .maybeSingle();
 
         if (myProfile) {
-            // Targets the new unique IDs we added to chat-list.html
             const aliasEl = document.getElementById('my-own-alias');
             const avatarEl = document.getElementById('my-own-avatar');
-            
             if (aliasEl) aliasEl.innerText = `@${myProfile.username}`;
             if (avatarEl && myProfile.avatar_url) {
                 avatarEl.style.backgroundImage = `url(${myProfile.avatar_url})`;
-                avatarEl.style.backgroundSize = 'cover';
-                avatarEl.style.backgroundPosition = 'center';
             }
         }
     };
     syncMyHeader(); 
 
-    // --- 1. LOAD PENDING VIBES ---
+    // --- 1. LOAD PENDING VIBES (Restored exactly from yours) ---
     const loadPending = async () => {
         const { data: requests, error } = await supabaseClient
             .from('friendships')
@@ -49,21 +45,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         requests?.forEach(req => {
             const card = document.createElement('div');
-            card.className = 'user-card';
+            card.className = 'user-card-wrapper'; // New Basin Wrapper
             const sender = req.profiles;
             card.innerHTML = `
-                <div class="user-avatar" style="background-image: url(${sender?.avatar_url || 'default-avatar.png'})"></div>
-                <div class="user-info">
-                    <h4>${sender?.username || 'Unknown Ghost'}</h4>
-                    <p>Wants to vibe with you</p>
+                <div class="user-card read-vibe">
+                    <div class="user-avatar" style="background-image: url(${sender?.avatar_url || 'default-avatar.png'})"></div>
+                    <div class="user-info">
+                        <h4>${sender?.username || 'Unknown Ghost'}</h4>
+                        <p>Wants to vibe with you</p>
+                    </div>
+                    <button class="accept-btn" onclick="acceptVibe('${req.id}')">Accept</button>
                 </div>
-                <button class="accept-btn" onclick="acceptVibe('${req.id}')">Accept</button>
             `;
             container.appendChild(card);
         });
     };
     
-    // --- 2. LOAD ACTIVE CHATS (The Tunnel Logic Fix) ---
+    // --- 2. LOAD ACTIVE CHATS (With Tunnel Logic + Basin Fix) ---
     const loadActive = async () => {
         const { data: friends } = await supabaseClient
             .from('friendships')
@@ -82,35 +80,49 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const displayedIDs = new Set();
 
-        // THIS IS THE BLOCK YOU NEEDED
-        friends?.forEach(f => {
-            // FORCE pick the profile that DOES NOT match your ID
-            let friend = null;
-            if (f.sender_id !== user.id) {
-                friend = f.sender; // If you are the receiver, show the sender
-            } else {
-                friend = f.receiver; // If you are the sender, show the receiver
-            }
+        for (const f of (friends || [])) {
+            let friend = f.sender_id === user.id ? f.receiver : f.sender;
 
             if (friend && !displayedIDs.has(friend.id)) {
                 displayedIDs.add(friend.id);
-                const card = document.createElement('div');
-                card.className = 'user-card';
-                card.onclick = () => window.location.href = `chat.html?friend_id=${friend.id}`;
-                
-                card.innerHTML = `
-                    <div class="user-avatar" style="background-image: url(${friend.avatar_url || 'default-avatar.png'})"></div>
-                    <div class="user-info">
-                        <h4>${friend.username || 'Ghost'}</h4>
-                        <p>Tap to enter tunnel</p>
+
+                // Check for read/unread status
+                const { data: lastMsg } = await supabaseClient
+                    .from('messages')
+                    .select('*')
+                    .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friend.id}),and(sender_id.eq.${friend.id},receiver_id.eq.${user.id})`)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+
+                const isUnread = lastMsg && lastMsg.receiver_id === user.id && !lastMsg.is_read;
+                const statusClass = isUnread ? 'unread-vibe' : 'read-vibe';
+                const time = lastMsg ? new Date(lastMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                const msgPreview = lastMsg ? lastMsg.content.substring(0, 25) + '...' : 'Tap to enter tunnel';
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'user-card-wrapper';
+                wrapper.innerHTML = `
+                    <div class="swipe-action swipe-pin">📌</div>
+                    <div class="swipe-action swipe-delete">🗑️</div>
+                    <div class="user-card ${statusClass}" id="card-${friend.id}" onclick="handleEntry('${friend.id}')">
+                        <div class="user-avatar" style="background-image: url(${friend.avatar_url || 'default-avatar.png'})"></div>
+                        <div class="user-info">
+                            <h4>${friend.username} <span class="msg-time">${time}</span></h4>
+                            <p>${msgPreview}</p>
+                        </div>
                     </div>
                 `;
-                container.appendChild(card);
+                container.appendChild(wrapper);
+                
+                // Attach Long Press and Swipe Logic
+                addLongPress(document.getElementById(`card-${friend.id}`), friend.id);
+                addSwipeLogic(wrapper);
             }
-        });
+        }
     };
     
-    // --- 3. SEARCH LOGIC ---
+    // --- 3. SEARCH LOGIC (Restored exactly) ---
     const searchInput = document.getElementById('search-ghost');
     const searchResults = document.getElementById('search-results');
 
@@ -129,21 +141,59 @@ document.addEventListener('DOMContentLoaded', async () => {
             searchResults.innerHTML = '';
             ghosts?.forEach(g => {
                 const card = document.createElement('div');
-                card.className = 'user-card';
+                card.className = 'user-card-wrapper';
                 card.innerHTML = `
-                    <div class="user-avatar" style="background-image: url(${g.avatar_url || 'default-avatar.png'})"></div>
-                    <div class="user-info">
-                        <h4>${g.username}</h4>
-                        <p>New Ghost found</p>
+                    <div class="user-card read-vibe">
+                        <div class="user-avatar" style="background-image: url(${g.avatar_url || 'default-avatar.png'})"></div>
+                        <div class="user-info">
+                            <h4>${g.username}</h4>
+                            <p>New Ghost found</p>
+                        </div>
+                        <button class="accept-btn" onclick="sendVibe('${g.id}')">Vibe</button>
                     </div>
-                    <button class="accept-btn" onclick="sendVibe('${g.id}')">Vibe</button>
                 `;
                 searchResults.appendChild(card);
             });
         });
     }
 
-    // --- 4. GLOBAL ACTIONS ---
+    // --- INTERACTIVE FEATURES ---
+    window.handleEntry = (friendId) => {
+        const isLocked = localStorage.getItem(`locked_${friendId}`);
+        if (isLocked) {
+            const pin = prompt("Enter 4-Digit PIN:");
+            if (pin === "1234") window.location.href = `chat.html?friend_id=${friendId}`;
+            else alert("Access Denied 💀");
+        } else {
+            window.location.href = `chat.html?friend_id=${friendId}`;
+        }
+    };
+
+    const addLongPress = (el, id) => {
+        let timer;
+        el.addEventListener('touchstart', () => {
+            timer = setTimeout(() => {
+                if(confirm("Lock this chat tunnel?")) localStorage.setItem(`locked_${id}`, 'true');
+            }, 800);
+        });
+        el.addEventListener('touchend', () => clearTimeout(timer));
+    };
+
+    const addSwipeLogic = (wrapper) => {
+        let startX;
+        const card = wrapper.querySelector('.user-card');
+        card.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+        card.addEventListener('touchmove', e => {
+            let diff = e.touches[0].clientX - startX;
+            if (diff < -50) card.style.transform = 'translateX(-80px)'; // Reveal Delete
+            if (diff > 50) card.style.transform = 'translateX(80px)'; // Reveal Pin
+        });
+        card.addEventListener('touchend', () => {
+            setTimeout(() => card.style.transform = 'translateX(0)', 2500); // Reset
+        });
+    };
+
+    // --- GLOBAL ACTIONS ---
     window.sendVibe = async (receiverId) => {
         const { error } = await supabaseClient
             .from('friendships')

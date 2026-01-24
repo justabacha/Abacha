@@ -1,43 +1,55 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ghost Identity</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="profile.css">
-</head>
-<body class="ghost-page">
-    <div class="hero-bg-overlay"></div>
-    
-    <div class="profile-container">
-        <div class="top-nav">
-            <button class="back-btn" onclick="window.location.href='settings.html'">‹ Settings</button>
-            <h2>Edit Identity</h2>
-        </div>
-
-        <div class="avatar-edit-section">
-            <div class="large-avatar-circle" id="profile-avatar"></div>
-            <button class="change-photo-btn">Change Pulse Avatar</button>
-        </div>
-
-        <div class="input-layers">
-            <div class="glass-input-group">
-                <label>Ghost Alias</label>
-                <input type="text" id="username-input" placeholder="@alias">
-            </div>
-
-            <div class="glass-input-group">
-                <label>Inner Circle Bio</label>
-                <textarea id="bio-input" placeholder="Tell the shadows who you are..."></textarea>
-            </div>
-        </div>
-
-        <button class="save-identity-btn" onclick="saveGhostProfile()">Update Identity 👌</button>
+<div class="profile-container">
+    <div class="top-nav">
+        <button class="back-btn" onclick="window.location.href='settings.html'">‹ Settings</button>
+        <h2>Ghost Identity</h2>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js"></script>
-    <script src="profile.js"></script>
-</body>
-</html>
+    <div class="avatar-header">
+        <div class="avatar-container" onclick="document.getElementById('avatar-input').click()">
+            <div id="profile-avatar-preview" class="avatar-preview-circle"></div>
+            <div class="upload-overlay"><span>📸</span></div>
+        </div>
+        <input type="file" id="avatar-input" accept="image/*" hidden>
+        <p class="upload-hint">Tap to change Pulse Avatar</p>
+    </div>
+
+    <div class="input-layers">
+        <div class="glass-input-group">
+            <label>Ghost Alias</label>
+            <input type="text" id="username-input" placeholder="@phestone">
+        </div>
+
+        <div class="glass-input-group">
+            <label>Ghost Status (Quote)</label>
+            <input type="text" id="status-input" placeholder="In the shadows...">
+        </div>
+
+        <div class="glass-input-group">
+            <label>Inner Circle Favourite</label>
+            <input type="text" id="fav-input" placeholder="@username">
+        </div>
+
+        <div class="glass-input-group">
+            <label>Current City (For Weather)</label>
+            <select id="city-input" class="ghost-select">
+                <option value="Nairobi">Nairobi</option>
+                <option value="Mombasa">Mombasa</option>
+                <option value="Kisumu">Kisumu</option>
+                <option value="Nakuru">Nakuru</option>
+                <option value="Eldoret">Eldoret</option>
+                <option value="Thika">Thika</option>
+                <option value="Malindi">Malindi</option>
+            </select>
+        </div>
+
+        <div class="glass-input-group">
+            <label>Secure Contact</label>
+            <div class="phone-input-wrapper">
+                <span class="prefix">KE +254</span>
+                <input type="number" id="phone-input" placeholder="700000000">
+            </div>
+        </div>
+    </div>
+
+    <button class="save-identity-btn" onclick="saveGhostProfile()">Update Identity 👌</button>
+</div>

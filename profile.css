@@ -1,4 +1,11 @@
-/* 1. Full Screen Wallpaper */
+/* 1. Full Screen Wallpaper - Optimized for Speed */
+.profile-page {
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+    overflow: hidden; /* Prevent double scrollbars */
+}
+
 .ghost-wallpaper {
     position: fixed;
     top: 0;
@@ -10,27 +17,62 @@
     filter: brightness(0.4) contrast(1.2);
 }
 
-.profile-layout {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    padding: 30px 20px;
-    box-sizing: border-box;
+/* 2. THE SCROLL FIX: This ensures the button is never hidden */
+.profile-scroll-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto; /* Allows smooth scrolling */
+    -webkit-overflow-scrolling: touch; /* Butter-smooth on iPhone */
 }
 
-/* 2. Avatar with 📸 Stamp */
+.profile-layout {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 25px;
+    padding-bottom: 60px; /* Extra space at the bottom for the save button */
+    box-sizing: border-box;
+    min-height: 100%; /* Spreads content out */
+}
+
+/* Nav Header Spacing */
+.top-nav-box {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 10px;
+}
+
+.ghost-back {
+    background: none;
+    border: none;
+    color: #32D74B;
+    font-size: 32px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.top-nav-box h1 {
+    color: white;
+    font-size: 24px;
+    margin: 0;
+}
+
+/* 3. Avatar with 📸 Stamp */
 .avatar-master-wrapper {
     display: flex;
     justify-content: center;
-    margin: 40px 0;
+    margin: 30px 0;
 }
 
 .avatar-main-circle {
-    width: 140px;
-    height: 140px;
+    width: 130px;
+    height: 130px;
     border-radius: 50%;
     background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 2px solid rgba(50, 215, 75, 0.3);
     position: relative;
     background-size: cover;
     background-position: center;
@@ -39,57 +81,57 @@
 
 .camera-stamp {
     position: absolute;
-    bottom: 5px;
-    right: 5px;
+    bottom: 2px;
+    right: 2px;
     background: #32D74B;
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 18px;
-    border: 3px solid #121212;
+    border: 4px solid #0a0a0a;
     cursor: pointer;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
 }
 
-/* 3. The Basin Tiles */
+/* 4. The Basin Tiles - Spaced Out */
 .basin-container {
-    flex-grow: 1;
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 22px; /* Balanced spacing */
 }
 
 .basin-tile {
     position: relative;
     padding: 10px 5px;
-    /* This creates the 'Basin' look: bottom line heavy, side/top gone */
     border-bottom: 2px solid rgba(50, 215, 75, 0.4); 
-    background: linear-gradient(to top, rgba(50, 215, 75, 0.08), transparent);
-    border-radius: 0 0 10px 10px;
+    background: linear-gradient(to top, rgba(50, 215, 75, 0.1), transparent);
+    border-radius: 0 0 15px 15px;
 }
 
 .basin-tile label {
-    font-size: 11px;
+    font-size: 10px;
     color: #32D74B;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-bottom: 8px;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
     display: block;
+    opacity: 0.8;
 }
 
 .basin-tile input, .basin-select {
     width: 100%;
-    background: transparent;
+    background: transparent !important;
     border: none;
     outline: none;
     color: white;
-    font-size: 18px;
+    font-size: 17px;
     padding: 5px 0;
 }
 
+/* Kenyan Phone Row Styling */
 .phone-row {
     display: flex;
     align-items: center;
@@ -99,19 +141,32 @@
 .prefix {
     color: #32D74B;
     font-weight: bold;
-    font-size: 16px;
+    font-size: 15px;
+    border-right: 1px solid rgba(255,255,255,0.2);
+    padding-right: 10px;
+}
+
+/* 5. The Lock Button - Anchored correctly */
+.bottom-action {
+    margin-top: 40px;
+    width: 100%;
 }
 
 .lock-identity-btn {
     width: 100%;
-    padding: 20px;
+    padding: 18px;
     background: #32D74B;
     border: none;
-    border-radius: 20px;
+    border-radius: 18px;
     color: white;
     font-weight: bold;
     font-size: 16px;
-    margin-top: 40px;
+    cursor: pointer;
     box-shadow: 0 10px 25px rgba(50, 215, 75, 0.3);
-    }
+    transition: transform 0.2s ease;
+}
+
+.lock-identity-btn:active {
+    transform: scale(0.97);
+        }
     

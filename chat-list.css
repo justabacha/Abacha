@@ -31,76 +31,77 @@
     overflow: hidden;
     margin-bottom: 35px; /* Added more breathing room for the open-top style */
 }
-
-/* THE BASIN CONTAINER (⚪️____|) */
+/* THE BASIN CONTAINER (Liquid Capsule Style) */
 .user-card { 
     position: relative;
-    margin-left: 40px; 
-    /* The Basin background: Color at bottom, vanishes at top */
-    background: linear-gradient(to top, rgba(var(--status-rgb), 0.25) 0%, transparent 80%);
-    backdrop-filter: blur(8px);
-    padding: 20px 15px 12px 50px; 
+    margin-left: 30px; /* Aligned so the avatar is the left wall */
+    margin-bottom: 25px;
+    min-height: 70px;
     display: flex; 
-    align-items: flex-end; /* Text sits at the base of the basin */
-    min-height: 80px;
+    align-items: center; 
+    padding: 10px 20px 10px 55px; /* More left padding to clear the avatar */
     cursor: pointer;
     transition: transform 0.3s ease;
     
-    /* NO UPPER LINE BORDER */
+    /* THE BASIN SHAPE: No top, solid bottom/right/left */
     border-top: none !important;
     border-bottom: 2px solid var(--status-glow);
     border-right: 2px solid var(--status-glow);
-    border-left: 2px solid var(--status-glow);
+    border-left: none; /* Left side is blocked by the Avatar circle */
     
-    /* Makes the side borders fade out as they reach the top */
-    border-image: linear-gradient(to top, var(--status-glow) 40%, transparent) 1;
-    
-    border-radius: 0 0 25px 0; /* Bottom curve only */
+    /* Right side curve like your drawing */
+    border-radius: 0 0 35px 0; 
 
-    /* Variables */
-    --status-glow: #32D74B;
-    --status-rgb: 50, 215, 75;
+    /* COLOUR INTENSITY (Liquid fill logic from your sketch) */
+    /* 100% intensity at bottom, 0% at top */
+    background: linear-gradient(to top, 
+        rgba(var(--status-rgb), 0.6) 0%,   /* 100% Intensity */
+        rgba(var(--status-rgb), 0.3) 50%,  /* 30-50% Intensity */
+        transparent 100%                   /* 0% Intensity */
+    );
+    
+    /* Makes the right side border fade out at the top */
+    border-image: linear-gradient(to top, var(--status-glow) 60%, transparent) 1;
 }
 
-/* UNREAD STATE (Blue) */
-.user-card.unread-vibe {
-    --status-glow: #007AFF;
-    --status-rgb: 0, 122, 255;
-}
-
-/* THE PROFILE BLOCKER (Acting as the left wall/starting border) */
+/* THE PROFILE BLOCKER (Left Wall) */
 .user-avatar { 
     position: absolute;
-    left: -40px; 
-    bottom: -2px; /* Sits perfectly on the bottom border line */
-    width: 80px; 
-    height: 80px; 
+    left: -35px; /* Sits exactly where the left border would be */
+    bottom: -2px; /* Anchored to the floor of the basin */
+    width: 75px; 
+    height: 75px; 
     border-radius: 50%; 
     background-size: cover; 
     background-position: center; 
+    /* The border of the circle acts as the left 'rim' of the basin */
     border: 3px solid var(--status-glow); 
     z-index: 10;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+    background-color: #000;
 }
 
-.user-info { 
-    flex-grow: 1; 
+/* STATUS COLORS (Vivid Blue/Green) */
+.unread-vibe { 
+    --status-glow: #007AFF; 
+    --status-rgb: 0, 122, 255; 
+}
+.read-vibe { 
+    --status-glow: #32D74B; 
+    --status-rgb: 50, 215, 75; 
 }
 
+/* TEXT VISIBILITY */
 .user-info h4 { 
     margin: 0; 
     color: white; 
-    font-size: 18px;
-    font-weight: 600;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    font-size: 17px; 
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
-
 .user-info p { 
-    margin: 4px 0 0 0; 
-    color: #ffffff; /* Brighter for visibility against the glow */
-    font-size: 14px; 
+    margin: 2px 0 0 0; 
+    color: #fff; /* High visibility */
+    font-size: 13px; 
+    opacity: 0.9;
 }
 
 /* The missing time element you mentioned */

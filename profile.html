@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ghost Identity</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="profile.css">
+</head>
+<body class="ghost-page">
+    <div class="hero-bg-overlay"></div>
+    
+    <div class="profile-container">
+        <div class="top-nav">
+            <button class="back-btn" onclick="window.location.href='settings.html'">‹ Settings</button>
+            <h2>Edit Identity</h2>
+        </div>
+
+        <div class="avatar-edit-section">
+            <div class="large-avatar-circle" id="profile-avatar"></div>
+            <button class="change-photo-btn">Change Pulse Avatar</button>
+        </div>
+
+        <div class="input-layers">
+            <div class="glass-input-group">
+                <label>Ghost Alias</label>
+                <input type="text" id="username-input" placeholder="@alias">
+            </div>
+
+            <div class="glass-input-group">
+                <label>Inner Circle Bio</label>
+                <textarea id="bio-input" placeholder="Tell the shadows who you are..."></textarea>
+            </div>
+        </div>
+
+        <button class="save-identity-btn" onclick="saveGhostProfile()">Update Identity 👌</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+    <script src="profile.js"></script>
+</body>
+</html>

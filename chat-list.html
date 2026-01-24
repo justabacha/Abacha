@@ -1,40 +1,27 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ghost Vibes</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="chat-list.css">
-</head>
-<body class="profile-page">
-    <div class="ghost-wallpaper"></div>
-    
-    <div class="top-nav-box" style="padding: 20px; display: flex; align-items: center; justify-content: space-between;">
-        <div style="display: flex; align-items: center;">
-            <button class="ghost-back" onclick="window.location.href='hub.html'" style="background:none; border:none; color:#32D74B; font-size:32px; margin-right:15px; cursor:pointer;">‹</button>
-            <h1 style="color:white; margin:0;">Vibes</h1>
-        </div>
+<div id="ghost-pad-overlay" class="ghost-pad-overlay" onclick="if(event.target == this) this.style.display='none'">
+    <div class="morphism-card">
+        <div class="pad-avatar-corner" id="pad-avatar"></div>
+        <div class="card-alias-header">Just•Abacha😎</div>
+        <p class="instruction-text" style="text-align:center; color:white; margin-top:20px; font-size:13px;"></p>
         
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <span id="my-own-alias" style="color: rgba(255,255,255,0.6); font-size: 14px;">@loading...</span>
-            <div id="my-own-avatar" style="width: 35px; height: 35px; border-radius: 50%; border: 1px solid #32D74B; background-size: cover; background-position: center;"></div>
+        <div class="pin-display" id="pin-display">◦◦◦◦</div>
+        
+        <div class="ghost-keyboard">
+            <button class="ghost-key" onclick="pressGhostKey('1')">👻<span class="key-num">1</span></button>
+            <button class="ghost-key" onclick="pressGhostKey('2')">👻<span class="key-num">2</span></button>
+            <button class="ghost-key" onclick="pressGhostKey('3')">👻<span class="key-num">3</span></button>
+            <button class="ghost-key" onclick="pressGhostKey('4')">👻<span class="key-num">4</span></button>
+            <button class="ghost-key" onclick="pressGhostKey('5')">👻<span class="key-num">5</span></button>
+            <button class="ghost-key" onclick="pressGhostKey('6')">👻<span class="key-num">6</span></button>
+            <button class="ghost-key" onclick="pressGhostKey('7')">👻<span class="key-num">7</span></button>
+            <button class="ghost-key" onclick="pressGhostKey('8')">👻<span class="key-num">8</span></button>
+            <button class="ghost-key" onclick="pressGhostKey('9')">👻<span class="key-num">9</span></button>
+            <div></div>
+            <button class="ghost-key" onclick="pressGhostKey('0')">👻<span class="key-num">0</span></button>
+            <button class="ghost-key" style="font-size:20px; color:white;" onclick="currentInput=''">DEL</button>
         </div>
+
+        <div id="pad-denied" class="vibe-denied"></div>
+        <button id="pad-action-btn" class="ghost-action-btn" onclick="submitGhostPad()"></button>
     </div>
-
-    <div class="vibe-list-container">
-        <input type="text" id="search-ghost" class="search-input" placeholder="Search @alias to vibe...">
-        <div id="search-results"></div>
-
-        <div class="section-label">Pending Requests</div>
-        <div id="pending-list"></div>
-
-        <div class="section-label">Active Chats</div>
-        <div id="active-chats"></div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js"></script>
-    <script src="chat-list.js"></script>
-</body>
-</html>
+</div>

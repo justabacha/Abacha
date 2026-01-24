@@ -1,73 +1,117 @@
-/* Layout Spacing */
-.input-layers {
+/* 1. Full Screen Wallpaper */
+.ghost-wallpaper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop') no-repeat center center/cover;
+    filter: brightness(0.4) contrast(1.2);
+}
+
+.profile-layout {
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin-top: 20px;
+    padding: 30px 20px;
+    box-sizing: border-box;
 }
 
-/* Glass Input Groups */
-.glass-input-group {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 18px;
-    padding: 12px 18px;
-    backdrop-filter: blur(15px);
+/* 2. Avatar with 📸 Stamp */
+.avatar-master-wrapper {
+    display: flex;
+    justify-content: center;
+    margin: 40px 0;
 }
 
-.glass-input-group label {
-    font-size: 10px;
-    color: #32D74B; /* Phestone Green accent */
+.avatar-main-circle {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+}
+
+.camera-stamp {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background: #32D74B;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    border: 3px solid #121212;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* 3. The Basin Tiles */
+.basin-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.basin-tile {
+    position: relative;
+    padding: 10px 5px;
+    /* This creates the 'Basin' look: bottom line heavy, side/top gone */
+    border-bottom: 2px solid rgba(50, 215, 75, 0.4); 
+    background: linear-gradient(to top, rgba(50, 215, 75, 0.08), transparent);
+    border-radius: 0 0 10px 10px;
+}
+
+.basin-tile label {
+    font-size: 11px;
+    color: #32D74B;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 5px;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
     display: block;
 }
 
-/* Phone Wrapper Logic */
-.phone-input-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.prefix {
-    font-weight: bold;
-    color: white;
-    font-size: 14px;
-    padding-right: 10px;
-    border-right: 1px solid rgba(255,255,255,0.2);
-}
-
-/* Inputs & Selects */
-.ghost-input, .ghost-select {
+.basin-tile input, .basin-select {
     width: 100%;
     background: transparent;
     border: none;
-    color: white;
-    font-size: 15px;
     outline: none;
-}
-
-.ghost-select option {
-    background: #1a1a1a; /* Dark background for dropdown items */
     color: white;
+    font-size: 18px;
+    padding: 5px 0;
 }
 
-/* Avatar Preview Circle */
-.avatar-preview-circle {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background-size: cover;
-    background-position: center;
-    background-color: rgba(255,255,255,0.1);
-    border: 2px solid #32D74B;
-    margin: 0 auto;
-    cursor: pointer;
-    transition: transform 0.3s ease;
+.phone-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-.avatar-preview-circle:active {
-    transform: scale(0.95);
+.prefix {
+    color: #32D74B;
+    font-weight: bold;
+    font-size: 16px;
 }
+
+.lock-identity-btn {
+    width: 100%;
+    padding: 20px;
+    background: #32D74B;
+    border: none;
+    border-radius: 20px;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    margin-top: 40px;
+    box-shadow: 0 10px 25px rgba(50, 215, 75, 0.3);
+    }
+    

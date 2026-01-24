@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let pendingPinMsg = null;
     let currentPins = [];
 
-    // --- GLOBAL IDENTITY SYNC BLOCK ---
+    // --- NEW: IDENTITY SYNC BLOCK (Maintains Sync across App) ---
     const syncChatIdentity = async () => {
         if (!user) return;
         const { data: profile } = await supabaseClient
@@ -24,15 +24,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             .single();
 
         if (profile) {
-            // Update Chat Header PFP
-            const chatPFP = document.querySelector('.chat-avatar, .nav-avatar');
-            if (chatPFP && profile.avatar_url) {
-                chatPFP.style.backgroundImage = `url(${profile.avatar_url})`;
-                chatPFP.style.backgroundSize = 'cover';
-            }
-            // Update Chat Header Name (Kills 'Inner Circle')
-            const chatName = document.querySelector('.chat-user-name, #display-username');
-            if (chatName && profile.username) chatName.innerText = profile.username;
+            const pfpElements = document.querySelectorAll('.chat-avatar, .nav-avatar, .avatar-circle');
+            pfpElements.forEach(el => {
+                if (profile.avatar_url) {
+                    el.style.backgroundImage = `url(${profile.avatar_url})`;
+                    el.style.backgroundSize = 'cover';
+                }
+            });
+            const nameElements = document.querySelectorAll('.chat-user-name, .ghost-alias-text, #display-username');
+            nameElements.forEach(el => {
+                if (profile.username) el.innerText = profile.username;
+            });
         }
     };
     syncChatIdentity();
@@ -89,7 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             overlay.style.display = 'flex';
         };
 
-        // --- 3. PINNING SYSTEM ---
+        // --- 3. PINNING SYSTEM (2-PIN LIMIT) ---
         window.openPinModal = (id, content) => {
             if (currentPins.length >= 2) {
                 alert("Ghost Layer Limit: Unpin a message first to add another.");
@@ -131,7 +133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else { pinBar.style.display = 'none'; }
         };
 
-        // --- 4. HELPERS ---
+        // --- 4. HELPERS (COPY, DELETE, REPLY) ---
         window.copyToClipboard = (text) => {
             const el = document.createElement('textarea');
             el.value = text;
@@ -247,4 +249,4 @@ document.addEventListener('DOMContentLoaded', () => {
     checkAcceptedVibes();
     subscribeToVibes();
 });
-                                    
+                                                                                                         

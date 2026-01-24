@@ -19,29 +19,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentPins = [];
 
     // --- NEW: IDENTITY SYNC BLOCK (Maintains Sync across App) ---
-    const syncChatIdentity = async () => {
-        if (!user) return;
-        const { data: profile } = await supabaseClient
-            .from('profiles')
-            .select('avatar_url, username')
-            .eq('id', user.id)
-            .single();
+        const syncChatIdentity = async () => {
+        try {
+            if (!user) return;
+            const { data: profile, error } = await supabaseClient
+                .from('profiles')
+                .select('avatar_url, username')
+                .eq('id', user.id)
+                .maybeSingle(); // maybeSingle is safer than .single()
 
-        if (profile) {
-            const pfpElements = document.querySelectorAll('.chat-avatar, .nav-avatar, .avatar-circle');
-            pfpElements.forEach(el => {
-                if (profile.avatar_url) {
-                    el.style.backgroundImage = `url(${profile.avatar_url})`;
-                    el.style.backgroundSize = 'cover';
-                    el.style.backgroundPosition = 'center';
-                }
-            });
-            const nameElements = document.querySelectorAll('.chat-user-name, .ghost-alias-text, #display-username');
-            nameElements.forEach(el => {
-                if (profile.username) el.innerText = profile.username;
-            });
+            if (error) console.error("Identity Sync Error:", error.message);
+
+            if (profile) {
+                // Update Pfps
+                const pfpElements = document.querySelectorAll('.chat-avatar, .nav-avatar, .avatar-circle');
+                pfpElements.forEach(el => {
+                    if (profile.avatar_url) {
+                        el.style.backgroundImage = `url(${profile.avatar_url})`;
+                        el.style.backgroundSize = 'cover';
+                        el.style.backgroundPosition = 'center';
+                    }
+                });
+                // Update Names
+                const nameElements = document.querySelectorAll('.chat-user-name, .ghost-alias-text, #display-username');
+                nameElements.forEach(el => {
+                    if (profile.username) el.innerText = profile.username;
+                });
+                console.log("Ghost Identity Synced: ", profile.username);
+            }
+        } catch (err) {
+            console.error("Critical Sync Crash:", err);
         }
     };
+    
     syncChatIdentity();
 
     if (chatBox && user) {

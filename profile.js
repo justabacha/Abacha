@@ -72,17 +72,17 @@ window.saveGhostProfile = async () => {
         if (avatarFile) {
             const { data: oldProfile } = await supabaseClient.from('profiles').select('avatar_url').eq('id', user.id).single();
             if (oldProfile?.avatar_url) {
-                const oldFileName = oldProfile.avatar_url.split('/').pop();
-                await supabaseClient.storage.from('avatars').remove([oldFileName]);
+                const oldFileName = oldProfile.avatar_url.split('/').pop().split('?')[0]; // Clean URL
+                await supabaseClient.storage.from('avatars').remove([`${user.id}/${oldFileName}`]);
             }
 
             const fileExt = avatarFile.name.split('.').pop();
-            const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+            const fileName = `${user.id}/${Date.now()}.${fileExt}`; // Added folder path
             const { error: uploadError } = await supabaseClient.storage.from('avatars').upload(fileName, avatarFile);
 
             if (!uploadError) {
                 const { data } = supabaseClient.storage.from('avatars').getPublicUrl(fileName);
-                avatarUrl = data.publicUrl;
+                avatarUrl = `${data.publicUrl}?v=${Date.now()}`; // Added Cache Buster
             }
         }
 
@@ -111,4 +111,4 @@ window.saveGhostProfile = async () => {
         saveBtn.disabled = false;
     }
 };
-    
+        

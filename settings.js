@@ -45,19 +45,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // 4. CONTACT US (TALK TO THE BOSS - YOUR DATA RESTORED)
-    window.openContact = () => {
-        const contactHTML = `
-            <div class="ghost-modal-tile">
-                <div class="modal-header">Talk to the Boss</div>
-                <p style="font-size: 14px;">WhatsApp: +254768946798<br>Email: its.phestone@gmail.com</p>
-                <div class="modal-header" style="margin-top:20px;">Directline Just•Abacha</div>
-                <p style="font-size: 14px;">Email: just1abacha@gmail.com</p>
-                <button class="metamorphism-green-btn" onclick="closeModal()">Back</button>
-            </div>
-        `;
-        showGlobalModal(contactHTML);
-    };
+window.openContact = () => {
+    const contactHTML = `
+        <div class="ghost-modal-tile large-tile">
+            <h3 class="modal-title">📞 Direct Line</h3>
+            
+            <div class="contact-layers">
+                <a href="https://wa.me/254768946798" class="contact-link-tile">
+                    <div class="contact-icon">💬</div>
+                    <div class="contact-text">
+                        <span>WhatsApp the Boss</span>
+                        <small>+254 768 946 798</small>
+                    </div>
+                </a>
 
+                <a href="tel:+254768946798" class="contact-link-tile">
+                    <div class="contact-icon">☎️</div>
+                    <div class="contact-text">
+                        <span>Direct Call</span>
+                        <small>Tap to dial Phestone</small>
+                    </div>
+                </a>
+
+                <a href="mailto:its.phestone@gmail.com" class="contact-link-tile">
+                    <div class="contact-icon">✉️</div>
+                    <div class="contact-text">
+                        <span>Personal Email</span>
+                        <small>its.phestone@gmail.com</small>
+                    </div>
+                </a>
+
+                <a href="mailto:just1abacha@gmail.com" class="contact-link-tile">
+                    <div class="contact-icon">🏢</div>
+                    <div class="contact-text">
+                        <span>Just•Abacha Support</span>
+                        <small>just1abacha@gmail.com</small>
+                    </div>
+                </a>
+            </div>
+
+            <button class="metamorphism-green-btn" style="margin-top:20px;" onclick="closeModal()">Close</button>
+        </div>
+    `;
+    showGlobalModal(contactHTML);
+};
+    
     // 5. STORAGE LOGIC (Original Time Tiles Maintained)
     window.openStorage = () => {
         const storageHTML = `
@@ -107,7 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="modal-header">Just•Abacha😎</div>
                 <p>Do you want to logout?</p>
                 <div class="modal-btns-row">
-                    <button class="btn-logout-yes" onclick="executeLogout()">Yes, Logout</button>
+                    <button class="btn-logout-yes" onclick="executeLogout()">Yes</button>
                     <button class="btn-logout-no" onclick="closeModal()">No, Stay</button>
                 </div>
             </div>

@@ -3,6 +3,10 @@ const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// --- NEW: Get the Friend ID from the URL (from Chat List) ---
+const urlParams = new URLSearchParams(window.location.search);
+const friendID = urlParams.get('friend_id');
+
 document.addEventListener('DOMContentLoaded', async () => {
     const { data: { user } } = await supabaseClient.auth.getUser();
     const chatBox = document.getElementById('chat-box');
@@ -16,36 +20,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- NEW: IDENTITY SYNC BLOCK (Maintains Sync across App) ---
     const syncChatIdentity = async () => {
-    if (!user) return;
-    // Add a small retry if profile is null
-    const { data: profile } = await supabaseClient
-        .from('profiles')
-        .select('avatar_url, username')
-        .eq('id', user.id)
-        .single();
+        if (!user) return;
+        const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('avatar_url, username')
+            .eq('id', user.id)
+            .single();
 
-    if (profile) {
-        // Target the specific classes we just added to HTML
-        const pfpElements = document.querySelectorAll('.chat-avatar, .nav-avatar, .avatar-circle');
-        pfpElements.forEach(el => {
-            if (profile.avatar_url) {
-                el.style.backgroundImage = `url(${profile.avatar_url})`;
-                el.style.backgroundSize = 'cover';
-                el.style.backgroundPosition = 'center'; // Added for centering
-            }
-        });
-        const nameElements = document.querySelectorAll('.chat-user-name, .ghost-alias-text, #display-username');
-        nameElements.forEach(el => {
-            if (profile.username) el.innerText = profile.username;
-        });
-    }
-}
+        if (profile) {
+            const pfpElements = document.querySelectorAll('.chat-avatar, .nav-avatar, .avatar-circle');
+            pfpElements.forEach(el => {
+                if (profile.avatar_url) {
+                    el.style.backgroundImage = `url(${profile.avatar_url})`;
+                    el.style.backgroundSize = 'cover';
+                    el.style.backgroundPosition = 'center';
+                }
+            });
+            const nameElements = document.querySelectorAll('.chat-user-name, .ghost-alias-text, #display-username');
+            nameElements.forEach(el => {
+                if (profile.username) el.innerText = profile.username;
+            });
+        }
+    };
     syncChatIdentity();
 
     if (chatBox && user) {
         // --- 1. MESSAGE DISPLAY (REPLY UI) ---
         const displayMessage = (msg) => {
-            const isMe = msg.sender_email === user.email;
+            // Updated to check sender_id for "isMe"
+            const isMe = msg.sender_id === user.id || msg.sender_email === user.email;
             const bubble = document.createElement('div');
             bubble.className = `message ${isMe ? 'sent' : 'received'}`;
 
@@ -180,39 +183,56 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         window.cancelReply = () => { replyingTo = null; document.getElementById('reply-preview')?.remove(); };
 
-        // --- 5. INITIAL LOAD & REALTIME ---
-        const { data: history } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: true });
+        // --- 5. INITIAL LOAD & REALTIME (Filtered by conversation) ---
+        const { data: history } = await supabaseClient
+            .from('messages')
+            .select('*')
+            .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`)
+            .order('created_at', { ascending: true });
+            
         history?.forEach(displayMessage);
         loadPins();
 
         supabaseClient.channel('messages').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
-            if (payload.eventType === 'INSERT') displayMessage(payload.new);
+            if (payload.eventType === 'INSERT') {
+                // Only display if it's part of THIS conversation
+                if ((payload.new.sender_id === user.id && payload.new.receiver_id === friendID) || 
+                    (payload.new.sender_id === friendID && payload.new.receiver_id === user.id)) {
+                    displayMessage(payload.new);
+                }
+            }
             else if (payload.eventType === 'UPDATE' || payload.eventType === 'DELETE') location.reload();
         }).subscribe();
 
+        // --- FIXED: THE HANDLESEND FUNCTION ---
         const handleSend = async () => {
-    const message = msgInput.value.trim();
-    if (message !== "") {
-        let content = message;
-        if (replyingTo) { 
-            content = `↳ [Replying to ${replyingTo.sender}: ${replyingTo.content}]\n${message}`; 
-            cancelReply(); 
-        }
-        
-        // ADDED ERROR LOGGING HERE
-        const { error } = await supabaseClient
-            .from('messages')
-            .insert([{ content, sender_email: user.email }]);
+            const message = msgInput.value.trim();
+            if (message !== "" && friendID) {
+                let content = message;
+                if (replyingTo) { 
+                    content = `↳ [Replying to ${replyingTo.sender}: ${replyingTo.content}]\n${message}`; 
+                    cancelReply(); 
+                }
+                
+                const { error } = await supabaseClient
+                    .from('messages')
+                    .insert([{ 
+                        content, 
+                        sender_id: user.id, 
+                        receiver_id: friendID,
+                        sender_email: user.email 
+                    }]);
 
-        if (error) {
-            console.error("Ghost Layer Sync Error:", error.message);
-            alert("Message failed: " + error.message); // This will tell us EXACTLY why
-        } else {
-            msgInput.value = "";
-            console.log("Message locked into Ghost Layer 🚀");
-        }
-    }
-};
+                if (error) {
+                    console.error("Ghost Layer Sync Error:", error.message);
+                    alert("Message failed: " + error.message);
+                } else {
+                    msgInput.value = "";
+                }
+            } else if (!friendID) {
+                alert("Ghost Warning: No receiver selected. Go to Vibe List first.");
+            }
+        };
 
         sendBtn.onclick = handleSend;
         msgInput.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };
@@ -263,4 +283,4 @@ document.addEventListener('DOMContentLoaded', () => {
     checkAcceptedVibes();
     subscribeToVibes();
 });
-                                                                                                         
+                    

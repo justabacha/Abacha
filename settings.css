@@ -187,7 +187,48 @@
     font-weight: bold;
     backdrop-filter: blur(10px);
 }
+.contact-layers {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
+}
 
+.contact-link-tile {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 15px;
+    text-decoration: none;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.contact-link-tile:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(0.98);
+}
+
+.contact-icon {
+    font-size: 20px;
+    margin-right: 15px;
+}
+
+.contact-text span {
+    display: block;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.contact-text small {
+    display: block;
+    font-size: 11px;
+    opacity: 0.6;
+    margin-top: 2px;
+    }
+    
 .modal-btns-row { display: flex; gap: 10px; margin-top: 20px; }
 .btn-logout-yes {
     flex: 1; padding: 15px; border-radius: 12px;

@@ -10,59 +10,61 @@
 <body class="profile-page">
     <div class="ghost-wallpaper"></div>
 
-    <div class="profile-layout">
-        <div class="top-nav-box">
-            <button class="ghost-back" onclick="window.location.href='settings.html'">‹</button>
-            <h1>Identity</h1>
-        </div>
+    <div class="profile-scroll-wrapper">
+        <div class="profile-layout">
+            <div class="top-nav-box">
+                <button class="ghost-back" onclick="window.location.href='settings.html'">‹</button>
+                <h1>Identity</h1>
+            </div>
 
-        <div class="avatar-master-wrapper">
-            <div class="avatar-main-circle" id="profile-avatar-preview">
-                <div class="camera-stamp" onclick="document.getElementById('avatar-input').click()">
-                    📸
+            <div class="avatar-master-wrapper">
+                <div class="avatar-main-circle" id="profile-avatar-preview">
+                    <div class="camera-stamp" onclick="document.getElementById('avatar-input').click()">
+                        📸
+                    </div>
+                </div>
+                <input type="file" id="avatar-input" accept="image/*" hidden>
+            </div>
+
+            <div class="basin-container">
+                <div class="basin-tile">
+                    <label>Ghost Alias</label>
+                    <input type="text" id="username-input" placeholder="@phestone">
+                </div>
+
+                <div class="basin-tile">
+                    <label>Ghost Status</label>
+                    <input type="text" id="status-input" placeholder="Vibing in the shadows...">
+                </div>
+
+                <div class="basin-tile">
+                    <label>Inner Circle Favourite</label>
+                    <input type="text" id="fav-input" placeholder="@username">
+                </div>
+
+                <div class="basin-tile">
+                    <label>Current City</label>
+                    <select id="city-input" class="basin-select">
+                        <option value="Nairobi">Nairobi</option>
+                        <option value="Mombasa">Mombasa</option>
+                        <option value="Kisumu">Kisumu</option>
+                        <option value="Nakuru">Nakuru</option>
+                        <option value="Eldoret">Eldoret</option>
+                    </select>
+                </div>
+
+                <div class="basin-tile">
+                    <label>Secure Contact</label>
+                    <div class="phone-row">
+                        <span class="prefix">KE +254</span>
+                        <input type="number" id="phone-input" placeholder="700 000 000">
+                    </div>
                 </div>
             </div>
-            <input type="file" id="avatar-input" accept="image/*" hidden>
-        </div>
 
-        <div class="basin-container">
-            <div class="basin-tile">
-                <label>Ghost Alias</label>
-                <input type="text" id="username-input" placeholder="@phestone">
+            <div class="bottom-action">
+                <button class="lock-identity-btn" onclick="saveGhostProfile()">Update Identity 👌</button>
             </div>
-
-            <div class="basin-tile">
-                <label>Ghost Status</label>
-                <input type="text" id="status-input" placeholder="Vibing in the shadows...">
-            </div>
-
-            <div class="basin-tile">
-                <label>Inner Circle Favourite</label>
-                <input type="text" id="fav-input" placeholder="@username">
-            </div>
-
-            <div class="basin-tile">
-                <label>Current City</label>
-                <select id="city-input" class="basin-select">
-                    <option value="Nairobi">Nairobi</option>
-                    <option value="Mombasa">Mombasa</option>
-                    <option value="Kisumu">Kisumu</option>
-                    <option value="Nakuru">Nakuru</option>
-                    <option value="Eldoret">Eldoret</option>
-                </select>
-            </div>
-
-            <div class="basin-tile">
-                <label>Secure Contact</label>
-                <div class="phone-row">
-                    <span class="prefix">KE +254</span>
-                    <input type="number" id="phone-input" placeholder="700 000 000">
-                </div>
-            </div>
-        </div>
-
-        <div class="bottom-action">
-            <button class="lock-identity-btn" onclick="saveGhostProfile()">Update Identity 👌</button>
         </div>
     </div>
 
@@ -70,5 +72,4 @@
     <script src="app.js"></script>
     <script src="profile.js"></script>
 </body>
-                    </html>
-    
+</html>

@@ -1,50 +1,89 @@
-// --- 1. HANDLE IMAGE SELECTION & PREVIEW ---
-document.getElementById('avatar-input').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        // Show instant preview
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            document.getElementById('profile-avatar-preview').style.backgroundImage = `url(${event.target.result})`;
-        };
-        reader.readAsDataURL(file);
+document.addEventListener('DOMContentLoaded', async () => {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
+
+    // 1. INITIAL DATA LOAD
+    const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+    if (profile) {
+        document.getElementById('username-input').value = profile.username || '';
+        document.getElementById('status-input').value = profile.bio || '';
+        document.getElementById('fav-input').value = profile.favourite_user || '';
+        document.getElementById('city-input').value = profile.city || 'Nairobi';
+        document.getElementById('phone-input').value = profile.phone || '';
+        
+        if (profile.avatar_url) {
+            document.getElementById('profile-avatar-preview').style.backgroundImage = `url(${profile.avatar_url})`;
+        }
     }
+
+    // 2. INSTANT IMAGE PREVIEW
+    document.getElementById('avatar-input').addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('profile-avatar-preview').style.backgroundImage = `url(${e.target.result})`;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
 });
 
-// --- 2. THE BIG SAVE (Identity & Image) ---
+// 3. THE BIG SAVE FUNCTION
 window.saveGhostProfile = async () => {
     const { data: { user } } = await supabaseClient.auth.getUser();
     const avatarFile = document.getElementById('avatar-input').files[0];
     let avatarUrl = null;
 
-    // A. Upload Avatar to Storage if selected
-    if (avatarFile) {
-        const fileExt = avatarFile.name.split('.').pop();
-        const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-        const { error: uploadError } = await supabaseClient.storage
-            .from('avatars')
-            .upload(fileName, avatarFile);
+    // Show loading state on button
+    const saveBtn = document.querySelector('.lock-identity-btn');
+    const originalText = saveBtn.innerText;
+    saveBtn.innerText = "Syncing...";
+    saveBtn.disabled = true;
 
-        if (!uploadError) {
-            const { data } = supabaseClient.storage.from('avatars').getPublicUrl(fileName);
-            avatarUrl = data.publicUrl;
+    try {
+        // Upload Avatar if a new one was selected
+        if (avatarFile) {
+            const fileExt = avatarFile.name.split('.').pop();
+            const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+            
+            const { error: uploadError } = await supabaseClient.storage
+                .from('avatars')
+                .upload(fileName, avatarFile);
+
+            if (!uploadError) {
+                const { data } = supabaseClient.storage.from('avatars').getPublicUrl(fileName);
+                avatarUrl = data.publicUrl;
+            }
         }
-    }
 
-    // B. Push all 5 tabs to Profiles Table
-    const updates = {
-        username: document.getElementById('username-input').value,
-        bio: document.getElementById('status-input').value, // Status
-        favourite_user: document.getElementById('fav-input').value, // Favourite
-        city: document.getElementById('city-input').value, // City
-        phone: document.getElementById('phone-input').value, // Contact
-        avatar_url: avatarUrl || undefined,
-        updated_at: new Date()
-    };
+        // Prepare the updates
+        const updates = {
+            username: document.getElementById('username-input').value,
+            bio: document.getElementById('status-input').value,
+            favourite_user: document.getElementById('fav-input').value,
+            city: document.getElementById('city-input').value,
+            phone: document.getElementById('phone-input').value,
+            updated_at: new Date()
+        };
 
-    const { error } = await supabaseClient.from('profiles').upsert(updates).eq('id', user.id);
+        if (avatarUrl) updates.avatar_url = avatarUrl;
 
-    if (error) alert("Ghost Sync Failed 😞");
-    else alert("Identity Locked in the Ghost Layer 👌");
-};
+        const { error } = await supabaseClient.from('profiles').update(updates).eq('id', user.id);
+
+        if (error) throw error;
+        alert("Identity Locked in the Ghost Layer 👌");
         
+    } catch (err) {
+        alert("Sync Error: " + err.message);
+    } finally {
+        saveBtn.innerText = originalText;
+        saveBtn.disabled = false;
+    }
+};
+    

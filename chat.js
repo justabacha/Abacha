@@ -1,3 +1,8 @@
+// 1. Connection Keys
+const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
+const SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 document.addEventListener('DOMContentLoaded', async () => {
     const { data: { user } } = await supabaseClient.auth.getUser();
     const chatBox = document.getElementById('chat-box');
@@ -8,6 +13,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     let messageToDelete = null;
     let pendingPinMsg = null;
     let currentPins = [];
+
+    // --- GLOBAL IDENTITY SYNC BLOCK ---
+    const syncChatIdentity = async () => {
+        if (!user) return;
+        const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('avatar_url, username')
+            .eq('id', user.id)
+            .single();
+
+        if (profile) {
+            // Update Chat Header PFP
+            const chatPFP = document.querySelector('.chat-avatar, .nav-avatar');
+            if (chatPFP && profile.avatar_url) {
+                chatPFP.style.backgroundImage = `url(${profile.avatar_url})`;
+                chatPFP.style.backgroundSize = 'cover';
+            }
+            // Update Chat Header Name (Kills 'Inner Circle')
+            const chatName = document.querySelector('.chat-user-name, #display-username');
+            if (chatName && profile.username) chatName.innerText = profile.username;
+        }
+    };
+    syncChatIdentity();
 
     if (chatBox && user) {
         // --- 1. MESSAGE DISPLAY (REPLY UI) ---
@@ -61,7 +89,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             overlay.style.display = 'flex';
         };
 
-        // --- 3. PINNING SYSTEM (2-PIN LIMIT) ---
+        // --- 3. PINNING SYSTEM ---
         window.openPinModal = (id, content) => {
             if (currentPins.length >= 2) {
                 alert("Ghost Layer Limit: Unpin a message first to add another.");
@@ -103,7 +131,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else { pinBar.style.display = 'none'; }
         };
 
-        // --- 4. HELPERS (COPY, DELETE, REPLY) ---
+        // --- 4. HELPERS ---
         window.copyToClipboard = (text) => {
             const el = document.createElement('textarea');
             el.value = text;
@@ -189,6 +217,7 @@ const showVibeNotification = (text) => {
 
 const checkAcceptedVibes = async () => {
     const { data: { user } } = await supabaseClient.auth.getUser();
+    if(!user) return;
     const { data: vibes } = await supabaseClient.from('friendships')
         .select(`updated_at, profiles!friendships_receiver_id_fkey (username)`)
         .eq('sender_id', user.id).eq('status', 'accepted').order('updated_at', { ascending: false }).limit(1);
@@ -203,6 +232,7 @@ const checkAcceptedVibes = async () => {
 
 const subscribeToVibes = async () => {
     const { data: { user } } = await supabaseClient.auth.getUser();
+    if(!user) return;
     supabaseClient.channel('vibe-updates').on('postgres_changes', 
         { event: 'UPDATE', schema: 'public', table: 'friendships', filter: `sender_id=eq.${user.id}` }, 
         async (payload) => {
@@ -217,4 +247,4 @@ document.addEventListener('DOMContentLoaded', () => {
     checkAcceptedVibes();
     subscribeToVibes();
 });
-                
+                                    

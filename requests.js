@@ -1,53 +1,54 @@
 // Safety Check: Wait for Supabase to be ready
 const initializeDiscovery = async () => {
+    // 1. SELECT UI ELEMENTS IMMEDIATELY
+    const searchInput = document.getElementById('user-search');
+    const discoveryList = document.getElementById('discovery-list');
+    const requestsList = document.getElementById('requests-list');
+
+    // 2. SHOW LOADING STATE IMMEDIATELY (Before Auth/Data)
+    // This makes the page feel instant on your phone
+    if (discoveryList) discoveryList.innerHTML = '<p style="color: #32D74B; font-size: 12px; padding: 15px; font-weight: bold; animation: pulse 1.5s infinite;">Searching the Ghost Layer... 🤓</p>';
+    if (requestsList) requestsList.innerHTML = '<p style="color: #fff; opacity: 0.3; font-size: 10px; padding: 15px;">Scanning vibes...</p>';
+
     try {
+        // 3. WAIT FOR SUPABASE CLIENT
         if (typeof supabaseClient === 'undefined') {
-            console.error("Supabase not found. Retrying...");
-            setTimeout(initializeDiscovery, 500);
+            setTimeout(initializeDiscovery, 300);
             return;
         }
 
+        // 4. GET USER (The "Heavy" Part)
         const { data: authData } = await supabaseClient.auth.getUser();
         const currentUser = authData?.user;
 
         if (!currentUser) {
-            console.error("No user logged in");
+            discoveryList.innerHTML = '<p style="color: #FF3B30; font-size: 12px; padding: 15px;">Session expired. Please re-login.</p>';
             return;
         }
 
-        const searchInput = document.getElementById('user-search');
-        const discoveryList = document.getElementById('discovery-list');
-        const requestsList = document.getElementById('requests-list');
+        // --- CORE FUNCTIONS ---
 
-        // ✨ FIX 1: IMMEDIATE FEEDBACK (Line 22-23)
-        // This stops the "blank screen" lag on your phone
-        discoveryList.innerHTML = '<p style="color: #32D74B; font-size: 12px; padding: 10px;">Searching the Ghost Layer... 🤓</p>';
-        requestsList.innerHTML = '<p style="color: #fff; opacity: 0.3; font-size: 10px; padding: 10px;">Checking vibes...</p>';
-
-        // 1. LOAD DISCOVERY (Optimized for Mobile)
         const loadDiscovery = async (searchTerm = '') => {
             let query = supabaseClient.from('profiles').select('*').neq('id', currentUser.id);
             if (searchTerm) { query = query.ilike('username', `%${searchTerm}%`); }
             
-            const { data: users } = await query.limit(15);
+            const { data: users, error } = await query.limit(15);
             
-            // ✨ FIX 2: FALLBACK FOR EMPTY PROFILES
             if (users && users.length > 0) {
                 discoveryList.innerHTML = users.map(user => `
                     <div class="user-tile">
                         <div class="user-info">
                             <div class="user-name">@${user.username}</div>
-                            <div class="user-bio">${user.bio || 'Ghosting...'}</div>
+                            <div class="user-bio">${user.bio || 'Silence is gold.'}</div>
                         </div>
                         <button class="request-btn" onclick="sendVibeRequest('${user.id}', '${user.username}', this)">Connect</button>
                     </div>
                 `).join('');
             } else {
-                discoveryList.innerHTML = '<p style="opacity:0.4; font-size:12px; padding:20px;">No ghosts found. Create a profile to start the vibe! 👻</p>';
+                discoveryList.innerHTML = '<p style="opacity:0.4; font-size:12px; padding:20px;">No ghosts found nearby. 👻</p>';
             }
         };
 
-        // 2. LOAD PENDING
         const loadRequests = async () => {
             const { data: reqs } = await supabaseClient
                 .from('friendships')
@@ -59,7 +60,6 @@ const initializeDiscovery = async () => {
                 requestsList.innerHTML = reqs.map(r => `
                     <div class="vibe-card">
                         <div class="vibe-msg">🤓 yoow this is <b>@${r.profiles.username}</b> I want to start a vibe.</div>
-                        <div class="vibe-footer">...Just•Abacha😎...</div>
                         <div class="action-row">
                             <button class="btn-deny" onclick="handleVibe('${r.id}', 'deny')">Deny</button>
                             <button class="btn-accept" onclick="handleVibe('${r.id}', 'accept')">Accept</button>
@@ -71,13 +71,15 @@ const initializeDiscovery = async () => {
             }
         };
 
-        // 3. ACTIONS
+        // --- GLOBAL ACTIONS ---
+
         window.sendVibeRequest = async (targetId, targetName, btn) => {
             if (btn.disabled) return;
             btn.disabled = true;
-            btn.innerText = "Wait...";
+            btn.innerText = "Sending...";
             const { error } = await supabaseClient.from('friendships').insert([{ sender_id: currentUser.id, receiver_id: targetId, status: 'pending' }]);
-            btn.innerText = error ? "Failed" : "Sent 🤓";
+            btn.innerText = error ? "Already Sent" : "Vibe Sent 🤓";
+            btn.style.opacity = "0.7";
         };
 
         window.handleVibe = async (requestId, action) => {
@@ -85,8 +87,8 @@ const initializeDiscovery = async () => {
                 await supabaseClient.from('friendships').update({ status: 'accepted', updated_at: new Date().toISOString() }).eq('id', requestId);
                 showGlobalModal(`
                     <div class="ghost-modal-tile" style="text-align:center;">
-                        <p>✅ Request Accepted!</p>
-                        <button class="metamorphism-blue-btn" style="width:100%; padding:12px; margin-top:10px;" onclick="window.location.href='chat.html'">Send Vibe</button>
+                        <p>✅ Vibe Accepted!</p>
+                        <button class="metamorphism-blue-btn" style="width:100%; padding:14px; margin-top:15px;" onclick="window.location.href='chat.html'">Send Vibe</button>
                     </div>
                 `);
             } else {
@@ -95,7 +97,6 @@ const initializeDiscovery = async () => {
             }
         };
 
-        // UI HELPERS
         window.showGlobalModal = (html) => {
             const overlay = document.getElementById('global-modal-overlay');
             if (overlay) {
@@ -104,6 +105,7 @@ const initializeDiscovery = async () => {
             } else { alert("Accepted!"); location.href='chat.html'; }
         };
 
+        // --- INITIALIZE ---
         searchInput?.addEventListener('input', (e) => loadDiscovery(e.target.value));
         loadDiscovery();
         loadRequests();
@@ -114,4 +116,4 @@ const initializeDiscovery = async () => {
 };
 
 document.addEventListener('DOMContentLoaded', initializeDiscovery);
-            
+                    

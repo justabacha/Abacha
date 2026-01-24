@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. DEDICATED REQUESTS LINK (MOVED OUTSIDE)
+    // 1. DEDICATED REQUESTS LINK (MOVED OUTSIDE FOR INSTANT ACTION)
     window.openRequests = () => {
         window.location.href = 'requests.html';
     };
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         localStorage.setItem('ghost-theme', themeName);
     };
 
-    // 3. HELP & CREDITS (Original Paragraph Maintained)
+    // 3. HELP & CREDITS (Restored Phestone's Jan 16 Quote)
     window.openHelp = () => {
         const helpHTML = `
             <div class="ghost-modal-tile large-tile">
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         showGlobalModal(helpHTML);
     };
 
-    // 4. CONTACT US (TALK TO THE BOSS)
+    // 4. CONTACT US (TALK TO THE BOSS - YOUR DATA RESTORED)
     window.openContact = () => {
         const contactHTML = `
             <div class="ghost-modal-tile">
@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(overlay) overlay.style.display = 'none';
     };
 
-    // LOGOUT LOGIC (Yes/No color variations maintained)
+    // LOGOUT LOGIC (Restored "No, Stay")
     window.showLogoutModal = () => {
         const logoutHTML = `
             <div class="ghost-modal-tile">

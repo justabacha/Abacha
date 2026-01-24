@@ -2,7 +2,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return;
 
-    // --- 1. LOAD PENDING VIBES (Requests sent to you) ---
+    // --- NEW: IDENTITY LOCK (Fixes the header swap) ---
+    const syncMyHeader = async () => {
+        const { data: myProfile } = await supabaseClient
+            .from('profiles')
+            .select('username, avatar_url')
+            .eq('id', user.id) 
+            .maybeSingle();
+
+        if (myProfile) {
+            const aliasEl = document.getElementById('display-username');
+            const avatarEl = document.querySelector('.nav-avatar');
+            
+            if (aliasEl) aliasEl.innerText = `@${myProfile.username}`;
+            if (avatarEl && myProfile.avatar_url) {
+                avatarEl.style.backgroundImage = `url(${myProfile.avatar_url})`;
+                avatarEl.style.backgroundSize = 'cover';
+                avatarEl.style.backgroundPosition = 'center';
+            }
+        }
+    };
+    syncMyHeader(); // Run this immediately
+
+    // --- 1. LOAD PENDING VIBES ---
     const loadPending = async () => {
         const { data: requests, error } = await supabaseClient
             .from('friendships')
@@ -40,7 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
     
-        // --- 2. LOAD ACTIVE CHATS (The Tunnel Access) ---
+    // --- 2. LOAD ACTIVE CHATS (Fixed Double-Row & Wrong Profile) ---
     const loadActive = async () => {
         const { data: friends } = await supabaseClient
             .from('friendships')
@@ -57,14 +79,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         container.innerHTML = friends?.length ? '' : '<p style="color:gray; font-size:12px;">Find someone to chat with!</p>';
 
-        // Create a Set to track IDs we've already displayed to prevent double-rows
         const displayedIDs = new Set();
 
         friends?.forEach(f => {
-            // FIX 1: Correctly identify the OTHER person
             const friend = f.sender_id === user.id ? f.receiver : f.sender;
 
-            // FIX 2: Check if we already showed this friend (Prevents the Double Row)
             if (friend && !displayedIDs.has(friend.id)) {
                 displayedIDs.add(friend.id);
 
@@ -84,7 +103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
     
-    // --- 3. SEARCH LOGIC (Finding New Ghosts) ---
+    // --- 3. SEARCH LOGIC ---
     const searchInput = document.getElementById('search-ghost');
     const searchResults = document.getElementById('search-results');
 
@@ -117,35 +136,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // --- 4. GLOBAL ACTIONS (Vibe Send/Accept) ---
+    // --- 4. GLOBAL ACTIONS ---
     window.sendVibe = async (receiverId) => {
         const { error } = await supabaseClient
             .from('friendships')
             .insert([{ sender_id: user.id, receiver_id: receiverId, status: 'pending' }]);
         
-        if (error) {
-            alert("Vibe already active or pending!");
-        } else {
+        if (error) alert("Vibe already active or pending!");
+        else {
             alert("Vibe sent! 🚀");
-            if (searchInput) {
-                searchInput.value = '';
-                searchResults.innerHTML = '';
-            }
+            if (searchInput) { searchInput.value = ''; searchResults.innerHTML = ''; }
         }
     };
 
     window.acceptVibe = async (id) => {
-        const { error } = await supabaseClient
-            .from('friendships')
-            .update({ status: 'accepted' })
-            .eq('id', id);
-            
+        const { error } = await supabaseClient.from('friendships').update({ status: 'accepted' }).eq('id', id);
         if (!error) location.reload();
         else alert("Vibe Error: " + error.message);
     };
 
-// This runs both at the exact same time!
-Promise.all([loadPending(), loadActive()]);
-    
+    Promise.all([loadPending(), loadActive()]);
 });
-        
+                          

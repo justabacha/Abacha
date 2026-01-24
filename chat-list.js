@@ -4,42 +4,41 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 1. Load Pending Vibes
         const loadPending = async () => {
-        console.log("Checking for vibes for user:", user.id); // Debug log
-        
-        const { data: requests, error } = await supabaseClient
-            .from('friendships')
-            .select(`
-                id, 
-                sender_id, 
-                profiles!friendships_sender_id_fkey(username, avatar_url)
-            `)
-            .eq('receiver_id', user.id)
-            .eq('status', 'pending');
+    // We remove the '!friendships_sender_id_fkey' and use the simpler join
+    const { data: requests, error } = await supabaseClient
+        .from('friendships')
+        .select(`
+            id,
+            sender_id,
+            profiles:sender_id (username, avatar_url)
+        `)
+        .eq('receiver_id', user.id)
+        .eq('status', 'pending');
 
-        if (error) {
-            console.error("Vibe Retrieval Error:", error.message);
-            return;
-        }
+    if (error) {
+        console.error("Ghost Sync Error:", error.message);
+        return;
+    }
 
-        console.log("Found requests:", requests); // This will show in your browser console
-
-        const container = document.getElementById('pending-list');
-        container.innerHTML = requests?.length ? '' : '<p style="color:gray; font-size:12px;">No new requests...</p>';
-        
-        requests?.forEach(req => {
-            const card = document.createElement('div');
-            card.className = 'user-card';
-            card.innerHTML = `
-                <div class="user-avatar" style="background-image: url(${req.profiles?.avatar_url || ''})"></div>
-                <div class="user-info">
-                    <h4>${req.profiles?.username || 'New Ghost'}</h4>
-                    <p>Wants to vibe</p>
-                </div>
-                <button class="accept-btn" onclick="acceptVibe('${req.id}')">Accept</button>
-            `;
-            container.appendChild(card);
-        });
-    };
+    const container = document.getElementById('pending-list');
+    container.innerHTML = requests?.length ? '' : '<p style="color:gray; font-size:12px;">No new requests...</p>';
+    
+    requests?.forEach(req => {
+        const card = document.createElement('div');
+        card.className = 'user-card';
+        // Note: we use req.profiles because of the alias in the select
+        const sender = req.profiles;
+        card.innerHTML = `
+            <div class="user-avatar" style="background-image: url(${sender?.avatar_url || 'default-avatar.png'})"></div>
+            <div class="user-info">
+                <h4>${sender?.username || 'Unknown Ghost'}</h4>
+                <p>Wants to vibe with you</p>
+            </div>
+            <button class="accept-btn" onclick="acceptVibe('${req.id}')">Accept</button>
+        `;
+        container.appendChild(card);
+    });
+};
     
     // 2. Load Active Chats
     const loadActive = async () => {

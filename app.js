@@ -6,6 +6,42 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("Ghost Engine: Online");
 
+    // --- GLOBAL IDENTITY SYNC (Runs on every page) ---
+    const syncGlobalIdentity = async () => {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!user) return;
+
+        const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('avatar_url, username, city')
+            .eq('id', user.id)
+            .single();
+
+        if (profile) {
+            // 1. Update Profile Circles (Settings & Hub)
+            const pfpElements = document.querySelectorAll('#user-avatar, .avatar-circle, .nav-avatar');
+            pfpElements.forEach(el => {
+                if (profile.avatar_url) {
+                    el.style.backgroundImage = `url(${profile.avatar_url})`;
+                    el.style.backgroundSize = 'cover';
+                    el.style.backgroundPosition = 'center';
+                }
+            });
+
+            // 2. Update Usernames across the app
+            const nameElements = document.querySelectorAll('#display-username, .ghost-alias-text');
+            nameElements.forEach(el => {
+                if (profile.username) el.innerText = profile.username;
+            });
+
+            // 3. Update Hub Weather based on City
+            const cityElement = document.getElementById('hub-city-label');
+            if (cityElement && profile.city) cityElement.innerText = profile.city;
+        }
+    };
+    
+    syncGlobalIdentity(); // Execute Sync
+
     // DYNAMIC BUTTON COLORS LOGIC
     const passwordInput = document.getElementById('password');
     const loginButton = document.getElementById('login-btn');
@@ -73,4 +109,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 });
-                    
+                      

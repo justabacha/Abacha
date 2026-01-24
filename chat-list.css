@@ -1,0 +1,56 @@
+/* Changed .chat-tile to .user-card to match your JS logic */
+.user-card {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: background 0.2s;
+    background: rgba(255, 255, 255, 0.02); /* Slight ghost tint */
+    margin-bottom: 8px;
+    border-radius: 12px;
+}
+
+.user-card:active {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    background-color: #333;
+    margin-right: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-info {
+    flex: 1;
+}
+
+.user-info h4 {
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+    margin: 0 0 4px 0;
+}
+
+.user-info p {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 13px;
+    margin: 0;
+}
+
+/* Style for the Accept/Vibe buttons in the list */
+.accept-btn {
+    background: #32D74B;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+}

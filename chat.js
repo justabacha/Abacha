@@ -206,37 +206,44 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // --- FIXED: THE HANDLESEND FUNCTION ---
         const handleSend = async () => {
+    console.log("🚀 Send Button Triggered"); // Check your console (F12) for this!
+
     const message = msgInput.value.trim();
     
-    // 1. Safety Check: Do we have a message and a receiver?
-    if (message !== "" && friendID) {
+    // 1. Critical Check: Make sure we have a receiver
+    if (!friendID) {
+        console.error("❌ No friendID found in URL");
+        alert("Select a ghost from your list first! 👻");
+        return;
+    }
+
+    if (message !== "") {
         let content = message;
         
-        // 2. Handle Reply Logic (Keeping your style)
-        if (replyingTo) { 
+        // 2. Safe Reply Logic (Prevents the 'null' crash)
+        if (replyingTo && replyingTo.sender) { 
             content = `↳ [Replying to ${replyingTo.sender}: ${replyingTo.content}]\n${message}`; 
             cancelReply(); 
         }
         
-        // 3. The Data Packet (Must match your new SQL columns!)
+        console.log("Attempting to sync message...");
+
+        // 3. The Insert (We omit sender_email if it's causing errors)
         const { error } = await supabaseClient
             .from('messages')
             .insert([{ 
                 content: content, 
-                sender_id: user.id,      // Updated to use ID
-                receiver_id: friendID,   // The ghost you're talking to
-                sender_email: user.email // Kept for legacy display
+                sender_id: user.id,
+                receiver_id: friendID
             }]);
 
         if (error) {
-            console.error("Ghost Engine Failure:", error.message);
-            alert("Error: " + error.message);
+            console.error("❌ Database Error:", error.message);
+            alert("Ghost Error: " + error.message);
         } else {
-            msgInput.value = ""; // Clear input on success
-            console.log("Message synced to Ghost Layer 🚀");
+            msgInput.value = "";
+            console.log("✅ Message locked in!");
         }
-    } else if (!friendID) {
-        alert("Ghost Warning: No receiver detected in URL. Please go back to Vibes.");
     }
 };
         

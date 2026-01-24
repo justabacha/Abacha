@@ -4,24 +4,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- NEW: IDENTITY LOCK (Fixes the header swap) ---
     const syncMyHeader = async () => {
-        const { data: myProfile } = await supabaseClient
-            .from('profiles')
-            .select('username, avatar_url')
-            .eq('id', user.id) 
-            .maybeSingle();
+    const { data: myProfile } = await supabaseClient
+        .from('profiles')
+        .select('username, avatar_url')
+        .eq('id', user.id) 
+        .maybeSingle();
 
-        if (myProfile) {
-            const aliasEl = document.getElementById('display-username');
-            const avatarEl = document.querySelector('.nav-avatar');
-            
-            if (aliasEl) aliasEl.innerText = `@${myProfile.username}`;
-            if (avatarEl && myProfile.avatar_url) {
-                avatarEl.style.backgroundImage = `url(${myProfile.avatar_url})`;
-                avatarEl.style.backgroundSize = 'cover';
-                avatarEl.style.backgroundPosition = 'center';
-            }
+    if (myProfile) {
+        // Targets the new unique IDs
+        const aliasEl = document.getElementById('my-own-alias');
+        const avatarEl = document.getElementById('my-own-avatar');
+        
+        if (aliasEl) aliasEl.innerText = `@${myProfile.username}`;
+        if (avatarEl && myProfile.avatar_url) {
+            avatarEl.style.backgroundImage = `url(${myProfile.avatar_url})`;
         }
-    };
+    }
+};
     syncMyHeader(); // Run this immediately
 
     // --- 1. LOAD PENDING VIBES ---

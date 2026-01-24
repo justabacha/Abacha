@@ -1,0 +1,44 @@
+.profile-container {
+    padding: 20px;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.glass-input-group {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 15px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.glass-input-group label {
+    display: block;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+}
+
+.glass-input-group input, 
+.glass-input-group textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 16px;
+    outline: none;
+}
+
+.save-identity-btn {
+    width: 100%;
+    padding: 18px;
+    border-radius: 20px;
+    background: #32D74B;
+    color: white;
+    font-weight: bold;
+    border: none;
+    box-shadow: 0 10px 20px rgba(50, 215, 75, 0.2);
+}

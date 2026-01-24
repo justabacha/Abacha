@@ -1,27 +1,23 @@
-<div id="ghost-pad-overlay" class="ghost-pad-overlay" onclick="if(event.target == this) this.style.display='none'">
+<div id="ghost-pad-overlay" class="ghost-pad-overlay" onclick="if(event.target==this)this.style.display='none'">
     <div class="morphism-card">
-        <div class="pad-avatar-corner" id="pad-avatar"></div>
-        <div class="card-alias-header">Just•Abacha😎</div>
-        <p class="instruction-text" style="text-align:center; color:white; margin-top:20px; font-size:13px;"></p>
-        
-        <div class="pin-display" id="pin-display">◦◦◦◦</div>
-        
+        <div id="pad-avatar" class="pad-avatar-top"></div>
+        <div class="pad-header-alias">Just•Abacha😎</div>
+        <p id="pad-instr" style="text-align:center; margin-top:30px; font-size:14px;"></p>
+        <div id="pin-display" style="text-align:center; font-size:20px; margin:20px 0;"></div>
         <div class="ghost-keyboard">
-            <button class="ghost-key" onclick="pressGhostKey('1')">👻<span class="key-num">1</span></button>
-            <button class="ghost-key" onclick="pressGhostKey('2')">👻<span class="key-num">2</span></button>
-            <button class="ghost-key" onclick="pressGhostKey('3')">👻<span class="key-num">3</span></button>
-            <button class="ghost-key" onclick="pressGhostKey('4')">👻<span class="key-num">4</span></button>
-            <button class="ghost-key" onclick="pressGhostKey('5')">👻<span class="key-num">5</span></button>
-            <button class="ghost-key" onclick="pressGhostKey('6')">👻<span class="key-num">6</span></button>
-            <button class="ghost-key" onclick="pressGhostKey('7')">👻<span class="key-num">7</span></button>
-            <button class="ghost-key" onclick="pressGhostKey('8')">👻<span class="key-num">8</span></button>
-            <button class="ghost-key" onclick="pressGhostKey('9')">👻<span class="key-num">9</span></button>
-            <div></div>
-            <button class="ghost-key" onclick="pressGhostKey('0')">👻<span class="key-num">0</span></button>
-            <button class="ghost-key" style="font-size:20px; color:white;" onclick="currentInput=''">DEL</button>
+            <button class="ghost-key" onclick="pressKey('1')">👻<span class="key-num">1</span></button>
+            <button class="ghost-key" onclick="pressKey('2')">👻<span class="key-num">2</span></button>
+            <button class="ghost-key" onclick="pressKey('3')">👻<span class="key-num">3</span></button>
+            <button class="ghost-key" onclick="pressKey('4')">👻<span class="key-num">4</span></button>
+            <button class="ghost-key" onclick="pressKey('5')">👻<span class="key-num">5</span></button>
+            <button class="ghost-key" onclick="pressKey('6')">👻<span class="key-num">6</span></button>
+            <button class="ghost-key" onclick="pressKey('7')">👻<span class="key-num">7</span></button>
+            <button class="ghost-key" onclick="pressKey('8')">👻<span class="key-num">8</span></button>
+            <button class="ghost-key" onclick="pressKey('9')">👻<span class="key-num">9</span></button>
+            <button class="ghost-key" onclick="currentInput=''">🗑️</button>
+            <button class="ghost-key" onclick="pressKey('0')">👻<span class="key-num">0</span></button>
+            <button class="ghost-key" onclick="submitPad()">✅</button>
         </div>
-
-        <div id="pad-denied" class="vibe-denied"></div>
-        <button id="pad-action-btn" class="ghost-action-btn" onclick="submitGhostPad()"></button>
+        <button id="pad-action-btn" onclick="submitPad()"></button>
     </div>
 </div>

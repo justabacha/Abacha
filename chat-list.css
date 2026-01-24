@@ -72,3 +72,57 @@
     box-sizing: border-box; 
     margin-bottom: 20px; 
 }
+/* Sharp, Non-Laggy Wallpaper */
+.ghost-wallpaper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('https://images.unsplash.com/photo-1477346611705-65d1883cee1e?auto=format&fit=crop&q=80') no-repeat center center;
+    background-size: cover;
+    z-index: -1;
+    transform: translateZ(0); /* Hardware acceleration to prevent lag */
+}
+
+/* The Basin Container */
+.user-card {
+    position: relative;
+    margin: 25px 0 25px 40px; /* Pushed right to make room for the 'Blocker' avatar */
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: none; /* Removed because the Avatar blocks this side */
+    border-radius: 0 20px 20px 0;
+    padding: 15px 15px 15px 35px;
+    min-height: 70px;
+    transition: transform 0.3s ease;
+}
+
+/* The "Corner Blocker" Avatar */
+.user-avatar {
+    position: absolute;
+    left: -35px; /* Halfway out of the basin */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    border: 3px solid #32D74B; /* Ghost Green for Read */
+    z-index: 10;
+    box-shadow: 0 0 15px rgba(50, 215, 75, 0.3);
+}
+
+/* Unread Status: Blue Glow */
+.user-card.unread {
+    border-top: 1px solid #007AFF;
+    border-right: 1px solid #007AFF;
+    border-bottom: 1px solid #007AFF;
+}
+.user-card.unread .user-avatar {
+    border-color: #007AFF;
+    box-shadow: 0 0 15px rgba(0, 122, 255, 0.5);
+    }
+    

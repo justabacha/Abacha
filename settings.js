@@ -22,49 +22,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         localStorage.setItem('ghost-theme', themeName);
     };
     
-window.openProfileEdit = async () => {
-    // 1. Fetch current data from Supabase
-    const { data: profile } = await supabaseClient
-        .from('profiles')
-        .select('username, bio')
-        .eq('id', (await supabaseClient.auth.getUser()).data.user.id)
-        .single();
-
-    const profileHTML = `
-        <div class="ghost-modal-tile large-tile">
-            <h3 class="modal-title">👤 Edit Ghost Identity</h3>
-            <div class="input-group">
-                <label>Alias</label>
-                <input type="text" id="edit-username" class="ghost-input" value="${profile.username}">
-            </div>
-            <div class="input-group" style="margin-top:15px;">
-                <label>Ghost Bio</label>
-                <textarea id="edit-bio" class="ghost-input" rows="3">${profile.bio || ''}</textarea>
-            </div>
-            <button class="metamorphism-green-btn" style="margin-top:20px;" onclick="saveProfile()">Save Identity</button>
-            <button class="metamorphism-red-btn" style="margin-top:10px; background:none; border:none; color:rgba(255,255,255,0.4);" onclick="closeModal()">Cancel</button>
-        </div>
-    `;
-    showGlobalModal(profileHTML);
-};
-  window.saveProfile = async () => {
-    const newUsername = document.getElementById('edit-username').value;
-    const newBio = document.getElementById('edit-bio').value;
-    const { data: { user } } = await supabaseClient.auth.getUser();
-
-    const { error } = await supabaseClient
-        .from('profiles')
-        .update({ username: newUsername, bio: newBio })
-        .eq('id', user.id);
-
-    if (error) {
-        alert("Update Failed: " + error.message);
-    } else {
-        alert("Identity Updated 👌");
-        location.reload(); // Refresh to show your new Ghost Alias
-    }
-};
-    
     // 3. HELP & CREDITS (Restored Phestone's Jan 16 Quote)
     window.openHelp = () => {
         const helpHTML = `

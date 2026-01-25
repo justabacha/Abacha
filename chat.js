@@ -172,24 +172,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // --- 6. SEND LOGIC (THE 🚀 FIX) ---
         const handleSend = async () => {
-            const message = msgInput.value.trim();
-            if (message !== "" && friendID) {
-                let content = message;
-                if (replyingTo) { 
-                    content = `↳ [Replying to ${replyingTo.sender}: ${replyingTo.content}]\n${message}`; 
-                    cancelReply(); 
-                }
-                const { error } = await supabaseClient.from('messages').insert([{ 
-                    content: content, 
-                    sender_id: user.id, 
-                    receiver_id: friendID,
-                    sender_email: user.email 
-                }]);
-                if (error) alert("Error: " + error.message);
-                else msgInput.value = ""; 
-            }
-        };
+    const message = msgInput.value.trim();
+    
+    // 1. PULL THE LIMIT FROM SETTINGS
+    // We grab the choice the user made in your settings (stored in localStorage)
+    const userTimeLimit = localStorage.getItem('chat_vanish_limit') || 720; 
 
+    if (message !== "" && friendID) {
+        let content = message;
+        if (replyingTo) { 
+            content = `↳ [Replying to ${replyingTo.sender}: ${replyingTo.content}]\n${message}`; 
+            cancelReply(); 
+        }
+
+        // 2. ATTACH THE TIME TO THE MESSAGE
+        const { error } = await supabaseClient.from('messages').insert([{ 
+            content: content, 
+            sender_id: user.id, 
+            receiver_id: friendID,
+            sender_email: user.email,
+            vanish_hours: parseInt(userTimeLimit) // This sends the 24 or 720 value
+        }]);
+
+        if (error) alert("Error: " + error.message);
+        else msgInput.value = ""; 
+    }
+};
+        
         if (sendBtn) {
             sendBtn.onclick = handleSend;
             msgInput.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };

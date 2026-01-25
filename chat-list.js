@@ -1,30 +1,35 @@
-// Add 'friendObj' as a parameter so we have the data IMMEDIATELY
 window.viewCard = async function(friendId, friendObj = {}) {
     const menu = document.getElementById('ghost-command-overlay');
     if(menu) menu.style.display = 'none';
 
-    // 1. USE LOCAL DATA FIRST (No more "Ghost User" or "Anonymous")
+    // 1. DATA FROM LIST (Name & Avatar)
     const displayName = friendObj.username || "Ghost";
     const displayAvatar = friendObj.avatar_url || 'default.png';
     
-    // 2. Fetch extra details (City/Bio) from Supabase in the background
-    let displayCity = 'Ghost Zone';
+    // 2. DATA FROM DATABASE (City & Bio)
+    let displayCity = 'Ghost Zone'; // Default if not found
     let displayBio = 'Roaming the ghost layer...';
     let secureContact = "+254👻👻👻👻👻";
 
     try {
         const { data: p } = await supabaseClient
             .from('profiles')
-            .select('city, bio, phone_number') 
+            .select('*') // Pull everything to be safe
             .eq('id', friendId)
             .maybeSingle();
 
         if (p) {
-            if (p.city) displayCity = p.city;
-            if (p.bio) displayBio = p.bio;
-            if (p.phone_number) secureContact = p.phone_number.substring(0, 4) + "👻👻👻👻👻";
+            // Check multiple possible column names
+            displayCity = p.city || p.location || 'Ghost Zone'; 
+            displayBio = p.bio || p.bio_quote || 'Roaming the ghost layer...';
+            
+            if (p.phone_number) {
+                secureContact = p.phone_number.substring(0, 4) + "👻👻👻👻👻";
+            }
         }
-    } catch (e) { console.log("Supabase fetch skipped, using defaults."); }
+    } catch (e) { 
+        console.log("Database fetch failed, staying in Ghost Zone."); 
+    }
 
     const displayID = `ja${Math.floor(10000 + Math.random() * 90000)}-aba`;
 

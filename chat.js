@@ -132,9 +132,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     clonedBubble.style.margin = '0 0 25px 0'; // Bottom margin for the menu tile
     
     menuContainer.appendChild(clonedBubble);
-    
-};
-        
+     
             const isPinned = currentPins.some(p => p.id === msg.id);
             
             const tile = document.createElement('div');

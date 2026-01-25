@@ -85,8 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     };
-
-    // --- FLOATING COMMANDS MENU ---
+// --- 1. FLOATING GHOST MENU ---
 window.showGhostMenu = (friendId, friendshipId, friendObj) => {
     let overlay = document.getElementById('ghost-command-overlay');
     if (!overlay) {
@@ -103,17 +102,16 @@ window.showGhostMenu = (friendId, friendshipId, friendObj) => {
                 <div style="width: 70px; height: 70px; border-radius: 20px; border: 2px solid #32D74B; background-image: url(${friendObj.avatar_url || 'default.png'}); background-size: cover; margin-right: 15px;"></div>
                 <div style="font-weight: bold; font-size: 16px; color: white;">Just•Abacha😎</div>
             </div>
-
             <button class="floating-btn" onclick="viewCard('${friendObj.id}')">👤 Profile Card</button>
             <button class="floating-btn" onclick="togglePin('${friendId}')">${isPinned ? '📍 Unpin' : '📌 Pin Chat'}</button>
             <button class="floating-btn" onclick="toggleLock('${friendId}', '${friendObj.avatar_url}')">${isLocked ? '🔓 Remove PIN' : '🔒 Lock Tunnel'}</button>
-            <button class="floating-btn btn-danger" onclick="deleteChatPermanently('${friendshipId}', '${friendId}')" style="border-color:#FF3B30; color:#FF3B30;">🗑️ Burn Chat</button>
+            <button class="floating-btn btn-ghost-yes" onclick="deleteChatPermanently('${friendshipId}', '${friendId}')">🗑️ Burn Chat</button>
             <button class="btn-cancel" onclick="document.getElementById('ghost-command-overlay').style.display='none'" style="background:none; border:none; color:rgba(255,255,255,0.5); margin-top:10px;">Dismiss</button>
         </div>
     `;
 };
 
-// --- GHOST PIN PROMPT (Dots to Ghosts) ---
+// --- 2. DYNAMIC GHOST PIN LAYER ---
 window.showPinLayer = (id, avatar, mode) => {
     let layer = document.getElementById('pin-layer-overlay');
     if (!layer) {
@@ -126,84 +124,86 @@ window.showPinLayer = (id, avatar, mode) => {
     const renderPinContent = () => {
         const instr = mode === "set" ? "set ur vibe lock" : "confirm ur vibe";
         const ghostDisplay = currentPin.split('').map(() => '👻').join('') + '•'.repeat(4 - currentPin.length);
-        
         layer.innerHTML = `
             <div class="floating-menu-container">
                 <div style="display: flex; align-items: center; width: 100%; margin-bottom: 10px; padding-left: 10px;">
                     <div style="width: 70px; height: 70px; border-radius: 20px; border: 2px solid #32D74B; background-image: url(${avatar}); background-size: cover; margin-right: 15px;"></div>
                     <div style="font-weight: bold; font-size: 16px; color: white;">Just•Abacha😎</div>
                 </div>
-                
                 <p style="color:white; font-size:13px; opacity:0.7;">${instr}</p>
                 <div class="ghost-pin-display" id="ghost-visual-pin">${ghostDisplay}</div>
-                
-                <input type="number" id="hidden-pin-input" pattern="[0-9]*" inputmode="numeric" maxlength="4" autofocus 
-                       style="position:absolute; opacity:0; pointer-events:none;">
-                
-                <button class="floating-btn" id="confirm-pin-btn" style="background:#32D74B; color:black;">${mode === 'set' ? 'Confirm Lock' : 'Check-in'}</button>
+                <input type="number" id="hidden-pin-input" pattern="[0-9]*" inputmode="numeric" maxlength="4" autofocus style="position:absolute; opacity:0; pointer-events:none;">
+                <button class="floating-btn" id="confirm-pin-btn" style="background:#32D74B; color:black;">Check-in</button>
             </div>
         `;
-
         const input = document.getElementById('hidden-pin-input');
         input.focus();
         input.addEventListener('input', (e) => {
             currentPin = e.target.value.substring(0, 4);
             document.getElementById('ghost-visual-pin').innerText = currentPin.split('').map(() => '👻').join('') + '•'.repeat(4 - currentPin.length);
         });
-
         document.getElementById('confirm-pin-btn').onclick = () => processPinAction(id, mode, currentPin);
     };
-
     renderPinContent();
 };
 
 window.processPinAction = (id, mode, pinVal) => {
     if (pinVal.length !== 4) return;
-    if (mode === "set") {
-        localStorage.setItem(`locked_${id}`, pinVal);
-        location.reload();
-    } else {
+    if (mode === "set") { localStorage.setItem(`locked_${id}`, pinVal); location.reload(); }
+    else {
         if (pinVal === localStorage.getItem(`locked_${id}`)) {
             mode === "unlock" ? (localStorage.removeItem(`locked_${id}`), location.reload()) : (window.location.href = `chat.html?friend_id=${id}`);
-        } else {
-            alert("Vibe Denied ☠️");
-        }
+        } else { alert("Vibe Denied ☠️"); }
     }
 };
-            
-    // --- UTILITIES ---
-    window.togglePin = (id) => {
-        let pins = JSON.parse(localStorage.getItem('pinned_ghosts') || '[]');
-        pins.includes(id) ? pins = pins.filter(p => p !== id) : pins.push(id);
-        localStorage.setItem('pinned_ghosts', JSON.stringify(pins));
+
+// --- 3. UPDATED UTILITIES ---
+window.togglePin = (id) => {
+    let pins = JSON.parse(localStorage.getItem('pinned_ghosts') || '[]');
+    pins.includes(id) ? pins = pins.filter(p => p !== id) : pins.push(id);
+    localStorage.setItem('pinned_ghosts', JSON.stringify(pins));
+    location.reload();
+};
+
+window.toggleLock = (id, avatar) => {
+    const menu = document.getElementById('ghost-command-overlay');
+    if(menu) menu.style.display = 'none';
+    const mode = localStorage.getItem(`locked_${id}`) ? "unlock" : "set";
+    showPinLayer(id, avatar, mode);
+};
+
+window.handleEntry = async (id, avatar) => {
+    if (localStorage.getItem(`locked_${id}`)) showPinLayer(id, avatar, "enter");
+    else window.location.href = `chat.html?friend_id=${id}`;
+};
+
+window.deleteChatPermanently = (fId, friendUid) => {
+    const menu = document.getElementById('ghost-command-overlay');
+    if(menu) menu.style.display = 'none';
+    let layer = document.getElementById('delete-layer-overlay');
+    if (!layer) {
+        layer = document.createElement('div'); layer.id = 'delete-layer-overlay'; layer.className = 'ghost-menu-overlay';
+        document.body.appendChild(layer);
+    }
+    layer.style.display = 'flex';
+    layer.innerHTML = `
+        <div class="floating-menu-container">
+            <div style="display: flex; align-items: center; width: 100%; margin-bottom: 20px; padding-left: 10px;">
+                <div style="width: 60px; height: 60px; border-radius: 15px; border: 2px solid #FF3B30; background-color: #000; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 24px;">🗑️</div>
+                <div style="font-weight: bold; font-size: 16px; color: white;">Just•Abacha😎</div>
+            </div>
+            <p style="color:white; text-align:center; font-size:14px; margin-bottom: 20px; padding: 0 10px;">Delete this chat with all its messages?</p>
+            <button class="floating-btn btn-ghost-yes" id="confirm-delete-btn">Burn Everything 🔥</button>
+            <button class="floating-btn btn-ghost-cancel" onclick="document.getElementById('delete-layer-overlay').style.display='none'">Cancel</button>
+        </div>
+    `;
+    document.getElementById('confirm-delete-btn').onclick = async () => {
+        await supabaseClient.from('messages').delete().or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendUid}),and(sender_id.eq.${friendUid},receiver_id.eq.${user.id})`);
+        await supabaseClient.from('friendships').delete().eq('id', fId);
         location.reload();
     };
-
-    window.toggleLock = (id, avatar) => {
-        document.getElementById('ghost-command-overlay').style.display = 'none';
-        const mode = localStorage.getItem(`locked_${id}`) ? "unlock" : "set";
-        showPinLayer(id, avatar, mode);
-    };
-
-    window.handleEntry = async (id, avatar) => {
-        if (localStorage.getItem(`locked_${id}`)) showPinLayer(id, avatar, "enter");
-        else window.location.href = `chat.html?friend_id=${id}`;
-    };
-
-    window.deleteChatPermanently = async (fId, friendUid) => {
-        if (confirm("Delete this chat and all messages?")) {
-            await supabaseClient.from('messages').delete().or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendUid}),and(sender_id.eq.${friendUid},receiver_id.eq.${user.id})`);
-            await supabaseClient.from('friendships').delete().eq('id', fId);
-            location.reload();
-        }
-    };
-
-    const addLongPress = (el, fid, fsid, fobj) => {
-        let t;
-        el.addEventListener('touchstart', () => t = setTimeout(() => showGhostMenu(fid, fsid, fobj), 700));
-        el.addEventListener('touchend', () => clearTimeout(t));
-    };
-
+};
+                
     window.deleteChatPermanently = (fId, friendUid) => {
     // Hide the command menu first
     const menu = document.getElementById('ghost-command-overlay');

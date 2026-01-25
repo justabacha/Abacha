@@ -241,3 +241,11 @@
 
 .divider { opacity: 0.1; margin: 15px 0; }
     
+/* The Active Selection Glow */
+.time-tile.active-tile {
+    border: 2px solid #32D74B !important;
+    background: rgba(50, 215, 75, 0.15) !important;
+    box-shadow: 0 0 15px rgba(50, 215, 75, 0.4);
+    color: #32D74B;
+    font-weight: bold;
+}

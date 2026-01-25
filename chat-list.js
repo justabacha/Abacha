@@ -3,19 +3,20 @@ window.viewCard = async function(friendId) {
     if(menu) menu.style.display = 'none';
 
     try {
-        // We fetch the profile
+        // Fetching with the exact names from your Settings Page setup
         const { data: p, error } = await supabaseClient
             .from('profiles')
-            .select('username, avatar_url, city, ghost_number, bio_quote')
+            .select('username, avatar_url, city, bio') 
             .eq('id', friendId)
             .maybeSingle();
 
-        // If the profile doesn't exist at all, we use the friendObj data we already have
+        // Safe Defaults if the user hasn't filled their settings yet
         const displayName = p?.username || "Ghost";
         const displayAvatar = p?.avatar_url || 'default.png';
         const displayCity = p?.city || 'Ghost Zone';
-        const displayID = p?.ghost_number || '####';
-        const displayQuote = p?.bio_quote || 'Roaming the ghost layer...';
+        const displayBio = p?.bio || 'Roaming the ghost layer...';
+        // We can auto-generate a Ghost ID based on the first 4 chars of their ID if not set
+        const displayID = friendId.substring(0, 4).toUpperCase();
 
         let layer = document.getElementById('profile-card-overlay');
         if (!layer) {
@@ -27,7 +28,8 @@ window.viewCard = async function(friendId) {
         layer.style.display = 'flex';
 
         layer.innerHTML = `
-            <div class="floating-menu-container" style="width: 320px; background: rgba(0,0,0,0.9); padding: 30px; border-radius: 40px; border: 1px solid #32D74B; backdrop-filter: blur(20px); box-shadow: 0 0 30px rgba(50, 215, 75, 0.2);">
+            <div class="floating-menu-container" style="width: 320px; background: rgba(0,0,0,0.9); padding: 30px; border-radius: 40px; border: 1px solid #32D74B; backdrop-filter: blur(25px); box-shadow: 0 0 30px rgba(50, 215, 75, 0.2);">
+                
                 <div style="width: 90px; height: 90px; border-radius: 25px; border: 2px solid #32D74B; background-image: url(${displayAvatar}); background-size: cover; background-position: center; margin: 0 auto 15px auto;"></div>
                 
                 <div style="text-align: center; margin-bottom: 20px;">
@@ -38,31 +40,31 @@ window.viewCard = async function(friendId) {
                 <div style="width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
                     <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
                         <span style="display: block; font-size: 9px; color: #32D74B; text-transform: uppercase;">Location</span>
-                        <span style="color: white; font-size: 12px;">${displayCity}</span>
+                        <span style="color: white; font-size: 12px; font-weight: bold;">${displayCity}</span>
                     </div>
                     <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
                         <span style="display: block; font-size: 9px; color: #32D74B; text-transform: uppercase;">Ghost ID</span>
-                        <span style="color: white; font-size: 12px;">#${displayID}</span>
+                        <span style="color: white; font-size: 12px; font-weight: bold;">#${displayID}</span>
                     </div>
                 </div>
 
                 <div style="width: 100%; background: rgba(50, 215, 75, 0.1); padding: 15px; border-radius: 20px; border: 1px solid #32D74B; margin-bottom: 25px;">
-                    <p style="margin: 0; color: white; font-size: 13px; font-style: italic; text-align: center;">
-                        "${displayQuote}"
+                    <p style="margin: 0; color: white; font-size: 13px; font-style: italic; text-align: center; line-height: 1.4;">
+                        "${displayBio}"
                     </p>
                 </div>
 
-                <button class="floating-btn" onclick="document.getElementById('profile-card-overlay').style.display='none'" style="border: none; background: #32D74B; color: black; font-weight: bold; width: 100%; border-radius: 15px; padding: 12px; cursor: pointer;">Dismiss</button>
+                <button class="floating-btn" onclick="document.getElementById('profile-card-overlay').style.display='none'" style="border: none; background: #32D74B; color: black; font-weight: bold; width: 100%; border-radius: 15px; padding: 12px;">Dismiss</button>
             </div>
         `;
 
         layer.onclick = (e) => { if(e.target === layer) layer.style.display = 'none'; };
 
     } catch (err) {
-        console.error(err);
+        console.error("Card System Error:", err);
     }
 };
-                            
+
 document.addEventListener('DOMContentLoaded', async () => {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return;

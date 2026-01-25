@@ -65,6 +65,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (chatBox) {
         // --- 3. MESSAGE DISPLAY & UI ---
         const displayMessage = (msg) => {
+    const now = new Date();
+    const createdAt = new Date(msg.created_at);
+    
+    // Calculate if the message should still be visible based on user choice
+    // Let's assume 'msg.vanish_hours' is where you store their choice (1, 24, etc.)
+    const vanishLimit = msg.vanish_hours || 720; // Default to 30 days (720 hrs) if not set
+    const expiryTime = new Date(createdAt.getTime() + (vanishLimit * 60 * 60 * 1000));
+
+    if (now > expiryTime) {
+        return; // Don't even render the bubble if it's past the user's set time
+    }
+    
             const isMe = msg.sender_id === user.id || msg.sender_email === user.email;
             const bubble = document.createElement('div');
             bubble.className = `message ${isMe ? 'sent' : 'received'}`;

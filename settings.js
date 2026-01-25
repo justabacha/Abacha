@@ -90,15 +90,18 @@ window.openContact = () => {
     showGlobalModal(contactHTML);
 };
     
-    // 5. STORAGE LOGIC (Original Time Tiles Maintained)
+        // 5. STORAGE LOGIC (Line 94)
     window.openStorage = () => {
+        // Grab the current saved limit so we can highlight it
+        const currentLimit = localStorage.getItem('chat_vanish_limit') || 720;
+
         const storageHTML = `
             <div class="ghost-modal-tile large-tile">
                 <div class="modal-header">Storage Timer</div>
                 <div class="storage-options">
-                    <div class="time-tile" onclick="setPurge(24)">24 Hours</div>
-                    <div class="time-tile" onclick="setPurge(168)">7 Days</div>
-                    <div class="time-tile" onclick="setPurge(720)">30 Days</div>
+                    <div class="time-tile ${currentLimit == 24 ? 'active-tile' : ''}" onclick="setPurge(24)">24 Hours</div>
+                    <div class="time-tile ${currentLimit == 168 ? 'active-tile' : ''}" onclick="setPurge(168)">7 Days</div>
+                    <div class="time-tile ${currentLimit == 720 ? 'active-tile' : ''}" onclick="setPurge(720)">30 Days</div>
                 </div>
                 <div class="soft-red-warning">
                     ⚠️ Messages are permanently deleted from the database every 30-day cycle.
@@ -108,12 +111,18 @@ window.openContact = () => {
         `;
         showGlobalModal(storageHTML);
     };
-
-    window.setPurge = (hours) => {
+    
+        window.setPurge = (hours) => {
+        // 1. Save to LocalStorage so chat.js can read it instantly
+        localStorage.setItem('chat_vanish_limit', hours);
+        
+        // 2. Show the confirmation
         alert(`Setting locked. Your messages will now vanish from your view after ${hours} hours.`);
+        
+        // 3. Optional: Highlight the selected tile in the UI (see below)
         closeModal();
     };
-
+    
     // HELPER: GLOBAL MODAL ENGINE
     const showGlobalModal = (html) => {
         let overlay = document.getElementById('global-modal-overlay');

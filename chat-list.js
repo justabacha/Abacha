@@ -135,34 +135,55 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- 5. LONG PRESS MENU (The Ghost Style) ---
     window.showGhostMenu = (friendId, friendshipId, friendObj) => {
-        let overlay = document.getElementById('ghost-command-overlay');
-        if (!overlay) {
-            overlay = document.createElement('div'); overlay.id = 'ghost-command-overlay'; overlay.className = 'ghost-menu-overlay';
-            document.body.appendChild(overlay);
-        }
-        const isPinned = (JSON.parse(localStorage.getItem('pinned_ghosts') || '[]')).includes(friendId);
-        const isLocked = localStorage.getItem(`locked_${friendId}`);
+    let overlay = document.getElementById('ghost-command-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div'); 
+        overlay.id = 'ghost-command-overlay'; 
+        overlay.className = 'ghost-menu-overlay';
+        document.body.appendChild(overlay);
+    }
+    
+    const isPinned = (JSON.parse(localStorage.getItem('pinned_ghosts') || '[]')).includes(friendId);
+    const isLocked = localStorage.getItem(`locked_${friendId}`);
 
-        overlay.style.display = 'flex';
-        overlay.style.background = "rgba(173, 216, 230, 0.2)"; // Light blue blur
-        overlay.style.backdropFilter = "blur(15px)";
+    overlay.style.display = 'flex';
+    
+    // THE GHOST LAYER MENU BOX
+    overlay.innerHTML = `
+        <div class="menu-box" style="width: 300px; padding-top: 45px;">
+            <div style="position: absolute; top: -30px; left: -10px; width: 80px; height: 80px; border-radius: 20px; border: 3px solid #32D74B; background-image: url(${friendObj.avatar_url || 'default.png'}); background-size: cover; background-position: center; box-shadow: 0 10px 20px rgba(0,0,0,0.4); z-index: 10001;"></div>
+            
+            <div style="position: absolute; top: 15px; left: 85px; font-weight: bold; font-size: 14px; color: #32D74B; letter-spacing: 1px;">Just•Abacha😎</div>
+            <div style="position: absolute; top: 32px; left: 85px; font-size: 10px; color: rgba(255,255,255,0.5);">@${friendObj.username}</div>
 
-        overlay.innerHTML = `
-            <div class="menu-box" style="position:relative;">
-                <div style="position: absolute; top: -35px; left: -10px; width: 75px; height: 75px; border-radius: 20px; border: 2px solid #32D74B; background-image: url(${friendObj.avatar_url || 'default.png'}); background-size: cover;"></div>
-                <div style="position: absolute; top: 15px; left: 15px; font-weight: bold; font-size: 13px; color: white;">Just•Abacha😎</div>
-                <div style="margin-top: 35px; display: flex; flex-direction: column; gap: 10px;">
-                    <button onclick="viewCard('${friendObj.id}')">👤 View Card</button>
-                    <button onclick="togglePin('${friendId}')">${isPinned ? '📍 Unpin Chat' : '📌 Pin Chat'}</button>
-                    <button onclick="toggleLock('${friendId}', '${friendObj.avatar_url}')">${isLocked ? '🔓 Remove PIN' : '🔒 Lock Tunnel'}</button>
-                    <button class="btn-danger" onclick="deleteChatPermanently('${friendshipId}', '${friendId}')">🗑️ Delete Chat</button>
-                    <button class="btn-cancel" onclick="document.getElementById('ghost-command-overlay').style.display='none'">Cancel</button>
-                </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+                <button onclick="viewCard('${friendObj.id}')" style="text-align: left; padding-left: 20px;">
+                    <span style="margin-right: 10px;">👤</span> Profile Card
+                </button>
+                
+                <button onclick="togglePin('${friendId}')" style="text-align: left; padding-left: 20px; border-color: ${isPinned ? '#FFD60A' : '#32D74B'}; color: ${isPinned ? '#FFD60A' : '#32D74B'};">
+                    <span style="margin-right: 10px;">${isPinned ? '📍' : '📌'}</span> ${isPinned ? 'Unpin Ghost' : 'Pin to Top'}
+                </button>
+                
+                <button onclick="toggleLock('${friendId}', '${friendObj.avatar_url}')" style="text-align: left; padding-left: 20px; border-color: ${isLocked ? '#007AFF' : '#32D74B'}; color: ${isLocked ? '#007AFF' : '#32D74B'};">
+                    <span style="margin-right: 10px;">${isLocked ? '🔓' : '🔒'}</span> ${isLocked ? 'Open Tunnel' : 'Lock Tunnel'}
+                </button>
+
+                <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 5px 0;"></div>
+
+                <button class="btn-danger" onclick="deleteChatPermanently('${friendshipId}', '${friendId}')" style="text-align: left; padding-left: 20px;">
+                    <span style="margin-right: 10px;">🗑️</span> Burn Conversation
+                </button>
+                
+                <button class="btn-cancel" onclick="document.getElementById('ghost-command-overlay').style.display='none'">Dismiss</button>
             </div>
-        `;
-        overlay.onclick = (e) => { if(e.target === overlay) overlay.style.display = 'none'; };
-    };
+        </div>
+    `;
 
+    // Close on clicking outside the box
+    overlay.onclick = (e) => { if(e.target === overlay) overlay.style.display = 'none'; };
+};
+    
     // --- UTILITIES ---
     window.togglePin = (id) => {
         let pins = JSON.parse(localStorage.getItem('pinned_ghosts') || '[]');

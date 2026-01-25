@@ -228,6 +228,60 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.sendVibe = async (id) => { await supabaseClient.from('friendships').insert([{ sender_id: user.id, receiver_id: id, status: 'pending' }]); alert("Sent!"); };
     window.acceptVibe = async (id) => { await supabaseClient.from('friendships').update({ status: 'accepted' }).eq('id', id); location.reload(); };
 
+    window.viewCard = async (friendId) => {
+    const menu = document.getElementById('ghost-command-overlay');
+    if(menu) menu.style.display = 'none';
+
+    const { data: p, error } = await supabaseClient
+        .from('profiles')
+        .select('username, avatar_url, city, ghost_number, bio_quote')
+        .eq('id', friendId)
+        .maybeSingle();
+
+    if (error || !p) return;
+
+    let layer = document.getElementById('profile-card-overlay');
+    if (!layer) {
+        layer = document.createElement('div');
+        layer.id = 'profile-card-overlay';
+        layer.className = 'ghost-menu-overlay';
+        document.body.appendChild(layer);
+    }
+    layer.style.display = 'flex';
+
+    layer.innerHTML = `
+        <div class="floating-menu-container" style="width: 320px; background: rgba(0,0,0,0.4); padding: 30px; border-radius: 40px; border: 1px solid rgba(50, 215, 75, 0.3); backdrop-filter: blur(20px);">
+            <div style="width: 90px; height: 90px; border-radius: 25px; border: 2px solid #32D74B; background-image: url(${p.avatar_url || 'default.png'}); background-size: cover; background-position: center; margin: 0 auto 15px auto;"></div>
+            
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: white; font-size: 20px; letter-spacing: 1px;">Just•Abacha😎</h2>
+                <p style="margin: 5px 0 0 0; color: #32D74B; font-size: 14px; font-family: monospace;">~${p.username}</p>
+            </div>
+
+            <div style="width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
+                    <span style="display: block; font-size: 9px; color: #32D74B; text-transform: uppercase; margin-bottom: 4px;">Location</span>
+                    <span style="color: white; font-size: 12px; font-weight: bold;">${p.city || 'Unknown'}</span>
+                </div>
+                <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
+                    <span style="display: block; font-size: 9px; color: #32D74B; text-transform: uppercase; margin-bottom: 4px;">Ghost ID</span>
+                    <span style="color: white; font-size: 12px; font-weight: bold;">#${p.ghost_number || '0000'}</span>
+                </div>
+            </div>
+
+            <div style="width: 100%; background: rgba(50, 215, 75, 0.05); padding: 15px; border-radius: 20px; border: 1px solid rgba(50, 215, 75, 0.2); margin-bottom: 25px;">
+                <p style="margin: 0; color: white; font-size: 13px; font-style: italic; line-height: 1.5; text-align: center;">
+                    "${p.bio_quote || 'Roaming the ghost layer...'}"
+                </p>
+            </div>
+
+            <button class="floating-btn" onclick="document.getElementById('profile-card-overlay').style.display='none'" style="border: none; background: #32D74B; color: black; font-weight: bold; width: 100%;">Dismiss</button>
+        </div>
+    `;
+
+    layer.onclick = (e) => { if(e.target === layer) layer.style.display = 'none'; };
+};
+    
     Promise.all([loadPending(), loadActive()]);
 });
         

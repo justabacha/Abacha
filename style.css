@@ -133,31 +133,3 @@ body, html {
     display: block; 
     margin: 10px 15px;
 }
-/* 1. DEFAULT VARIABLES (Just•Abacha) */
-:root {
-    --bg-color: #000;
-    --accent: #32D74B; /* Ghost Green */
-    --bubble-sent: rgba(50, 215, 75, 0.2);
-    --bubble-border: rgba(255, 255, 255, 0.1);
-    --glass: rgba(255, 255, 255, 0.1);
-    --text: #ffffff;
-}
-
-/* 2. THE GHOST THEME (The "Peng" Option 3) */
-[data-theme="ghost"] {
-    --bg-color: #000000;
-    --accent: #007AFF; /* Electric Blue */
-    --bubble-sent: transparent; /* Hollow look */
-    --bubble-border: rgba(0, 122, 255, 0.6); /* Blue Outline */
-    --glass: rgba(255, 255, 255, 0.05);
-    --text: #ffffff;
-}
-
-/* 3. ABACHA-v1.0 (The Green Blender) */
-[data-theme="abacha-v1"] {
-    --bg-color: #041a08;
-    --accent: #00ff40;
-    --bubble-sent: rgba(0, 255, 64, 0.3);
-    --bubble-border: rgba(0, 255, 64, 0.5);
-    --glass: rgba(0, 40, 10, 0.4);
-    }

@@ -126,30 +126,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     const menuContainer = document.getElementById('menu-content');
     menuContainer.innerHTML = '';
 
-    // CLEAR OLD ALIGNMENT SO IT CENTERS IN THE OVERLAY
-    clonedBubble.classList.add('popped-message');
-    clonedBubble.style.alignSelf = 'center'; // Force it to the center of the screen
-    clonedBubble.style.margin = '0 0 25px 0'; // Bottom margin for the menu tile
+    // 1. Detect side
+    const isMe = msg.sender_id === user.id || msg.sender_email === user.email;
     
-    menuContainer.appendChild(clonedBubble);
-     
-            const isPinned = currentPins.some(p => p.id === msg.id);
-            
-            const tile = document.createElement('div');
-            tile.className = 'action-tile';
-            tile.innerHTML = `
-                <div class="action-item" onclick="copyToClipboard('${msg.content.replace(/'/g, "\\'")}')">Copy <span>📑</span></div>
-                <div class="action-item" onclick="setReply('${msg.sender_email || 'Ghost'}', '${msg.content.replace(/'/g, "\\'")}')">Reply <span>✍️</span></div>
-                <div class="action-item">Forward <span>📤</span></div>
-                <div class="action-item" onclick="${isPinned ? `unpinMessage('${msg.id}')` : `openPinModal('${msg.id}', '${msg.content.replace(/'/g, "\\'")}')`}">
-                    ${isPinned ? 'Unpin' : 'Pin'} <span>📌</span>
-                </div>
-                <div class="action-item delete" onclick="deleteMessage('${msg.id}')">Delete <span>🗑️</span></div>
-            `;
-            menuContainer.appendChild(tile);
-            overlay.style.display = 'flex';
-        };
+    // 2. Align the Container itself (The "Stack")
+    menuContainer.style.display = 'flex';
+    menuContainer.style.flexDirection = 'column';
+    menuContainer.style.width = '100%';
+    menuContainer.style.padding = '0 25px'; // Padding from screen edges
+    menuContainer.style.alignItems = isMe ? 'flex-end' : 'flex-start';
 
+    // 3. Style the Bubble
+    clonedBubble.classList.add('popped-message');
+    clonedBubble.style.margin = '0';
+    clonedBubble.style.marginBottom = '15px';
+    // Ensure it doesn't have the "wrapper" avatar inside the menu for a cleaner look
+    const avatarInClone = clonedBubble.querySelector('.avatar');
+    if(avatarInClone) avatarInClone.remove();
+
+    // 4. Build the Tile (exactly as you had it)
+    const isPinned = currentPins.some(p => p.id === msg.id);
+    const tile = document.createElement('div');
+    tile.className = 'action-tile';
+    tile.innerHTML = `
+        <div class="action-item" onclick="copyToClipboard('${msg.content.replace(/'/g, "\\'")}')">Copy <span>📑</span></div>
+        <div class="action-item" onclick="setReply('${msg.sender_email || 'Ghost'}', '${msg.content.replace(/'/g, "\\'")}')">Reply <span>✍️</span></div>
+        <div class="action-item">Forward <span>📤</span></div>
+        <div class="action-item" onclick="${isPinned ? `unpinMessage('${msg.id}')` : `openPinModal('${msg.id}', '${msg.content.replace(/'/g, "\\'")}')`}">
+            ${isPinned ? 'Unpin' : 'Pin'} <span>📌</span>
+        </div>
+        <div class="action-item delete" onclick="deleteMessage('${msg.id}')">Delete <span>🗑️</span></div>
+    `;
+
+    menuContainer.appendChild(clonedBubble);
+    menuContainer.appendChild(tile);
+    overlay.style.display = 'flex';
+};
+        
         // --- 5. PINNING SYSTEM ---
         window.openPinModal = (id, content) => {
             if (currentPins.length >= 2) {

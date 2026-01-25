@@ -114,38 +114,42 @@ window.openContact = () => {
 
  // 1. THE TRIGGER (What happens when you click a time tile)
 window.setPurge = (hours) => {
-    let confirmOverlay = document.getElementById('purge-confirm-overlay');
-    if (!confirmOverlay) {
-        confirmOverlay = document.createElement('div');
-        confirmOverlay.id = 'purge-confirm-overlay';
-        confirmOverlay.className = 'ghost-modal-overlay';
-        confirmOverlay.style.zIndex = "3000";
-        document.body.appendChild(confirmOverlay);
-    }
+    // 1. Kill any existing overlays first to prevent "stacking" lag
+    const oldOverlay = document.getElementById('purge-confirm-overlay');
+    if (oldOverlay) oldOverlay.remove();
 
-    confirmOverlay.style.display = 'flex';
+    // 2. Create the new one
+    const confirmOverlay = document.createElement('div');
+    confirmOverlay.id = 'purge-confirm-overlay';
+    
+    // Use a simpler class or direct styles for speed
+    confirmOverlay.style = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.7); backdrop-filter: blur(15px);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 9999; opacity: 1; transition: opacity 0.2s ease;
+    `;
+
     confirmOverlay.innerHTML = `
-        <div class="ghost-modal-tile" style="max-width: 320px; border: 1px solid rgba(255,255,255,0.1); background: rgba(15,15,15,0.9); backdrop-filter: blur(25px); padding: 25px; border-radius: 25px;">
-            <div style="font-weight: 800; font-size: 14px; color: #FFFFFF; opacity: 0.6; margin-bottom: 15px; text-align: left; letter-spacing: 1px;">
+        <div class="ghost-modal-tile" style="width: 85%; max-width: 320px; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+            <div style="font-weight: 800; font-size: 14px; color: #32D74B; margin-bottom: 15px; text-align: left;">
                 Just•Abacha😎
             </div>
 
-            <p style="color: white; font-size: 16px; line-height: 1.5; text-align: left; margin-bottom: 25px; font-weight: 500;">
-                Confirming the Ghost Protocol. Messages will vanish after <b>${hours === 720 ? '30 Days' : hours + ' Hours'}</b>.
+            <p style="color: white; font-size: 16px; text-align: left; margin-bottom: 25px;">
+                Ghost Protocol: Set messages to vanish after <b>${hours} Hours</b>?
             </p>
 
-            <div style="display: flex; gap: 10px; width: 100%;">
-                <button onclick="window.executePurgeSetting(${hours})" style="flex: 1; background: rgba(255, 69, 58, 0.15); color: #FF453A; border: 1px solid rgba(255, 69, 58, 0.3); padding: 14px; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 14px;">
-                    Confirm
-                </button>
-                <button onclick="document.getElementById('purge-confirm-overlay').style.display='none'" style="flex: 1; background: rgba(50, 215, 75, 0.15); color: #32D74B; border: 1px solid rgba(50, 215, 75, 0.3); padding: 14px; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 14px;">
-                    Cancel
-                </button>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="window.executePurgeSetting(${hours})" style="flex: 1; background: rgba(255, 69, 58, 0.2); color: #FF453A; border: 1px solid #FF453A; padding: 15px; border-radius: 15px; font-weight: bold;">Confirm</button>
+                <button onclick="this.closest('#purge-confirm-overlay').remove()" style="flex: 1; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 15px; border-radius: 15px;">Cancel</button>
             </div>
         </div>
     `;
-};
 
+    document.body.appendChild(confirmOverlay);
+};
+    
 // 2. THE EXECUTION (What happens when you hit Red Confirm)
 window.executePurgeSetting = (hours) => {
     // Save to memory for chat.js [cite: 3, 2026-01-25]

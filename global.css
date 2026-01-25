@@ -1,0 +1,33 @@
+/* THE ACCENT REPOSITORY */
+:root {
+    /* Default: Just•Abacha */
+    --bg-color: #000;
+    --accent: #32D74B;
+    --bubble-sent: rgba(50, 215, 75, 0.2);
+    --bubble-border: rgba(255, 255, 255, 0.1);
+    --main-text: #ffffff;
+    --bg-image: var(--user-wallpaper, none);
+}
+
+/* THE GHOST VIBE (Option 3 - Peng) */
+[data-theme="ghost"] {
+    --bg-color: #000;
+    --accent: #007AFF; /* Electric Blue */
+    --bubble-sent: transparent;
+    --bubble-border: rgba(0, 122, 255, 0.6); /* Blue Outline */
+}
+
+/* Apply variables to the body */
+body {
+    background-color: var(--bg-color);
+    background-image: var(--bg-image);
+    background-size: cover;
+    background-attachment: fixed;
+    color: var(--main-text);
+}
+
+/* Update your chat bubbles to use variables */
+.message.sent {
+    background: var(--bubble-sent);
+    border: 1px solid var(--bubble-border);
+}

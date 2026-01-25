@@ -101,3 +101,38 @@ body { margin: 0; font-family: -apple-system, system-ui, sans-serif; color: whit
 .btn-cancel { border: none !important; color: #007AFF !important; margin-top: 10px; }
 .btn-confirm { background: rgba(255, 255, 255, 0.9) !important; color: #007AFF !important; border: none !important; }
 .btn-checkin { background: #32D74B !important; color: black !important; border: none !important; }
+/* Remove the solid box, keep it floating */
+.floating-menu-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 280px;
+    position: relative;
+    align-items: center;
+}
+
+.floating-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.05); /* Very faint glass */
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #32D74B;
+    font-weight: 600;
+    font-size: 16px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+}
+
+.floating-btn:active { transform: scale(0.95); }
+
+/* The Dynamic Pin Display */
+.ghost-pin-display {
+    font-size: 24px;
+    letter-spacing: 8px;
+    margin: 20px 0;
+    color: #32D74B;
+    text-shadow: 0 0 10px rgba(50, 215, 75, 0.5);
+}

@@ -229,3 +229,22 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 .action-item:last-child { border: none; }
 .action-item.delete { color: #FF3B30; }
             
+/* KILL THE BLUE BOX ON BUTTONS */
+button, .action-item, .input-tile {
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+}
+
+/* FIX THE POPPED MESSAGE MARGINS */
+.popped-message { 
+    transform: scale(1.05); /* Slightly smaller scale so it doesn't hit walls */
+    margin-bottom: 30px; 
+    box-shadow: 0 15px 40px rgba(0,0,0,0.6); 
+    max-width: 80% !important; /* Forces it away from the side walls */
+    z-index: 100001;
+}
+
+/* ADD PADDING TO THE OVERLAY SO IT CAN'T TOUCH EDGES */
+#chat-overlay {
+    padding: 0 25px; /* Keeps everything away from the phone's physical edges */
+                 }

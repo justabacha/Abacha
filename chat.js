@@ -63,33 +63,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     syncReceiverHeader(); // Add this call
     
     if (chatBox) {
-        // --- 3. MESSAGE DISPLAY & UI ---
-        const displayMessage = (msg) => {
-    const now = new Date();
-    const createdAt = new Date(msg.created_at);
-    
-    // Calculate if the message should still be visible based on user choice
-    // Let's assume 'msg.vanish_hours' is where you store their choice (1, 24, etc.)
-    const vanishLimit = msg.vanish_hours || 720; // Default to 30 days (720 hrs) if not set
-    const expiryTime = new Date(createdAt.getTime() + (vanishLimit * 60 * 60 * 1000));
+                // --- 3. MESSAGE DISPLAY & UI (GHOST SURGERY) ---
+        const displayMessage = async (msg) => {
+            const now = new Date();
+            const createdAt = new Date(msg.created_at);
+            const vanishLimit = msg.vanish_hours || 720; 
+            const expiryTime = new Date(createdAt.getTime() + (vanishLimit * 60 * 60 * 1000));
 
-    if (now > expiryTime) {
-        return; // Don't even render the bubble if it's past the user's set time
-    }
-    
+            if (now > expiryTime) return; 
+
             const isMe = msg.sender_id === user.id || msg.sender_email === user.email;
-            const bubble = document.createElement('div');
-            bubble.className = `message ${isMe ? 'sent' : 'received'}`;
+            
+            // 1. Create the Phesty-style Wrapper
+            const wrapper = document.createElement('div');
+            wrapper.className = `msg-wrapper ${isMe ? 'user-wrapper' : 'ai-wrapper'}`;
+            wrapper.style.display = 'flex';
+            wrapper.style.alignItems = 'flex-end';
+            wrapper.style.gap = '10px';
+            wrapper.style.marginBottom = '12px';
+            if (isMe) wrapper.style.alignSelf = 'flex-end';
 
-            if (msg.content.includes("↳ [Replying to")) {
-                const parts = msg.content.split(']\n');
-                const replyHeader = parts[0].replace('↳ [', '');
-                const actualMessage = parts[1] || "";
-                bubble.innerHTML = `<div class="reply-quote">${replyHeader}</div><div>${actualMessage}</div>`;
-            } else {
-                bubble.innerText = msg.content;
-            }
+            // 2. Fetch the Correct Avatar for this specific bubble
+            const { data: senderProfile } = await supabaseClient
+                .from('profiles')
+                .select('avatar_url')
+                .eq('id', msg.sender_id)
+                .maybeSingle();
 
+            const avatarImg = senderProfile?.avatar_url || 'https://i.postimg.cc/rpD4fgxR/IMG-5898-2.jpg';
+
+            // 3. Build the Bubble with the Phesty HTML structure
+            wrapper.innerHTML = `
+                <img src="${avatarImg}" class="avatar" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover;">
+                <div class="message ${isMe ? 'sent' : 'received'}" style="margin: 0;">
+                    ${msg.content.includes("↳ [Replying to") 
+                        ? `<div class="reply-quote">${msg.content.split(']\n')[0].replace('↳ [', '')}</div><div>${msg.content.split(']\n')[1] || ""}</div>`
+                        : `<div>${msg.content}</div>`
+                    }
+                </div>
+            `;
+
+            const bubble = wrapper.querySelector('.message');
+
+            // 4. Preserve Long-Press & Context Menu Logic
             let pressTimer;
             bubble.addEventListener('touchstart', () => {
                 pressTimer = setTimeout(() => showActionMenu(msg, bubble.cloneNode(true)), 600);
@@ -100,10 +116,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showActionMenu(msg, bubble.cloneNode(true));
             };
 
-            chatBox.appendChild(bubble);
+            chatBox.appendChild(wrapper);
             chatBox.scrollTop = chatBox.scrollHeight;
         };
-
+        
         // --- 4. ACTION MENUS (PIN/DELETE/REPLY) ---
         window.showActionMenu = (msg, clonedBubble) => {
             const overlay = document.getElementById('chat-overlay');

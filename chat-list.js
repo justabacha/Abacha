@@ -176,45 +176,64 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // --- 4. FLOATING GHOST LAYERS ---
-window.showGhostMenu = (friendObj) => {
+window.showGhostMenu = (friendId, friendshipId, friendObj) => {
     let overlay = document.getElementById('ghost-command-overlay');
     if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'ghost-command-overlay';
+        overlay = document.createElement('div'); 
+        overlay.id = 'ghost-command-overlay'; 
         overlay.className = 'ghost-menu-overlay';
         document.body.appendChild(overlay);
     }
 
-    overlay.style.display = 'flex';
+    // Keep your logic for Pin and Lock status
+    const isPinned = (JSON.parse(localStorage.getItem('pinned_ghosts') || '[]')).includes(friendId);
+    const isLocked = localStorage.getItem(`locked_${friendId}`);
 
-    // We use a container that lets us pin the title to the top left
+    overlay.style.display = 'flex';
     overlay.innerHTML = `
         <div class="menu-wrapper" style="width: 100%; height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;">
             
-            <div style="position: absolute; top: 40px; left: 30px; font-weight: 800; font-size: 18px; color: #FFFFFF; text-shadow: 0 0 10px rgba(255,255,255,0.3);">
+            <div style="position: absolute; top: 40px; left: 30px; font-weight: 800; font-size: 18px; color: #FFFFFF; text-shadow: 0 0 10px rgba(255,255,255,0.4); letter-spacing: 1px;">
                 Just•Abacha😎
             </div>
 
-            <div style="width: 110px; height: 110px; border-radius: 35px; border: 3px solid #32D74B; background-image: url('${friendObj.avatar_url || 'default.png'}'); background-size: cover; background-position: center; margin-bottom: 40px; box-shadow: 0 0 30px rgba(50, 215, 75, 0.3);"></div>
-
-            <div style="width: 100%; max-width: 300px; display: flex; flex-direction: column; gap: 15px;">
+            <div class="floating-menu-container" style="display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 320px;">
                 
-                <button class="floating-btn" onclick='viewCard("${friendObj.id}", ${JSON.stringify(friendObj).replace(/'/g, "&apos;")})'>
-                   👤 Profile Card
+                <div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-bottom: 30px;">
+                    <div style="width: 100px; height: 100px; border-radius: 30px; border: 3px solid #32D74B; background-image: url(${friendObj.avatar_url || 'default.png'}); background-size: cover; background-position: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);"></div>
+                    <div style="margin-top: 15px; text-align: center;">
+                        <div style="font-size: 14px; color: #32D74B; font-weight: 900; letter-spacing: 1px;">~${friendObj.username}</div>
+                    </div>
+                </div>
+
+                <div style="width: 100%; display: flex; flex-direction: column; gap: 12px;">
+                    <button class="floating-btn" onclick='viewCard("${friendId}", ${JSON.stringify(friendObj).replace(/'/g, "&apos;")})'>
+                        👤 Profile Card
+                    </button>
+
+                    <button class="floating-btn" onclick="togglePin('${friendId}')">
+                        ${isPinned ? '📍 Unpin' : '📌 Pin Chat'}
+                    </button>
+
+                    <button class="floating-btn" onclick="toggleLock('${friendId}', '${friendObj.avatar_url}')">
+                        ${isLocked ? '🔓 Remove PIN' : '🔒 Lock Tunnel'}
+                    </button>
+
+                    <button class="floating-btn btn-ghost-yes" onclick="deleteChatPermanently('${friendshipId}', '${friendId}')" style="background: rgba(255, 69, 58, 0.2); color: #FF453A; border: 1px solid rgba(255, 69, 58, 0.3);">
+                        🗑️ Burn Chat
+                    </button>
+                </div>
+                
+                <button class="btn-cancel" onclick="document.getElementById('ghost-command-overlay').style.display='none'" style="background:none; border:none; color:rgba(255,255,255,0.6); margin-top:25px; cursor:pointer; font-weight: 600;">
+                    Dismiss
                 </button>
-
-                <button class="floating-btn" style="color: #32D74B;">📌 Pin Chat</button>
-                <button class="floating-btn" style="color: #FFD60A;">🔒 Lock Tunnel</button>
-                <button class="floating-btn" style="background: rgba(255, 69, 58, 0.2); color: #FF453A; border: 1px solid rgba(255, 69, 58, 0.3);">🗑️ Burn Chat</button>
             </div>
-
-            <button onclick="document.getElementById('ghost-command-overlay').style.display='none'" style="margin-top: 30px; background: none; border: none; color: #007AFF; font-weight: 600; cursor: pointer;">Dismiss</button>
         </div>
     `;
 
     overlay.onclick = (e) => { if (e.target === overlay) overlay.style.display = 'none'; };
 };
-    
+
     window.showPinLayer = (id, avatar, mode) => {
         let layer = document.getElementById('pin-layer-overlay');
         if (!layer) {

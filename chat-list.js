@@ -204,12 +204,44 @@ window.processPinAction = (id, mode, pinVal) => {
         el.addEventListener('touchend', () => clearTimeout(t));
     };
 
-    // --- SEARCH ---
-    const searchInput = document.getElementById('search-ghost');
-    if (searchInput) {
-        searchInput.addEventListener('input', async (e) => {
-            const term = e.target.value.trim();
-            const results = document.getElementById('search-results');
+    window.deleteChatPermanently = (fId, friendUid) => {
+    // Hide the command menu first
+    const menu = document.getElementById('ghost-command-overlay');
+    if(menu) menu.style.display = 'none';
+
+    let layer = document.getElementById('delete-layer-overlay');
+    if (!layer) {
+        layer = document.createElement('div'); 
+        layer.id = 'delete-layer-overlay'; 
+        layer.className = 'ghost-menu-overlay';
+        document.body.appendChild(layer);
+    }
+    layer.style.display = 'flex';
+
+    layer.innerHTML = `
+        <div class="floating-menu-container">
+            <div style="display: flex; align-items: center; width: 100%; margin-bottom: 20px; padding-left: 10px;">
+                <div style="width: 60px; height: 60px; border-radius: 15px; border: 2px solid #FF3B30; background-color: #000; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 24px;">🗑️</div>
+                <div style="font-weight: bold; font-size: 16px; color: white;">Just•Abacha😎</div>
+            </div>
+
+            <p style="color:white; text-align:center; font-size:14px; margin-bottom: 20px; padding: 0 10px; line-height:1.4;">
+                Delete this chat with all its messages? This action is permanent.
+            </p>
+
+            <button class="floating-btn btn-ghost-yes" id="confirm-delete-btn">Burn Everything 🔥</button>
+            <button class="floating-btn btn-ghost-cancel" onclick="document.getElementById('delete-layer-overlay').style.display='none'">Cancel</button>
+        </div>
+    `;
+
+    document.getElementById('confirm-delete-btn').onclick = async () => {
+        // Execute the deletion in Supabase
+        await supabaseClient.from('messages').delete().or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendUid}),and(sender_id.eq.${friendUid},receiver_id.eq.${user.id})`);
+        await supabaseClient.from('friendships').delete().eq('id', fId);
+        location.reload();
+    };
+};
+    
             if (term.length < 2) { results.innerHTML = ''; return; }
             const { data: ghosts } = await supabaseClient.from('profiles').select('id, username, avatar_url').ilike('username', `%${term}%`).neq('id', user.id).limit(5);
             results.innerHTML = '';

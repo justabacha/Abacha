@@ -1,70 +1,68 @@
-// --- FORCE GLOBAL VIEW CARD ---
 window.viewCard = async function(friendId) {
-    // 1. Close the previous menu immediately
     const menu = document.getElementById('ghost-command-overlay');
     if(menu) menu.style.display = 'none';
 
-    // 2. Try to fetch the data
     try {
+        // We fetch the profile
         const { data: p, error } = await supabaseClient
             .from('profiles')
             .select('username, avatar_url, city, ghost_number, bio_quote')
             .eq('id', friendId)
             .maybeSingle();
 
-        if (error || !p) {
-            alert("Vibe check failed: User data not found.");
-            return;
-        }
+        // If the profile doesn't exist at all, we use the friendObj data we already have
+        const displayName = p?.username || "Ghost";
+        const displayAvatar = p?.avatar_url || 'default.png';
+        const displayCity = p?.city || 'Ghost Zone';
+        const displayID = p?.ghost_number || '####';
+        const displayQuote = p?.bio_quote || 'Roaming the ghost layer...';
 
-        // 3. Create or show the overlay
         let layer = document.getElementById('profile-card-overlay');
         if (!layer) {
             layer = document.createElement('div');
             layer.id = 'profile-card-overlay';
-            layer.className = 'ghost-menu-overlay'; // This uses your light-blue blur
+            layer.className = 'ghost-menu-overlay';
             document.body.appendChild(layer);
         }
         layer.style.display = 'flex';
 
-        // 4. Inject the Card
         layer.innerHTML = `
-            <div class="floating-menu-container" style="width: 320px; background: rgba(0,0,0,0.85); padding: 30px; border-radius: 40px; border: 1px solid #32D74B; backdrop-filter: blur(20px);">
-                <div style="width: 90px; height: 90px; border-radius: 25px; border: 2px solid #32D74B; background-image: url(${p.avatar_url || 'default.png'}); background-size: cover; background-position: center; margin: 0 auto 15px auto;"></div>
+            <div class="floating-menu-container" style="width: 320px; background: rgba(0,0,0,0.9); padding: 30px; border-radius: 40px; border: 1px solid #32D74B; backdrop-filter: blur(20px); box-shadow: 0 0 30px rgba(50, 215, 75, 0.2);">
+                <div style="width: 90px; height: 90px; border-radius: 25px; border: 2px solid #32D74B; background-image: url(${displayAvatar}); background-size: cover; background-position: center; margin: 0 auto 15px auto;"></div>
                 
                 <div style="text-align: center; margin-bottom: 20px;">
                     <h2 style="margin: 0; color: white; font-size: 20px;">Just•Abacha😎</h2>
-                    <p style="margin: 5px 0 0 0; color: #32D74B; font-size: 14px;">~${p.username}</p>
+                    <p style="margin: 5px 0 0 0; color: #32D74B; font-size: 14px;">~${displayName}</p>
                 </div>
 
                 <div style="width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-                    <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 15px; text-align: center;">
+                    <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
                         <span style="display: block; font-size: 9px; color: #32D74B; text-transform: uppercase;">Location</span>
-                        <span style="color: white; font-size: 12px;">${p.city || 'Unknown'}</span>
+                        <span style="color: white; font-size: 12px;">${displayCity}</span>
                     </div>
-                    <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 15px; text-align: center;">
+                    <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
                         <span style="display: block; font-size: 9px; color: #32D74B; text-transform: uppercase;">Ghost ID</span>
-                        <span style="color: white; font-size: 12px;">#${p.ghost_number || '0000'}</span>
+                        <span style="color: white; font-size: 12px;">#${displayID}</span>
                     </div>
                 </div>
 
                 <div style="width: 100%; background: rgba(50, 215, 75, 0.1); padding: 15px; border-radius: 20px; border: 1px solid #32D74B; margin-bottom: 25px;">
                     <p style="margin: 0; color: white; font-size: 13px; font-style: italic; text-align: center;">
-                        "${p.bio_quote || 'Roaming the ghost layer...'}"
+                        "${displayQuote}"
                     </p>
                 </div>
 
-                <button class="floating-btn" onclick="document.getElementById('profile-card-overlay').style.display='none'" style="border: none; background: #32D74B; color: black; font-weight: bold; width: 100%; border-radius: 15px; padding: 12px;">Dismiss</button>
+                <button class="floating-btn" onclick="document.getElementById('profile-card-overlay').style.display='none'" style="border: none; background: #32D74B; color: black; font-weight: bold; width: 100%; border-radius: 15px; padding: 12px; cursor: pointer;">Dismiss</button>
             </div>
         `;
 
         layer.onclick = (e) => { if(e.target === layer) layer.style.display = 'none'; };
 
     } catch (err) {
-        alert("Critical Error: " + err.message);
+        console.error(err);
     }
 };
-
+                            
 document.addEventListener('DOMContentLoaded', async () => {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return;

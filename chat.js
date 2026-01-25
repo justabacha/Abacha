@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // 4. Preserve Long-Press & Context Menu Logic
             let pressTimer;
             bubble.addEventListener('touchstart', () => {
-                pressTimer = setTimeout(() => showActionMenu(msg, bubble.cloneNode(true)), 600);
+                pressTimer = setTimeout(() => showActionMenu(msg, bubble.cloneNode(true)), 1000);
             });
             bubble.addEventListener('touchend', () => clearTimeout(pressTimer));
             bubble.oncontextmenu = (e) => {
@@ -122,12 +122,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // --- 4. ACTION MENUS (PIN/DELETE/REPLY) ---
         window.showActionMenu = (msg, clonedBubble) => {
-            const overlay = document.getElementById('chat-overlay');
-            const menuContainer = document.getElementById('menu-content');
-            menuContainer.innerHTML = '';
-            clonedBubble.classList.add('popped-message');
-            menuContainer.appendChild(clonedBubble);
-            
+    const overlay = document.getElementById('chat-overlay');
+    const menuContainer = document.getElementById('menu-content');
+    menuContainer.innerHTML = '';
+
+    // CLEAR OLD ALIGNMENT SO IT CENTERS IN THE OVERLAY
+    clonedBubble.classList.add('popped-message');
+    clonedBubble.style.alignSelf = 'center'; // Force it to the center of the screen
+    clonedBubble.style.margin = '0 0 25px 0'; // Bottom margin for the menu tile
+    
+    menuContainer.appendChild(clonedBubble);
+    
+    // ... rest of your menu tile logic
+    overlay.style.display = 'flex';
+};
+        
             const isPinned = currentPins.some(p => p.id === msg.id);
             
             const tile = document.createElement('div');

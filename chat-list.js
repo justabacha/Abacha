@@ -1,9 +1,9 @@
-  window.viewCard = async function(friendId) {
+window.viewCard = async function(friendId) {
     const menu = document.getElementById('ghost-command-overlay');
     if(menu) menu.style.display = 'none';
 
     try {
-        const { data: p, error } = await supabaseClient
+        const { data: p } = await supabaseClient
             .from('profiles')
             .select('username, avatar_url, city, bio, phone_number') 
             .eq('id', friendId)
@@ -13,12 +13,8 @@
         const displayAvatar = p?.avatar_url || 'default.png';
         const displayCity = p?.city || 'Nairobi';
         const displayBio = p?.bio || 'Roaming the ghost layer...';
+        const displayID = `ja${Math.floor(10000 + Math.random() * 90000)}-aba`;
         
-        // GHOST ID LOGIC: ja + random + -aba
-        const randomDigits = Math.floor(10000 + Math.random() * 90000);
-        const displayID = `ja${randomDigits}-aba`;
-        
-        // SECURE CONTACT
         let rawPhone = p?.phone_number || "";
         let secureContact = rawPhone ? rawPhone.substring(0, 4) + "👻👻👻👻👻" : "+254👻👻👻👻👻";
 
@@ -31,52 +27,90 @@
         }
         layer.style.display = 'flex';
 
+        // THE SEAMLESS TRANSITION CSS
         layer.innerHTML = `
-            <div class="floating-card-wrapper" style="width: 92%; max-width: 360px; border-radius: 40px; overflow: hidden; background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(20,20,20,0.4) 100%); backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
-                
-                <div style="padding: 25px 25px 10px 25px; backdrop-filter: blur(10px);">
-                    <div style="font-weight: 900; font-size: 14px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 2px;">Just•Abacha😎</div>
-                </div>
+            <div class="seamless-ghost-card" style="
+                width: 92%; 
+                max-width: 360px; 
+                border-radius: 45px; 
+                position: relative;
+                background: linear-gradient(165deg, rgba(20,20,20,0.9) 0%, rgba(30,30,30,0.4) 100%);
+                backdrop-filter: blur(25px);
+                border: 1px solid rgba(255,255,255,0.15);
+                padding: 30px;
+                box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+                overflow: hidden;
+            ">
+                <div style="font-weight: 700; font-size: 15px; color: rgba(255,255,255,0.3); margin-bottom: 25px; letter-spacing: 1px;">Just•Abacha</div>
 
-                <div style="padding: 10px 25px 30px 25px; display: flex; flex-direction: column; align-items: flex-start;">
+                <div style="display: flex; flex-direction: column; align-items: flex-start; position: relative; z-index: 2;">
                     
-                    <div style="width: 80px; height: 80px; border-radius: 22px; border: 2px solid #32D74B; background-image: url(${displayAvatar}); background-size: cover; background-position: center; margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(50, 215, 75, 0.2));"></div>
+                    <div style="
+                        width: 85px; 
+                        height: 85px; 
+                        border-radius: 26px; 
+                        border: 2px solid #32D74B; 
+                        background-image: url(${displayAvatar}); 
+                        background-size: cover; 
+                        background-position: center; 
+                        margin-bottom: 20px; 
+                        box-shadow: 0 0 25px rgba(50, 215, 75, 0.4);
+                        filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+                    "></div>
                     
-                    <div style="font-size: 26px; font-weight: 800; color: white; margin-bottom: 8px; letter-spacing: -0.5px;">~${displayName}</div>
+                    <div style="font-size: 28px; font-weight: 800; color: white; margin-bottom: 5px;">~${displayName}</div>
                     
-                    <div style="background: rgba(50, 215, 75, 0.1); padding: 5px 12px; border-radius: 12px; margin-bottom: 25px;">
-                        <span style="font-size: 13px; color: #32D74B; font-family: monospace; font-weight: bold;">${secureContact}</span>
+                    <div style="background: rgba(50, 215, 75, 0.15); padding: 6px 14px; border-radius: 12px; margin-bottom: 25px; border: 1px solid rgba(50, 215, 75, 0.2);">
+                        <span style="font-size: 13px; color: #32D74B; font-weight: bold; letter-spacing: 0.5px;">${secureContact}</span>
                     </div>
 
-                    <div style="display: flex; gap: 20px; width: 100%; margin-bottom: 25px;">
+                    <div style="display: flex; gap: 30px; width: 100%; margin-bottom: 25px;">
                         <div>
-                            <span style="display: block; font-size: 11px; color: #32D74B; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; opacity: 0.9;">Location</span>
-                            <span style="color: white; font-size: 15px; font-weight: 500;">${displayCity}</span>
+                            <span style="display: block; font-size: 10px; color: #32D74B; font-weight: 900; text-transform: uppercase; margin-bottom: 5px;">Location</span>
+                            <span style="color: white; font-size: 16px; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${displayCity}</span>
                         </div>
                         <div>
-                            <span style="display: block; font-size: 11px; color: #32D74B; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; opacity: 0.9;">Ghost ID</span>
-                            <span style="color: white; font-size: 15px; font-weight: 500; font-family: monospace;">${displayID}</span>
+                            <span style="display: block; font-size: 10px; color: #32D74B; font-weight: 900; text-transform: uppercase; margin-bottom: 5px;">Ghost ID</span>
+                            <span style="color: white; font-size: 16px; font-weight: 600; font-family: monospace; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${displayID}</span>
                         </div>
                     </div>
 
-                    <div style="width: 100%; margin-bottom: 30px; border-left: 2px solid rgba(255,255,255,0.1); padding-left: 15px;">
-                        <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 14px; line-height: 1.6;">
-                           ${displayBio}
+                    <div style="width: 100%; margin-bottom: 35px; border-left: 3px solid #32D74B; padding-left: 15px;">
+                        <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 14px; line-height: 1.6; font-style: italic;">
+                           "${displayBio}"
                         </p>
                     </div>
 
-                    <button class="floating-btn" onclick="document.getElementById('profile-card-overlay').style.display='none'" style="border: none; background: #28a745; color: white; font-weight: bold; width: 100%; border-radius: 20px; padding: 16px; font-size: 16px; align-self: center; transition: transform 0.2s;">Dismiss</button>
+                    <button class="floating-btn" onclick="document.getElementById('profile-card-overlay').style.display='none'" style="
+                        border: none; 
+                        background: #28a745; 
+                        color: white; 
+                        font-weight: bold; 
+                        width: 100%; 
+                        border-radius: 22px; 
+                        padding: 18px; 
+                        font-size: 16px; 
+                        align-self: center; 
+                        box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+                    ">Dismiss</button>
                 </div>
+
+                <div style="
+                    position: absolute; 
+                    top: 0; left: 0; right: 0; bottom: 0; 
+                    background: radial-gradient(circle at top left, rgba(50, 215, 75, 0.05) 0%, transparent 60%);
+                    pointer-events: none;
+                "></div>
             </div>
         `;
 
         layer.onclick = (e) => { if(e.target === layer) layer.style.display = 'none'; };
 
     } catch (err) {
-        console.error("Layout Engine Error:", err);
+        console.error("Ghost Engine Error:", err);
     }
 };
-        
+          
 document.addEventListener('DOMContentLoaded', async () => {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return;

@@ -93,22 +93,50 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     display: block;
 }
 
-/* 1. MAKE THE INPUT TILE FLOAT */
+/* 1. THE FLOATING CAPSULE */
 .input-tile { 
-    position: fixed; /* Detaches it from the layout flow */
-    bottom: 40px;    /* Floats it above the bottom edge */
+    position: fixed;
+    bottom: 40px;
     left: 20px;
-    right: 20px;     /* Centers it with margins */
-    
-    background: rgba(0, 0, 0, 0.6); 
+    right: 20px;
+    background: rgba(255, 255, 255, 0.1); /* Thin glass */
     backdrop-filter: blur(25px); 
     -webkit-backdrop-filter: blur(25px);
     border-radius: 30px; 
-    padding: 10px 20px; 
+    padding: 8px 18px; /* Slightly tighter padding */
     display: flex; 
     align-items: center; 
     border: 1px solid rgba(255, 255, 255, 0.15);
-    z-index: 1000;   /* Keeps it above the scrolling messages */
+    z-index: 1000;
+}
+
+/* 2. THE TEXT INPUT (The "rada?..." part) */
+.input-tile input { 
+    flex: 1; /* This pushes the emoji to the furthest end */
+    background: transparent !important; 
+    border: none !important; 
+    color: white !important; 
+    outline: none !important; 
+    font-size: 16px; 
+    padding: 10px 0;
+}
+
+/* 3. THE SEND EMOJI (The "floating" icon) */
+.input-tile button { 
+    background: transparent !important; /* Removes the white/grey layer */
+    border: none !important; 
+    outline: none !important;
+    font-size: 22px; /* Makes the emoji pop */
+    cursor: pointer;
+    padding: 0 0 0 10px; /* Space between text and emoji */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.input-tile button:active {
+    transform: scale(1.2); /* Slight grow when you tap it */
 }
 
 /* 2. ADJUST THE CHAT BOX TO SCROLL TO THE ABSOLUTE BOTTOM */

@@ -133,8 +133,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     menuContainer.appendChild(clonedBubble);
     
-    // ... rest of your menu tile logic
-    overlay.style.display = 'flex';
 };
         
             const isPinned = currentPins.some(p => p.id === msg.id);

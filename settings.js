@@ -114,35 +114,47 @@ window.openContact = () => {
 
  // 1. THE TRIGGER (What happens when you click a time tile)
 window.setPurge = (hours) => {
-    // 1. Kill any existing overlays first to prevent "stacking" lag
+    // 1. Remove any old versions to keep the DOM clean
     const oldOverlay = document.getElementById('purge-confirm-overlay');
     if (oldOverlay) oldOverlay.remove();
 
-    // 2. Create the new one
+    // 2. Create the top-level overlay
     const confirmOverlay = document.createElement('div');
     confirmOverlay.id = 'purge-confirm-overlay';
     
-    // Use a simpler class or direct styles for speed
+    // THE SECRET: z-index 9999 puts it on top of the other modal
     confirmOverlay.style = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.7); backdrop-filter: blur(15px);
+        background: rgba(0,0,0,0.6); backdrop-filter: blur(15px);
         display: flex; align-items: center; justify-content: center;
-        z-index: 9999; opacity: 1; transition: opacity 0.2s ease;
+        z-index: 9999; 
     `;
 
     confirmOverlay.innerHTML = `
-        <div class="ghost-modal-tile" style="width: 85%; max-width: 320px; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
-            <div style="font-weight: 800; font-size: 14px; color: #32D74B; margin-bottom: 15px; text-align: left;">
+        <div class="ghost-modal-tile" style="width: 85%; max-width: 320px; border: 1px solid rgba(255,255,255,0.1); padding: 25px; border-radius: 25px; background: rgba(20,20,20,0.95);">
+            
+            <div style="font-weight: 800; font-size: 14px; color: #FFFFFF; opacity: 0.6; margin-bottom: 20px; text-align: left;">
                 Just•Abacha😎
             </div>
 
-            <p style="color: white; font-size: 16px; text-align: left; margin-bottom: 25px;">
-                Ghost Protocol: Set messages to vanish after <b>${hours} Hours</b>?
+            <p style="color: white; font-size: 16px; text-align: left; margin-bottom: 30px; line-height: 1.4;">
+                Confirming the Ghost Protocol. Messages will vanish after <b>${hours} Hours</b>.
             </p>
 
-            <div style="display: flex; gap: 10px;">
-                <button onclick="window.executePurgeSetting(${hours})" style="flex: 1; background: rgba(255, 69, 58, 0.2); color: #FF453A; border: 1px solid #FF453A; padding: 15px; border-radius: 15px; font-weight: bold;">Confirm</button>
-                <button onclick="this.closest('#purge-confirm-overlay').remove()" style="flex: 1; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 15px; border-radius: 15px;">Cancel</button>
+            <div style="display: flex; gap: 12px; width: 100%;">
+                <button onclick="window.executePurgeSetting(${hours})" style="
+                    flex: 1; background: rgba(255, 69, 58, 0.2); color: #FF453A; 
+                    border: 1px solid rgba(255, 69, 58, 0.4); padding: 15px; 
+                    border-radius: 15px; font-weight: 900; cursor: pointer;">
+                    Confirm
+                </button>
+
+                <button onclick="document.getElementById('purge-confirm-overlay').remove()" style="
+                    flex: 1; background: rgba(50, 215, 75, 0.2); color: #32D74B; 
+                    border: 1px solid rgba(50, 215, 75, 0.4); padding: 15px; 
+                    border-radius: 15px; font-weight: 900; cursor: pointer;">
+                    Cancel
+                </button>
             </div>
         </div>
     `;

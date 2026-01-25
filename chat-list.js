@@ -81,28 +81,37 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- 4. FLOATING GHOST LAYERS ---
     window.showGhostMenu = (friendId, friendshipId, friendObj) => {
-        let overlay = document.getElementById('ghost-command-overlay');
-        if (!overlay) {
-            overlay = document.createElement('div'); overlay.id = 'ghost-command-overlay'; overlay.className = 'ghost-menu-overlay';
-            document.body.appendChild(overlay);
-        }
-        const isPinned = (JSON.parse(localStorage.getItem('pinned_ghosts') || '[]')).includes(friendId);
-        const isLocked = localStorage.getItem(`locked_${friendId}`);
-        overlay.style.display = 'flex';
-        overlay.innerHTML = `
-            <div class="floating-menu-container">
-                <div style="display: flex; align-items: center; width: 100%; margin-bottom: 20px; padding-left: 10px;">
-                    <div style="width: 70px; height: 70px; border-radius: 20px; border: 2px solid #32D74B; background-image: url(${friendObj.avatar_url || 'default.png'}); background-size: cover; margin-right: 15px;"></div>
-                    <div style="font-weight: bold; font-size: 16px; color: white;">Just•Abacha😎</div>
-                </div>
-                <button class="floating-btn" onclick="viewCard('${friendObj.id}')">👤 Profile Card</button>
-                <button class="floating-btn" onclick="togglePin('${friendId}')">${isPinned ? '📍 Unpin' : '📌 Pin Chat'}</button>
-                <button class="floating-btn" onclick="toggleLock('${friendId}', '${friendObj.avatar_url}')">${isLocked ? '🔓 Remove PIN' : '🔒 Lock Tunnel'}</button>
-                <button class="floating-btn btn-ghost-yes" onclick="deleteChatPermanently('${friendshipId}', '${friendId}')">🗑️ Burn Chat</button>
-                <button class="btn-cancel" onclick="document.getElementById('ghost-command-overlay').style.display='none'" style="background:none; border:none; color:rgba(255,255,255,0.5); margin-top:10px;">Dismiss</button>
-            </div>`;
-    };
+    let overlay = document.getElementById('ghost-command-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div'); 
+        overlay.id = 'ghost-command-overlay'; 
+        overlay.className = 'ghost-menu-overlay';
+        document.body.appendChild(overlay);
+    }
+    const isPinned = (JSON.parse(localStorage.getItem('pinned_ghosts') || '[]')).includes(friendId);
+    const isLocked = localStorage.getItem(`locked_${friendId}`);
 
+    overlay.style.display = 'flex';
+    overlay.innerHTML = `
+        <div class="floating-menu-container">
+            <div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-bottom: 25px;">
+                <div style="width: 85px; height: 85px; border-radius: 25px; border: 2px solid #32D74B; background-image: url(${friendObj.avatar_url || 'default.png'}); background-size: cover; background-position: center; box-shadow: 0 10px 20px rgba(0,0,0,0.3);"></div>
+                <div style="margin-top: 12px; text-align: center;">
+                    <div style="font-weight: bold; font-size: 18px; color: white; letter-spacing: 0.5px;">Just•Abacha😎</div>
+                    <div style="font-size: 13px; color: #32D74B; opacity: 0.8; margin-top: 2px;">~${friendObj.username}</div>
+                </div>
+            </div>
+
+            <button class="floating-btn" onclick="viewCard('${friendObj.id}')">👤 Profile Card</button>
+            <button class="floating-btn" onclick="togglePin('${friendId}')">${isPinned ? '📍 Unpin' : '📌 Pin Chat'}</button>
+            <button class="floating-btn" onclick="toggleLock('${friendId}', '${friendObj.avatar_url}')">${isLocked ? '🔓 Remove PIN' : '🔒 Lock Tunnel'}</button>
+            <button class="floating-btn btn-ghost-yes" onclick="deleteChatPermanently('${friendshipId}', '${friendId}')">🗑️ Burn Chat</button>
+            
+            <button class="btn-cancel" onclick="document.getElementById('ghost-command-overlay').style.display='none'" style="background:none; border:none; color:rgba(255,255,255,0.5); margin-top:15px; cursor:pointer;">Dismiss</button>
+        </div>
+    `;
+};
+    
     window.showPinLayer = (id, avatar, mode) => {
         let layer = document.getElementById('pin-layer-overlay');
         if (!layer) {

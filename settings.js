@@ -114,25 +114,32 @@ window.openContact = () => {
 
  // 1. THE TRIGGER (What happens when you click a time tile)
 window.setPurge = (hours) => {
-    // 1. Remove any old versions to keep the DOM clean
+    // 1. Clean up old ones
     const oldOverlay = document.getElementById('purge-confirm-overlay');
     if (oldOverlay) oldOverlay.remove();
 
-    // 2. Create the top-level overlay
+    // 2. Create overlay
     const confirmOverlay = document.createElement('div');
     confirmOverlay.id = 'purge-confirm-overlay';
     
-    // THE SECRET: z-index 9999 puts it on top of the other modal
-    confirmOverlay.style = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.6); backdrop-filter: blur(15px);
-        display: flex; align-items: center; justify-content: center;
-        z-index: 9999; 
-    `;
+    // 3. FORCE IT TO THE FRONT (Style bypass)
+    Object.assign(confirmOverlay.style, {
+        position: 'fixed',
+        top: '0',
+        left: '0',
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backdropFilter: 'blur(20px)',
+        webkitBackdropFilter: 'blur(20px)', // Support for Safari/iOS
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: '999999' // Extreme z-index to stay on top
+    });
 
     confirmOverlay.innerHTML = `
-        <div class="ghost-modal-tile" style="width: 85%; max-width: 320px; border: 1px solid rgba(255,255,255,0.1); padding: 25px; border-radius: 25px; background: rgba(20,20,20,0.95);">
-            
+        <div class="ghost-modal-tile" style="width: 85%; max-width: 320px; border: 1px solid rgba(255,255,255,0.1); padding: 25px; border-radius: 25px; background: #0a0a0a; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
             <div style="font-weight: 800; font-size: 14px; color: #FFFFFF; opacity: 0.6; margin-bottom: 20px; text-align: left;">
                 Just•Abacha😎
             </div>
@@ -142,23 +149,17 @@ window.setPurge = (hours) => {
             </p>
 
             <div style="display: flex; gap: 12px; width: 100%;">
-                <button onclick="window.executePurgeSetting(${hours})" style="
-                    flex: 1; background: rgba(255, 69, 58, 0.2); color: #FF453A; 
-                    border: 1px solid rgba(255, 69, 58, 0.4); padding: 15px; 
-                    border-radius: 15px; font-weight: 900; cursor: pointer;">
+                <button onclick="window.executePurgeSetting(${hours})" style="flex: 1; background: rgba(255, 69, 58, 0.2); color: #FF453A; border: 1px solid #FF453A; padding: 15px; border-radius: 15px; font-weight: 900; cursor: pointer;">
                     Confirm
                 </button>
-
-                <button onclick="document.getElementById('purge-confirm-overlay').remove()" style="
-                    flex: 1; background: rgba(50, 215, 75, 0.2); color: #32D74B; 
-                    border: 1px solid rgba(50, 215, 75, 0.4); padding: 15px; 
-                    border-radius: 15px; font-weight: 900; cursor: pointer;">
+                <button onclick="document.getElementById('purge-confirm-overlay').remove()" style="flex: 1; background: rgba(50, 215, 75, 0.2); color: #32D74B; border: 1px solid #32D74B; padding: 15px; border-radius: 15px; font-weight: 900; cursor: pointer;">
                     Cancel
                 </button>
             </div>
         </div>
     `;
 
+    // Always append to the body to ensure it's outside the main modal's container
     document.body.appendChild(confirmOverlay);
 };
     

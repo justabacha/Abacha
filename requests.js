@@ -27,13 +27,37 @@ const initializeDiscovery = async () => {
         }
 
         // --- CORE FUNCTIONS ---
-
         const loadDiscovery = async (searchTerm = '') => {
-            let query = supabaseClient.from('profiles').select('*').neq('id', currentUser.id);
-            if (searchTerm) { query = query.ilike('username', `%${searchTerm}%`); }
+            // 1. GET ALL EXISTING CONNECTIONS (EXCLUSION LIST)
+            const { data: connections } = await supabaseClient
+                .from('friendships')
+                .select('sender_id, receiver_id')
+                .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`);
+
+            // 2. BUILD AN ARRAY OF IDs TO HIDE
+            // We start with your own ID so you don't find yourself
+            const excludedIDs = [currentUser.id];
+            
+            if (connections) {
+                connections.forEach(conn => {
+                    excludedIDs.push(conn.sender_id);
+                    excludedIDs.push(conn.receiver_id);
+                });
+            }
+
+            // 3. QUERY PROFILES (BUT EXCLUDE THE LIST)
+            let query = supabaseClient
+                .from('profiles')
+                .select('*')
+                .not('id', 'in', `(${excludedIDs.join(',')})`); // The Ghost Filter
+
+            if (searchTerm) { 
+                query = query.ilike('username', `%${searchTerm}%`); 
+            }
             
             const { data: users, error } = await query.limit(15);
             
+            // 4. RENDER (Your original UI logic)
             if (users && users.length > 0) {
                 discoveryList.innerHTML = users.map(user => `
                     <div class="user-tile">
@@ -45,10 +69,10 @@ const initializeDiscovery = async () => {
                     </div>
                 `).join('');
             } else {
-                discoveryList.innerHTML = '<p style="opacity:0.4; font-size:12px; padding:20px;">No ghosts found nearby. 👻</p>';
+                discoveryList.innerHTML = '<p style="opacity:0.4; font-size:12px; padding:20px;">No new ghosts found. 👻</p>';
             }
         };
-
+        
         const loadRequests = async () => {
             const { data: reqs } = await supabaseClient
                 .from('friendships')

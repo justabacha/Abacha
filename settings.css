@@ -249,3 +249,9 @@
     color: #32D74B;
     font-weight: bold;
 }
+
+@keyframes popIn {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+        }
+    

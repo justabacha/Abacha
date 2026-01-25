@@ -3,16 +3,19 @@ window.viewCard = async function(friendId) {
     if(menu) menu.style.display = 'none';
 
     try {
-        const { data: p } = await supabaseClient
+        // 1. Fetch the profile
+        const { data: p, error } = await supabaseClient
             .from('profiles')
             .select('username, avatar_url, city, bio, phone_number') 
             .eq('id', friendId)
             .maybeSingle();
 
-        const displayName = p?.username || "Ghost";
+        // 2. FALLBACK LOGIC: If the profile is empty, we don't just say "Ghost"
+        // We use the data already available or set smart defaults
+        const displayName = p?.username || "Anonymous";
         const displayAvatar = p?.avatar_url || 'default.png';
-        const displayCity = p?.city || 'Nairobi';
-        const displayBio = p?.bio || 'Roaming the ghost layer...';
+        const displayCity = p?.city || 'Ghost Zone';
+        const displayBio = p?.bio || 'Vibing in the shadows...';
         const displayID = `ja${Math.floor(10000 + Math.random() * 90000)}-aba`;
         
         let rawPhone = p?.phone_number || "";
@@ -27,56 +30,57 @@ window.viewCard = async function(friendId) {
         }
         layer.style.display = 'flex';
 
-        // THE SEAMLESS TRANSITION CSS
         layer.innerHTML = `
             <div class="seamless-ghost-card" style="
                 width: 92%; 
                 max-width: 360px; 
                 border-radius: 45px; 
                 position: relative;
-                background: linear-gradient(165deg, rgba(20,20,20,0.9) 0%, rgba(30,30,30,0.4) 100%);
-                backdrop-filter: blur(25px);
-                border: 1px solid rgba(255,255,255,0.15);
-                padding: 30px;
-                box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+                background: linear-gradient(180deg, rgba(10,10,10,0.95) 0%, rgba(30,30,30,0.5) 100%);
+                backdrop-filter: blur(40px);
+                border: 1px solid rgba(255,255,255,0.12);
+                padding: 35px 25px;
+                box-shadow: 0 40px 80px rgba(0,0,0,0.8);
                 overflow: hidden;
             ">
-                <div style="font-weight: 700; font-size: 15px; color: rgba(255,255,255,0.3); margin-bottom: 25px; letter-spacing: 1px;">Just•Abacha</div>
+                <div style="font-weight: 700; font-size: 14px; color: rgba(255,255,255,0.3); margin-bottom: 30px; letter-spacing: 1.5px; text-align: left;">
+                    Just•Abacha😎
+                </div>
 
-                <div style="display: flex; flex-direction: column; align-items: flex-start; position: relative; z-index: 2;">
+                <div style="display: flex; flex-direction: column; align-items: flex-start; width: 100%;">
                     
                     <div style="
-                        width: 85px; 
-                        height: 85px; 
-                        border-radius: 26px; 
+                        width: 90px; 
+                        height: 90px; 
+                        border-radius: 28px; 
                         border: 2px solid #32D74B; 
                         background-image: url(${displayAvatar}); 
                         background-size: cover; 
                         background-position: center; 
-                        margin-bottom: 20px; 
-                        box-shadow: 0 0 25px rgba(50, 215, 75, 0.4);
-                        filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+                        margin-bottom: 18px; 
+                        box-shadow: 0 0 30px rgba(50, 215, 75, 0.25);
+                        position: relative;
                     "></div>
                     
-                    <div style="font-size: 28px; font-weight: 800; color: white; margin-bottom: 5px;">~${displayName}</div>
+                    <div style="font-size: 24px; font-weight: 700; color: white; margin-bottom: 6px;">~${displayName}</div>
                     
-                    <div style="background: rgba(50, 215, 75, 0.15); padding: 6px 14px; border-radius: 12px; margin-bottom: 25px; border: 1px solid rgba(50, 215, 75, 0.2);">
-                        <span style="font-size: 13px; color: #32D74B; font-weight: bold; letter-spacing: 0.5px;">${secureContact}</span>
+                    <div style="background: rgba(50, 215, 75, 0.1); padding: 5px 12px; border-radius: 12px; margin-bottom: 30px; border: 1px solid rgba(50, 215, 75, 0.15);">
+                        <span style="font-size: 13px; color: #32D74B; font-weight: bold; letter-spacing: 1px;">${secureContact}</span>
                     </div>
 
-                    <div style="display: flex; gap: 30px; width: 100%; margin-bottom: 25px;">
+                    <div style="display: flex; gap: 35px; width: 100%; margin-bottom: 30px; text-align: left;">
                         <div>
-                            <span style="display: block; font-size: 10px; color: #32D74B; font-weight: 900; text-transform: uppercase; margin-bottom: 5px;">Location</span>
-                            <span style="color: white; font-size: 16px; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${displayCity}</span>
+                            <span style="display: block; font-size: 10px; color: #32D74B; font-weight: 900; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 1px;">Location</span>
+                            <span style="color: white; font-size: 16px; font-weight: 600;">${displayCity}</span>
                         </div>
                         <div>
-                            <span style="display: block; font-size: 10px; color: #32D74B; font-weight: 900; text-transform: uppercase; margin-bottom: 5px;">Ghost ID</span>
-                            <span style="color: white; font-size: 16px; font-weight: 600; font-family: monospace; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${displayID}</span>
+                            <span style="display: block; font-size: 10px; color: #32D74B; font-weight: 900; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 1px;">Ghost ID</span>
+                            <span style="color: white; font-size: 15px; font-weight: 600; font-family: monospace;">${displayID}</span>
                         </div>
                     </div>
 
-                    <div style="width: 100%; margin-bottom: 35px; border-left: 3px solid #32D74B; padding-left: 15px;">
-                        <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 14px; line-height: 1.6; font-style: italic;">
+                    <div style="width: 100%; margin-bottom: 35px; border-left: 2px solid #32D74B; padding-left: 15px; text-align: left;">
+                        <p style="margin: 0; color: rgba(255,255,255,0.8); font-size: 14px; line-height: 1.6; font-style: italic;">
                            "${displayBio}"
                         </p>
                     </div>
@@ -87,30 +91,23 @@ window.viewCard = async function(friendId) {
                         color: white; 
                         font-weight: bold; 
                         width: 100%; 
-                        border-radius: 22px; 
-                        padding: 18px; 
+                        border-radius: 20px; 
+                        padding: 16px; 
                         font-size: 16px; 
-                        align-self: center; 
-                        box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+                        margin-top: 10px;
+                        box-shadow: 0 10px 20px rgba(40, 167, 69, 0.2);
                     ">Dismiss</button>
                 </div>
-
-                <div style="
-                    position: absolute; 
-                    top: 0; left: 0; right: 0; bottom: 0; 
-                    background: radial-gradient(circle at top left, rgba(50, 215, 75, 0.05) 0%, transparent 60%);
-                    pointer-events: none;
-                "></div>
             </div>
         `;
 
         layer.onclick = (e) => { if(e.target === layer) layer.style.display = 'none'; };
 
     } catch (err) {
-        console.error("Ghost Engine Error:", err);
+        console.error("Ghost Engine Failure:", err);
     }
 };
-          
+                               
 document.addEventListener('DOMContentLoaded', async () => {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return;

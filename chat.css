@@ -1,52 +1,155 @@
-/* --- UPDATED CHAT BOX WITH FADE --- */
+/* --- KEEPING YOUR GHOST UI RESET --- */
+* {
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    user-select: none; 
+}
+input, textarea { -webkit-user-select: text; user-select: text; }
+
+.chat-page {
+    background: var(--chat-bg) no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* --- 1. TRANSPARENT HEADER (Updated for Fade) --- */
+.chat-header {
+    display: flex; 
+    align-items: center; 
+    padding: 55px 15px 10px; /* Increased top padding for iOS status bar */
+    background: transparent; 
+    border-bottom: none; /* Stripped border for Ghost look */
+    z-index: 100;
+}
+
+/* --- 2. PINNED BAR (Preserved) --- */
+#pinned-bar {
+    display: none;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.pin-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #FFD700;
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+
+/* --- 3. CHAT BOX & FADE MASK (The Surgical Part) --- */
 #chat-box { 
     flex: 1; 
     overflow-y: auto; 
-    padding: 100px 20px 150px; /* Extra padding for floating header/input */
+    padding: 20px 20px 150px; 
     display: flex; 
     flex-direction: column; 
-    gap: 15px; 
-    /* THE PHESTY FADE */
+    gap: 12px; 
+    /* The Phesty Ghost Fade */
     -webkit-mask-image: linear-gradient(to bottom, 
         transparent 0%, 
         transparent 5%, 
         black 15%, 
-        black 90%, 
+        black 92%, 
         transparent 100%);
 }
 
-/* --- THE GHOST BUBBLES --- */
+/* NEW: Wrapper to hold Avatar + Bubble */
+.msg-wrapper { 
+    display: flex; 
+    align-items: flex-end; 
+    gap: 8px; 
+    max-width: 85%; 
+}
+.user-wrapper { align-self: flex-end; flex-direction: row-reverse; }
+.ai-wrapper { align-self: flex-start; flex-direction: row; }
+
+.avatar { 
+    width: 32px; 
+    height: 32px; 
+    border-radius: 50%; 
+    object-fit: cover; 
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* --- 4. MESSAGE BUBBLES (Ghostified) --- */
 .message { 
-    max-width: 80%; 
-    padding: 12px 18px; 
+    padding: 12px 16px; 
     font-size: 15px; 
     color: white; 
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255,255,255,0.1);
-    position: relative;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 }
 
-/* SENT: Neon Ghost Border */
 .message.sent { 
-    align-self: flex-end; 
-    background: rgba(50, 215, 75, 0.1); 
+    background: rgba(50, 215, 75, 0.15); 
     border: 1px solid rgba(50, 215, 75, 0.3);
-    border-radius: 22px 22px 2px 22px; 
+    border-radius: 18px 18px 2px 18px; 
 }
 
-/* RECEIVED: Crystal Ghost Border */
 .message.received { 
-    align-self: flex-start; 
     background: rgba(255, 255, 255, 0.05); 
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 22px 22px 22px 2px; 
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px 18px 18px 2px; 
 }
 
-/* --- FLOATING INPUT ENHANCEMENT --- */
+/* --- 5. FLOATING INPUT (Preserved but Detached) --- */
+.floating-input-container { padding: 20px; padding-bottom: 45px; position: relative; z-index: 1000; }
 .input-tile { 
-    background: rgba(10, 10, 10, 0.8) !important; 
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.6); 
+    backdrop-filter: blur(25px); 
+    -webkit-backdrop-filter: blur(25px);
+    border-radius: 30px; 
+    padding: 10px 20px; 
+    display: flex; 
+    align-items: center; 
+    border: 1px solid rgba(255,255,255,0.1); 
+}
+.input-tile input { flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 16px; }
+
+/* --- 6. ALL MODAL & ACTION LOGIC (Untouched/Safe) --- */
+.message-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: none; 
+    z-index: 9999;
+    justify-content: center; 
+    align-items: center;
+    flex-direction: column;
+}
+
+.ghost-modal-tile {
+    background: rgba(15, 15, 15, 0.95);
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 25px;
+    width: 300px;
+    padding: 25px;
+    color: white;
+}
+
+.popped-message { transform: scale(1.1); margin-bottom: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); }
+.action-tile { background: rgba(45, 45, 45, 0.9); border-radius: 22px; width: 260px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; }
+.action-item { padding: 16px; color: white; display: flex; justify-content: space-between; font-size: 17px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.action-item.delete { color: #FF3B30; }
+
+/* RE-ADDING YOUR REPLY QUOTE LOGIC */
+.reply-quote {
+    background: rgba(0, 122, 255, 0.2);
+    border-left: 3px solid #007AFF; 
+    padding: 8px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 12px;
     }
+    

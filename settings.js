@@ -111,18 +111,52 @@ window.openContact = () => {
         `;
         showGlobalModal(storageHTML);
     };
+
+    window.setPurge = (hours) => {
+    const confirmOverlay = document.createElement('div');
+    confirmOverlay.id = 'purge-confirm-overlay';
+    confirmOverlay.className = 'ghost-modal-overlay'; // Reusing your blur class
+    confirmOverlay.style.zIndex = "2000"; // Ensure it stays on top
     
-        window.setPurge = (hours) => {
-        // 1. Save to LocalStorage so chat.js can read it instantly
-        localStorage.setItem('chat_vanish_limit', hours);
-        
-        // 2. Show the confirmation
-        alert(`Setting locked. Your messages will now vanish from your view after ${hours} hours.`);
-        
-        // 3. Optional: Highlight the selected tile in the UI (see below)
-        closeModal();
-    };
+    confirmOverlay.innerHTML = `
+        <div class="ghost-modal-tile" style="max-width: 320px; border: 1px solid rgba(255,255,255,0.2);">
+            <div style="font-weight: 800; font-size: 14px; color: #FFFFFF; opacity: 0.8; margin-bottom: 20px; text-align: left;">
+                Just•Abacha😎
+            </div>
+
+            <p style="color: white; font-size: 16px; line-height: 1.4; text-align: left; margin-bottom: 30px;">
+                Are you sure? Messages will vanish from the Ghost Layer after <b>${hours === 168 ? '7 Days' : hours + ' Hours'}</b>.
+            </p>
+
+            <div style="display: flex; gap: 12px; width: 100%;">
+                <button onclick="executePurgeSetting(${hours})" style="
+                    flex: 1; background: rgba(255, 69, 58, 0.2); color: #FF453A; 
+                    border: 1px solid rgba(255, 69, 58, 0.4); padding: 15px; 
+                    border-radius: 15px; font-weight: 900; cursor: pointer;">
+                    Confirm
+                </button>
+                <button onclick="document.getElementById('purge-confirm-overlay').remove()" style="
+                    flex: 1; background: rgba(50, 215, 75, 0.2); color: #32D74B; 
+                    border: 1px solid rgba(50, 215, 75, 0.4); padding: 15px; 
+                    border-radius: 15px; font-weight: 900; cursor: pointer;">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(confirmOverlay);
+};
+
+// This actually locks the choice in
+window.executePurgeSetting = (hours) => {
+    localStorage.setItem('chat_vanish_limit', hours); // Critical for chat.js
+    document.getElementById('purge-confirm-overlay').remove();
+    closeModal(); // Close the main storage modal
     
+    // Optional: Small success toast
+    console.log(`Ghost Protocol Updated: ${hours}h`);
+};
+                    
     // HELPER: GLOBAL MODAL ENGINE
     const showGlobalModal = (html) => {
         let overlay = document.getElementById('global-modal-overlay');

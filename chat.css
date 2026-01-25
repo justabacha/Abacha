@@ -44,7 +44,6 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 }
 .pin-item:last-child { margin-bottom: 0; }
 
-#chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
 /* --- SURGICAL BLOCK: MESSAGE ALIGNMENT --- */
 
 /* 1. The Container for Avatar + Bubble */
@@ -94,10 +93,45 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     display: block;
 }
 
-.floating-input-container { padding: 20px; padding-bottom: 45px; position: relative; z-index: 1000; }
-.input-tile { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(25px); border-radius: 30px; padding: 10px 20px; display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.15); }
-.input-tile input { flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 16px; }
-.input-tile button { background: transparent; border: none; font-size: 24px; }
+/* 1. MAKE THE INPUT TILE FLOAT */
+.input-tile { 
+    position: fixed; /* Detaches it from the layout flow */
+    bottom: 40px;    /* Floats it above the bottom edge */
+    left: 20px;
+    right: 20px;     /* Centers it with margins */
+    
+    background: rgba(0, 0, 0, 0.6); 
+    backdrop-filter: blur(25px); 
+    -webkit-backdrop-filter: blur(25px);
+    border-radius: 30px; 
+    padding: 10px 20px; 
+    display: flex; 
+    align-items: center; 
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    z-index: 1000;   /* Keeps it above the scrolling messages */
+}
+
+/* 2. ADJUST THE CHAT BOX TO SCROLL TO THE ABSOLUTE BOTTOM */
+#chat-box { 
+    flex: 1; 
+    overflow-y: auto; 
+    padding: 20px 20px 120px; /* Extra bottom padding so last message clears the tile */
+    display: flex; 
+    flex-direction: column; 
+    gap: 12px; 
+    
+    /* Update the Vanish Mask to only fade at the TOP */
+    -webkit-mask-image: linear-gradient(to bottom, 
+        transparent 0%, 
+        black 10%, 
+        black 100%); /* No fade at the bottom so they reach the edge */
+}
+
+/* 3. STRIP THE OLD CONTAINER */
+.floating-input-container { 
+    background: transparent; 
+    padding: 0; 
+}
 
 /* --- 5. LONG PRESS OVERLAY (LIGHT BLUR) --- */
 .message-overlay {

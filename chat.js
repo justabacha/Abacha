@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let pendingPinMsg = null;
     let currentPins = [];
 
-    // --- 2. IDENTITY SYNC (CRASH-PROOF) ---
+     // --- 2. IDENTITY SYNC (CRASH-PROOF) ---
     const syncChatIdentity = async () => {
         try {
             const { data: profile } = await supabaseClient
@@ -26,22 +26,42 @@ document.addEventListener('DOMContentLoaded', async () => {
                 .maybeSingle(); 
 
             if (profile) {
-                document.querySelectorAll('.chat-avatar, .nav-avatar, .avatar-circle').forEach(el => {
-                    if (profile.avatar_url) {
-                        el.style.backgroundImage = `url(${profile.avatar_url})`;
-                        el.style.backgroundSize = 'cover';
-                        el.style.backgroundPosition = 'center';
-                    }
+                // STRIP OUT '.chat-avatar' FROM HERE
+                document.querySelectorAll('.nav-avatar, .my-self-avatar').forEach(el => {
+                    if (profile.avatar_url) el.style.backgroundImage = `url(${profile.avatar_url})`;
                 });
-                document.querySelectorAll('.chat-user-name, .ghost-alias-text, #display-username').forEach(el => {
+                // STRIP OUT '.chat-user-name' FROM HERE
+                document.querySelectorAll('#display-username, .my-alias').forEach(el => {
                     if (profile.username) el.innerText = profile.username;
                 });
             }
         } catch (err) { console.error("Identity Stall:", err); }
     };
+
+    // --- NEW: SPECIFIC HEADER SYNC FOR THE RECEIVER ---
+    const syncReceiverHeader = async () => {
+        if (!friendID) return;
+        const { data: friend } = await supabaseClient
+            .from('profiles')
+            .select('avatar_url, username')
+            .eq('id', friendID)
+            .maybeSingle();
+
+        if (friend) {
+            // Specifically target the header elements by their IDs or unique classes
+            const headerName = document.querySelector('.chat-user-name');
+            const headerAvatar = document.querySelector('.chat-avatar');
+            
+            if (headerName) headerName.innerText = `~${friend.username}`;
+            if (headerAvatar && friend.avatar_url) {
+                headerAvatar.style.backgroundImage = `url(${friend.avatar_url})`;
+            }
+        }
+    };
     
     syncChatIdentity();
-
+    syncReceiverHeader(); // Add this call
+    
     if (chatBox) {
         // --- 3. MESSAGE DISPLAY & UI ---
         const displayMessage = (msg) => {

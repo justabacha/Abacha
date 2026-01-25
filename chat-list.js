@@ -86,104 +86,91 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // --- 4. GHOST PIN LAYER LOGIC ---
-    window.showPinLayer = (id, avatar, mode) => {
-        let layer = document.getElementById('pin-layer-overlay');
-        if (!layer) {
-            layer = document.createElement('div'); 
-            layer.id = 'pin-layer-overlay'; 
-            layer.className = 'ghost-menu-overlay';
-            document.body.appendChild(layer);
-        }
-        layer.style.display = 'flex';
-        
-        const instr = mode === "set" ? "set ur vibe lock 4 digits" : 
-                      mode === "unlock" ? "confirm ur vibe to unlock" : "enter vibe";
-        const btnText = mode === "set" ? "confirm lock" : 
-                        mode === "unlock" ? "Unlock 🔓" : "check-in";
-        const btnClass = mode === "set" ? "btn-confirm" : "btn-checkin";
-
-        layer.innerHTML = `
-            <div class="menu-box" style="position:relative; background: rgba(25, 25, 25, 0.95); border-radius: 35px; border: 1px solid rgba(255,255,255,0.1);">
-                <div style="position: absolute; top: -35px; left: -10px; width: 75px; height: 75px; border-radius: 20px; border: 2px solid #32D74B; background-image: url(${avatar}); background-size: cover;"></div>
-                <div style="position: absolute; top: 15px; left: 15px; font-weight: bold; font-size: 13px;">Just•Abacha😎</div>
-                <p style="text-align:center; margin-top:40px; font-size:14px; color: white;">${instr}</p>
-                <input type="password" id="ghost-pin-input" maxlength="4" style="background: transparent; border: none; border-bottom: 2px solid #32D74B; color: white; text-align: center; width: 100%; font-size: 24px; margin: 20px 0; outline: none; letter-spacing: 15px;" placeholder="••••">
-                <button class="${btnClass}" style="width:100%; padding:15px; border-radius:15px; font-weight:bold; border:none; cursor:pointer;" onclick="processPin('${id}', '${mode}')">${btnText}</button>
-            </div>
-        `;
-
-        // 30s auto-dismiss & backdrop click
-        setTimeout(() => { layer.style.display = 'none'; }, 30000);
-        layer.onclick = (e) => { if(e.target === layer) layer.style.display = 'none'; };
-    };
-
-    window.processPin = (id, mode) => {
-        const val = document.getElementById('ghost-pin-input').value;
-        if (mode === "set") {
-            if(val.length === 4) { localStorage.setItem(`locked_${id}`, val); location.reload(); }
-        } else {
-            const stored = localStorage.getItem(`locked_${id}`);
-            if(val === stored) {
-                if(mode === "unlock") { localStorage.removeItem(`locked_${id}`); location.reload(); }
-                else { window.location.href = `chat.html?friend_id=${id}`; }
-            } else {
-                alert("Vibe Denied ☠️");
-            }
-        }
-    };
-
-    // --- 5. LONG PRESS MENU (The Ghost Style) ---
-    window.showGhostMenu = (friendId, friendshipId, friendObj) => {
+    // --- FLOATING COMMANDS MENU ---
+window.showGhostMenu = (friendId, friendshipId, friendObj) => {
     let overlay = document.getElementById('ghost-command-overlay');
     if (!overlay) {
-        overlay = document.createElement('div'); 
-        overlay.id = 'ghost-command-overlay'; 
-        overlay.className = 'ghost-menu-overlay';
+        overlay = document.createElement('div'); overlay.id = 'ghost-command-overlay'; overlay.className = 'ghost-menu-overlay';
         document.body.appendChild(overlay);
     }
-    
     const isPinned = (JSON.parse(localStorage.getItem('pinned_ghosts') || '[]')).includes(friendId);
     const isLocked = localStorage.getItem(`locked_${friendId}`);
 
     overlay.style.display = 'flex';
-    
-    // THE GHOST LAYER MENU BOX
     overlay.innerHTML = `
-        <div class="menu-box" style="width: 300px; padding-top: 45px;">
-            <div style="position: absolute; top: -30px; left: -10px; width: 80px; height: 80px; border-radius: 20px; border: 3px solid #32D74B; background-image: url(${friendObj.avatar_url || 'default.png'}); background-size: cover; background-position: center; box-shadow: 0 10px 20px rgba(0,0,0,0.4); z-index: 10001;"></div>
-            
-            <div style="position: absolute; top: 15px; left: 85px; font-weight: bold; font-size: 14px; color: #32D74B; letter-spacing: 1px;">Just•Abacha😎</div>
-            <div style="position: absolute; top: 32px; left: 85px; font-size: 10px; color: rgba(255,255,255,0.5);">@${friendObj.username}</div>
-
-            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
-                <button onclick="viewCard('${friendObj.id}')" style="text-align: left; padding-left: 20px;">
-                    <span style="margin-right: 10px;">👤</span> Profile Card
-                </button>
-                
-                <button onclick="togglePin('${friendId}')" style="text-align: left; padding-left: 20px; border-color: ${isPinned ? '#FFD60A' : '#32D74B'}; color: ${isPinned ? '#FFD60A' : '#32D74B'};">
-                    <span style="margin-right: 10px;">${isPinned ? '📍' : '📌'}</span> ${isPinned ? 'Unpin Ghost' : 'Pin to Top'}
-                </button>
-                
-                <button onclick="toggleLock('${friendId}', '${friendObj.avatar_url}')" style="text-align: left; padding-left: 20px; border-color: ${isLocked ? '#007AFF' : '#32D74B'}; color: ${isLocked ? '#007AFF' : '#32D74B'};">
-                    <span style="margin-right: 10px;">${isLocked ? '🔓' : '🔒'}</span> ${isLocked ? 'Open Tunnel' : 'Lock Tunnel'}
-                </button>
-
-                <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 5px 0;"></div>
-
-                <button class="btn-danger" onclick="deleteChatPermanently('${friendshipId}', '${friendId}')" style="text-align: left; padding-left: 20px;">
-                    <span style="margin-right: 10px;">🗑️</span> Burn Conversation
-                </button>
-                
-                <button class="btn-cancel" onclick="document.getElementById('ghost-command-overlay').style.display='none'">Dismiss</button>
+        <div class="floating-menu-container">
+            <div style="display: flex; align-items: center; width: 100%; margin-bottom: 20px; padding-left: 10px;">
+                <div style="width: 70px; height: 70px; border-radius: 20px; border: 2px solid #32D74B; background-image: url(${friendObj.avatar_url || 'default.png'}); background-size: cover; margin-right: 15px;"></div>
+                <div style="font-weight: bold; font-size: 16px; color: white;">Just•Abacha😎</div>
             </div>
+
+            <button class="floating-btn" onclick="viewCard('${friendObj.id}')">👤 Profile Card</button>
+            <button class="floating-btn" onclick="togglePin('${friendId}')">${isPinned ? '📍 Unpin' : '📌 Pin Chat'}</button>
+            <button class="floating-btn" onclick="toggleLock('${friendId}', '${friendObj.avatar_url}')">${isLocked ? '🔓 Remove PIN' : '🔒 Lock Tunnel'}</button>
+            <button class="floating-btn btn-danger" onclick="deleteChatPermanently('${friendshipId}', '${friendId}')" style="border-color:#FF3B30; color:#FF3B30;">🗑️ Burn Chat</button>
+            <button class="btn-cancel" onclick="document.getElementById('ghost-command-overlay').style.display='none'" style="background:none; border:none; color:rgba(255,255,255,0.5); margin-top:10px;">Dismiss</button>
         </div>
     `;
-
-    // Close on clicking outside the box
-    overlay.onclick = (e) => { if(e.target === overlay) overlay.style.display = 'none'; };
 };
-    
+
+// --- GHOST PIN PROMPT (Dots to Ghosts) ---
+window.showPinLayer = (id, avatar, mode) => {
+    let layer = document.getElementById('pin-layer-overlay');
+    if (!layer) {
+        layer = document.createElement('div'); layer.id = 'pin-layer-overlay'; layer.className = 'ghost-menu-overlay';
+        document.body.appendChild(layer);
+    }
+    layer.style.display = 'flex';
+    let currentPin = "";
+
+    const renderPinContent = () => {
+        const instr = mode === "set" ? "set ur vibe lock" : "confirm ur vibe";
+        const ghostDisplay = currentPin.split('').map(() => '👻').join('') + '•'.repeat(4 - currentPin.length);
+        
+        layer.innerHTML = `
+            <div class="floating-menu-container">
+                <div style="display: flex; align-items: center; width: 100%; margin-bottom: 10px; padding-left: 10px;">
+                    <div style="width: 70px; height: 70px; border-radius: 20px; border: 2px solid #32D74B; background-image: url(${avatar}); background-size: cover; margin-right: 15px;"></div>
+                    <div style="font-weight: bold; font-size: 16px; color: white;">Just•Abacha😎</div>
+                </div>
+                
+                <p style="color:white; font-size:13px; opacity:0.7;">${instr}</p>
+                <div class="ghost-pin-display" id="ghost-visual-pin">${ghostDisplay}</div>
+                
+                <input type="number" id="hidden-pin-input" pattern="[0-9]*" inputmode="numeric" maxlength="4" autofocus 
+                       style="position:absolute; opacity:0; pointer-events:none;">
+                
+                <button class="floating-btn" id="confirm-pin-btn" style="background:#32D74B; color:black;">${mode === 'set' ? 'Confirm Lock' : 'Check-in'}</button>
+            </div>
+        `;
+
+        const input = document.getElementById('hidden-pin-input');
+        input.focus();
+        input.addEventListener('input', (e) => {
+            currentPin = e.target.value.substring(0, 4);
+            document.getElementById('ghost-visual-pin').innerText = currentPin.split('').map(() => '👻').join('') + '•'.repeat(4 - currentPin.length);
+        });
+
+        document.getElementById('confirm-pin-btn').onclick = () => processPinAction(id, mode, currentPin);
+    };
+
+    renderPinContent();
+};
+
+window.processPinAction = (id, mode, pinVal) => {
+    if (pinVal.length !== 4) return;
+    if (mode === "set") {
+        localStorage.setItem(`locked_${id}`, pinVal);
+        location.reload();
+    } else {
+        if (pinVal === localStorage.getItem(`locked_${id}`)) {
+            mode === "unlock" ? (localStorage.removeItem(`locked_${id}`), location.reload()) : (window.location.href = `chat.html?friend_id=${id}`);
+        } else {
+            alert("Vibe Denied ☠️");
+        }
+    }
+};
+            
     // --- UTILITIES ---
     window.togglePin = (id) => {
         let pins = JSON.parse(localStorage.getItem('pinned_ghosts') || '[]');

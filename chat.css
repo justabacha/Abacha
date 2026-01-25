@@ -248,3 +248,25 @@ button, .action-item, .input-tile {
 #chat-overlay {
     padding: 0 25px; /* Keeps everything away from the phone's physical edges */
                  }
+/* Ensure the menu content container fills the screen but respects the flex alignment */
+#menu-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Ensure the action tile only takes up as much space as it needs */
+.action-tile {
+    background: rgba(45, 45, 45, 0.95);
+    border-radius: 22px;
+    width: 250px; /* Fixed width for a consistent look */
+    border: 1px solid rgba(255,255,255,0.1);
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+}
+
+/* Fix the popped bubble scale so it doesn't move away from the edge too much */
+.popped-message {
+    transform: scale(1.02); /* Very subtle scale */
+    transform-origin: inherit; /* Keeps it pinned to its flex side */
+}

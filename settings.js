@@ -244,22 +244,26 @@ window.handleWallpaperUpload = (input) => {
         reader.onload = (e) => {
             const imageUrl = e.target.result;
             
-            // Save to memory
+            // 1. Save to memory (The part that was working)
             localStorage.setItem('phestone-wallpaper', imageUrl);
             
-            // Visual confirmation
-            alert("Wallpaper saved to memory! 🎭✨");
-            console.log("Image data saved under 'phestone-wallpaper'");
-            
-            // Immediate preview on settings page
+            // 2. Immediate preview
             document.body.style.backgroundImage = `url(${imageUrl})`;
+            document.body.style.backgroundSize = "cover";
+            document.body.style.backgroundPosition = "center";
+
+            // 3. THE TWEAK: Replace alert with Ghost Toast
+            const toast = document.getElementById('ghost-toast');
+            if (toast) {
+                toast.innerText = "Wallpaper Synced 🖼️✨";
+                toast.classList.add('show');
+                setTimeout(() => { toast.classList.remove('show'); }, 3000);
+            }
         };
         reader.readAsDataURL(file);
-    } else {
-        console.error("No file selected.");
     }
 };
-            
+
 window.toggleGhostMode = (isActive) => {
     const root = document.documentElement;
     

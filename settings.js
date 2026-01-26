@@ -278,3 +278,29 @@ document.addEventListener('DOMContentLoaded', () => {
     if (toggle) toggle.checked = isGhost;
 });
     
+window.showGhostToast = (message) => {
+    const toast = document.getElementById('ghost-toast');
+    toast.innerText = message;
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000); // Vibe disappears after 3 seconds
+};
+
+window.toggleGhostMode = (isActive) => {
+    const root = document.documentElement;
+    
+    if (isActive) {
+        root.setAttribute('data-theme', 'ghost');
+        localStorage.setItem('ghost-mode-active', 'true');
+        localStorage.setItem('message-expiry', '24'); // 24-hour protocol [cite: 2026-01-25]
+        showGhostToast("Ghost Protocol Active 👻");
+    } else {
+        root.setAttribute('data-theme', 'default');
+        localStorage.setItem('ghost-mode-active', 'false');
+        localStorage.removeItem('message-expiry');
+        showGhostToast("Ghost Mode Disabled");
+    }
+};
+    

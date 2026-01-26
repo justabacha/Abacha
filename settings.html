@@ -35,11 +35,11 @@
     <div class="tile-right">›</div>
             </div>
 
-            <div class="settings-tile" onclick="openThemeSettings()">
-                <div class="tile-left">🎨 <span>Theme & Wallpaper</span></div>
-                <div class="tile-right">›</div>
-            </div>
-
+        <div class="settings-tile" onclick="openThemePanel()">
+    <div class="tile-left">🎨 <span>Theme & Wallpaper</span></div>
+    <div class="tile-right"><span class="chevron">›</span></div>
+        </div>
+            
             <div class="settings-tile" onclick="openRequests()">
                 <div class="tile-left">📩 <span>Chat Requests</span></div>
                 <div class="tile-right">›</div>
@@ -73,6 +73,27 @@
 
     <div id="global-modal-overlay" class="ghost-modal-overlay" style="display:none;"></div>
 
+    <div id="theme-panel" class="sub-modal" style="display: none;">
+    <div class="modal-header">
+        <button onclick="closeThemePanel()">Back</button>
+        <h3>Atmosphere</h3>
+    </div>
+    
+    <div class="theme-grid">
+        <div class="theme-card" onclick="ThemeEngine.setTheme('default')">Just•Abacha</div>
+        <div class="theme-card ghost-style" onclick="ThemeEngine.setTheme('ghost')">Ghost</div>
+        <div class="theme-card green-style" onclick="ThemeEngine.setTheme('abacha-v1')">Abacha-v1.0</div>
+    </div>
+
+    <hr>
+
+    <div class="wallpaper-section">
+        <h4>Wallpaper</h4>
+        <button onclick="document.getElementById('wall-input').click()">Select from Gallery</button>
+        <input type="file" id="wall-input" style="display:none" accept="image/*" onchange="handleWallpaperUpload(this)">
+    </div>
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
     <script src="settings.js"></script>

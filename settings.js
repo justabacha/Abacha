@@ -244,18 +244,16 @@ window.handleWallpaperUpload = (input) => {
         reader.onload = (e) => {
             const imageUrl = e.target.result;
             
-            // 1. Save to memory (The part that was working)
+            // 1. Save to memory for the Chat page (The most important part) [cite: 2026-01-26]
             localStorage.setItem('phestone-wallpaper', imageUrl);
             
-            // 2. Immediate preview
-            document.body.style.backgroundImage = `url(${imageUrl})`;
-            document.body.style.backgroundSize = "cover";
-            document.body.style.backgroundPosition = "center";
+            // 2. REMOVED: The line that was forcing the image onto the Settings page.
+            // This prevents the "blur/takeover" glitch you saw.
 
-            // 3. THE TWEAK: Replace alert with Ghost Toast
+            // 3. Trigger the Ghost Toast
             const toast = document.getElementById('ghost-toast');
             if (toast) {
-                toast.innerText = "Wallpaper Synced 🖼️✨";
+                toast.innerText = "Wallpaper Synced 🎭✨";
                 toast.classList.add('show');
                 setTimeout(() => { toast.classList.remove('show'); }, 3000);
             }

@@ -244,21 +244,13 @@ window.handleWallpaperUpload = (input) => {
         reader.onload = (e) => {
             const imageUrl = e.target.result;
             
-            // Save to memory for the chat page
+            // Save to memory
             localStorage.setItem('phestone-wallpaper', imageUrl);
             
-            // Apply immediate preview to the settings background
-            document.body.style.backgroundImage = `url(${imageUrl})`;
-            document.body.style.backgroundSize = "cover";
-            document.body.style.backgroundPosition = "center";
-
-            // Trigger the sleek notification
-            window.showGhostToast("Wallpaper Synced 🖼️✨");
-        };
-        reader.readAsDataURL(file);
-    }
-};
-
+            // Visual confirmation
+            alert("Wallpaper saved to memory! 🎭✨");
+            console.log("Image data saved under 'phestone-wallpaper'");
+            
             // Immediate preview on settings page
             document.body.style.backgroundImage = `url(${imageUrl})`;
         };
@@ -267,7 +259,7 @@ window.handleWallpaperUpload = (input) => {
         console.error("No file selected.");
     }
 };
-    
+            
 window.toggleGhostMode = (isActive) => {
     const root = document.documentElement;
     

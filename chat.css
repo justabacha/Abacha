@@ -281,49 +281,50 @@ button, .action-item, .input-tile {
     display: block;
 }
 
-/* Container: Centered and lowered */
+/* 1. Centering & Bottom Placement */
 .floating-input-container {
     position: fixed;
-    bottom: 15px; /* Lowered from 30px */
+    bottom: 10px; /* Very close to bottom */
     left: 50%;
-    transform: translateX(-50%); /* Perfect centering */
-    width: 90%; /* Responsive width */
-    max-width: 500px; /* Desktop safety */
+    transform: translateX(-50%); /* Forces perfect horizontal center */
+    width: 92%; /* Equal spacing on both sides */
+    max-width: 500px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    z-index: 1000;
+    z-index: 9999; /* Ensure it stays above chat bubbles */
 }
 
-/* Reply Box: Mounted ON TOP */
+/* 2. The Reply Box (Mounted ON TOP) */
 #reply-preview-container {
-    display: none; /* Hidden by default */
-    background: rgba(20, 20, 20, 0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    display: none; 
+    background: rgba(20, 20, 20, 0.98);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
     border-radius: 20px 20px 0 0; 
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-bottom: none;
-    padding: 10px 15px 25px 15px; /* Extra bottom padding to hide gap */
-    width: 95%; /* Slightly slimmer than capsule for a layered look */
+    padding: 12px 18px 25px 18px; /* Extra bottom padding */
+    width: 96%; /* Slightly slimmer for that layered look */
     box-sizing: border-box;
-    margin-bottom: -20px; /* Tucks it behind the top edge of the capsule */
-    z-index: 1001; /* Higher than input-tile */
+    margin-bottom: -18px; /* This tucks the bottom edge into the capsule */
+    z-index: 10000; /* Lower than input-tile but high enough to be seen */
+    position: relative;
 }
 
-/* The Capsule: The Base Layer */
+/* 3. The Input Capsule (The Front Layer) */
 .input-tile {
-    position: relative !important;
     width: 100%;
     background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(25px); 
-    -webkit-backdrop-filter: blur(25px);
-    border-radius: 30px; 
-    padding: 12px 20px;
+    backdrop-filter: blur(30px); 
+    -webkit-backdrop-filter: blur(30px);
+    border-radius: 35px; 
+    padding: 10px 18px;
     display: flex; 
     align-items: center; 
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-sizing: border-box;
-    z-index: 1002; /* Highest level so it stays in front of the reply gap */
-    }
-        
+    z-index: 10001; /* Highest layer to stay in front */
+    position: relative;
+        }
+    

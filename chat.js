@@ -70,35 +70,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!user || !friendID) return;
 
     // A. SYNC IDENTITY
-        const syncReceiverHeader = async () => {
-        // We look for the profile of the person we are chatting WITH (friendID)
-        const { data: friend, error } = await supabaseClient
-            .from('profiles')
-            .select('avatar_url, username')
-            .eq('id', friendID) 
-            .single();
-
+    const syncReceiverHeader = async () => {
+        const { data: friend } = await supabaseClient.from('profiles').select('avatar_url, username').eq('id', friendID).maybeSingle();
         if (friend) {
-            const headerName = document.querySelector('.chat-user-name');
-            const headerAvatar = document.querySelector('.chat-avatar');
-            
-            // Set the Friend's Username
-            if (headerName) {
-                headerName.innerText = `~${friend.username}`;
-                headerName.style.color = "white"; // Ensure visibility
-            }
-            
-            // Set the Friend's Avatar
-            if (headerAvatar && friend.avatar_url) {
-                headerAvatar.style.backgroundImage = `url('${friend.avatar_url}')`;
-                headerAvatar.style.backgroundSize = "cover";
-                headerAvatar.style.backgroundPosition = "center";
-            }
-        } else {
-            console.error("Ghost Layer Error: Could not sync friend profile", error);
+            document.querySelector('.chat-user-name').innerText = `~${friend.username}`;
+            if (friend.avatar_url) document.querySelector('.chat-avatar').style.backgroundImage = `url(${friend.avatar_url})`;
         }
     };
-    
+    syncReceiverHeader();
+
     // B. LOAD PINS
     window.loadPins = async () => {
         const now = new Date().toISOString();
@@ -155,13 +135,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // E. ACTION MENU (Full Options)
-        window.showActionMenu = (msg, clonedBubble) => {
+    window.showActionMenu = (msg, clonedBubble) => {
         const overlay = document.getElementById('chat-overlay');
         const menuContainer = document.getElementById('menu-content');
         const isMe = msg.sender_id === user.id;
-        
-        // CHECK IF ALREADY PINNED
-        const isPinned = currentPins.some(p => p.id === msg.id);
         
         menuContainer.innerHTML = '';
         menuContainer.style.alignItems = isMe ? 'flex-end' : 'flex-start';
@@ -172,16 +149,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         tile.innerHTML = `
             <div class="action-item" onclick="window.triggerReply('${msg.sender_id}', '${msg.content.replace(/'/g, "\\'")}')">Reply <span>✍️</span></div>
             <div class="action-item" onclick="navigator.clipboard.writeText('${msg.content}')">Copy <span>📑</span></div>
-            <div class="action-item" onclick="${isPinned ? `window.unpinMessage('${msg.id}')` : `window.openPinModal('${msg.id}', '${msg.content.replace(/'/g, "\\'")}')`}">
-                ${isPinned ? 'Unpin' : 'Pin'} <span>📌</span>
-            </div>
+            <div class="action-item" onclick="alert('Forwarding coming soon!')">Forward <span>📤</span></div>
+            <div class="action-item" onclick="window.openPinModal('${msg.id}', '${msg.content.replace(/'/g, "\\'")}')">Pin <span>📌</span></div>
             <div class="action-item delete" onclick="window.deleteMessage('${msg.id}')">Delete <span>🗑️</span></div>`;
 
         menuContainer.appendChild(clonedBubble);
         menuContainer.appendChild(tile);
         overlay.style.display = 'flex';
     };
-            
+
     // F. REPLY LOGIC (Identity Fix)
     window.triggerReply = async (senderId, content) => {
         let name = "Ghost";

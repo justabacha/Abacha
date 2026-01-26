@@ -233,34 +233,24 @@ window.handleWallpaperUpload = (input) => {
         reader.onload = (e) => {
             const imageUrl = e.target.result;
             
-            // Save to memory
+            // 1. Save to memory
             localStorage.setItem('phestone-wallpaper', imageUrl);
             
-            // Visual confirmation
-            window.handleWallpaperUpload = (input) => {
-    const file = input.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const imageUrl = e.target.result;
-            
-            // Save to memory
-            localStorage.setItem('phestone-wallpaper', imageUrl);
-            
-            // Apply preview to settings page immediately
+            // 2. Apply preview immediately
             document.body.style.backgroundImage = `url(${imageUrl})`;
             document.body.style.backgroundSize = "cover";
-            document.body.style.backgroundPosition = "center";
 
-            // 🔥 SLEEK NOTIFICATION (Replacing the boring alert)
+            // 3. TRIGGER THE NEW ALERT (Check if it exists first)
             if (window.showGhostToast) {
-                showGhostToast("Wallpaper Synced 🎭✨");
+                window.showGhostToast("Wallpaper Synced 🎭✨");
+            } else {
+                console.error("The notification function 'showGhostToast' is missing!");
             }
         };
         reader.readAsDataURL(file);
     }
 };
-            
+
             // Immediate preview on settings page
             document.body.style.backgroundImage = `url(${imageUrl})`;
         };

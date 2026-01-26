@@ -39,17 +39,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (profile) {
                 // STRIP OUT '.chat-avatar' FROM HERE
-                document.querySelectorAll('.nav-avatar, .my-self-avatar').forEach(el => {
+                    const syncChatIdentity = async () => {
+        try {
+            const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('avatar_url, username')
+                .eq('id', user.id)
+                .maybeSingle(); 
+
+            if (profile) {
+                // Only sync YOUR self-avatars (not the header)
+                document.querySelectorAll('.my-self-avatar').forEach(el => {
                     if (profile.avatar_url) el.style.backgroundImage = `url(${profile.avatar_url})`;
-                });
-                // STRIP OUT '.chat-user-name' FROM HERE
-                document.querySelectorAll('#display-username, .my-alias').forEach(el => {
-                    if (profile.username) el.innerText = profile.username;
                 });
             }
         } catch (err) { console.error("Identity Stall:", err); }
     };
-
+                          
     // --- NEW: SPECIFIC HEADER SYNC FOR THE RECEIVER ---
     const syncReceiverHeader = async () => {
         if (!friendID) return;
@@ -76,16 +82,58 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (chatBox) {
                 // --- 3. MESSAGE DISPLAY & UI (GHOST SURGERY) ---
-        const displayMessage = async (msg) => {
+                // --- 3. MESSAGE DISPLAY (GHOST SURGERY: REVERSE & TIME) ---
+        const displayMessage = async (msg, isHistory = false) => {
             const now = new Date();
             const createdAt = new Date(msg.created_at);
-            const vanishLimit = msg.vanish_hours || 720; 
-            const expiryTime = new Date(createdAt.getTime() + (vanishLimit * 60 * 60 * 1000));
-
-            if (now > expiryTime) return; 
+            
+            // Format time (e.g., 4:20 PM)
+            const timeStr = createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
             const isMe = msg.sender_id === user.id || msg.sender_email === user.email;
             
+            const wrapper = document.createElement('div');
+            wrapper.className = `msg-wrapper ${isMe ? 'user-wrapper' : 'ai-wrapper'}`;
+            
+            // Fetch Avatar
+            const { data: senderProfile } = await supabaseClient
+                .from('profiles')
+                .select('avatar_url')
+                .eq('id', msg.sender_id)
+                .maybeSingle();
+
+            const avatarImg = senderProfile?.avatar_url || 'https://i.postimg.cc/rpD4fgxR/IMG-5898-2.jpg';
+
+            wrapper.innerHTML = `
+                <img src="${avatarImg}" class="avatar">
+                <div class="message ${isMe ? 'sent' : 'received'}">
+                    ${msg.content.includes("↳ [Replying to") 
+                        ? `<div class="reply-quote">${msg.content.split(']\n')[0].replace('↳ [', '')}</div><div>${msg.content.split(']\n')[1] || ""}</div>`
+                        : `<div>${msg.content}</div>`
+                    }
+                    <div class="msg-time">${timeStr}</div>
+                </div>
+            `;
+
+            // If it's history, we put it at the bottom, if new, we append
+            chatBox.appendChild(wrapper);
+            
+            // Stop the "Storm": Only jump to bottom, don't animate the scroll
+            chatBox.scrollTop = chatBox.scrollHeight;
+        };
+
+        // --- 7. HISTORY (MODIFIED TO PREVENT STORM) ---
+        const { data: history } = await supabaseClient.from('messages').select('*')
+            .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`)
+            .order('created_at', { ascending: true });
+        
+        // Load history silently
+        if(history) {
+            history.forEach(msg => displayMessage(msg, true));
+            // One final jump to the latest message
+            setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 100);
+        }
+        
             // 1. Create the Phesty-style Wrapper
             const wrapper = document.createElement('div');
             wrapper.className = `msg-wrapper ${isMe ? 'user-wrapper' : 'ai-wrapper'}`;
@@ -307,19 +355,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // --- GLOBAL HELPERS ---
-window.setReply = (sender, content) => {
-    replyingTo = { sender, content };
-    const inputArea = document.querySelector('.floating-input-container');
-    let preview = document.getElementById('reply-preview') || document.createElement('div');
-    preview.id = 'reply-preview';
-    inputArea.prepend(preview);
-    preview.innerHTML = `<div style="background:rgba(255,255,255,0.1); padding:10px; border-left:4px solid #32D74B; font-size:12px; color:white; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-        <span>Replying to <b>${sender}</b>: "${content.substring(0, 20)}..."</span>
-        <span onclick="cancelReply()" style="color:#FF3B30; font-weight:bold; cursor:pointer; padding:5px;">✕</span>
-    </div>`;
+window.setReply = async (senderEmail, content) => {
+    // Fetch the username for that email
+    const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('username')
+        .eq('email', senderEmail)
+        .maybeSingle();
+
+    const displayName = profile ? profile.username : "Ghost";
+    replyingTo = { sender: displayName, content };
+
+    const container = document.getElementById('reply-preview-container');
+    container.style.display = 'block';
+    container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="border-left: 2px solid #007AFF; padding-left:10px;">
+                <div style="color:#007AFF; font-size:11px; font-weight:bold;">Replying to ${displayName}</div>
+                <div style="color:rgba(255,255,255,0.6); font-size:12px;">${content.substring(0, 30)}...</div>
+            </div>
+            <span onclick="cancelReply()" style="color:#FF3B30; cursor:pointer; padding:5px;">✕</span>
+        </div>`;
+    
     document.getElementById('chat-overlay').style.display = 'none';
 };
-window.cancelReply = () => { document.getElementById('reply-preview')?.remove(); replyingTo = null; };
+
+window.cancelReply = () => { 
+    document.getElementById('reply-preview-container').style.display = 'none'; 
+    replyingTo = null; 
+};
 window.copyToClipboard = (text) => { navigator.clipboard.writeText(text); document.getElementById('chat-overlay').style.display = 'none'; };
 window.deleteMessage = (id) => { messageToDelete = id; document.getElementById('delete-modal').style.display = 'flex'; document.getElementById('chat-overlay').style.display = 'none'; };
 window.confirmGhostDelete = async () => { if (messageToDelete) { await supabaseClient.from('messages').delete().eq('id', messageToDelete); location.reload(); } };

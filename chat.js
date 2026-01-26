@@ -71,30 +71,41 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // A. SYNC IDENTITY
     const syncReceiverHeader = async () => {
-    if (!friendID) return;
+    const syncReceiverHeader = async () => {
+    // 1. Double check we have the Friend's ID from the URL
+    if (!friendID) {
+        console.error("Ghost Layer: No friendID found in URL");
+        return;
+    }
 
-    // Explicitly query ONLY the friend's profile using the ID from the URL
+    console.log("Syncing Header for Friend ID:", friendID);
+
+    // 2. Explicitly query ONLY the friend's profile
     const { data: friend, error } = await supabaseClient
         .from('profiles')
         .select('username, avatar_url')
         .eq('id', friendID) 
-        .single();
+        .maybeSingle();
 
     if (friend) {
-        // Force update the DOM elements
-        const nameEl = document.querySelector('.chat-user-name');
-        const avatarEl = document.querySelector('.chat-avatar');
+        const headerName = document.querySelector('.chat-user-name');
+        const headerAvatar = document.querySelector('.chat-avatar');
         
-        if (nameEl) nameEl.innerText = `~${friend.username}`;
-        if (avatarEl && friend.avatar_url) {
-            avatarEl.style.backgroundImage = `url('${friend.avatar_url}')`;
-            avatarEl.style.backgroundSize = "cover";
+        // 3. Force overwrite the DOM
+        if (headerName) {
+            headerName.innerText = `~${friend.username}`;
+            console.log("Header name set to:", friend.username);
+        }
+        
+        if (headerAvatar && friend.avatar_url) {
+            headerAvatar.style.backgroundImage = `url('${friend.avatar_url}')`;
+            headerAvatar.style.backgroundSize = "cover";
         }
     } else {
-        console.error("Profile Sync Error:", error);
+        console.error("Ghost Layer: Friend profile fetch failed", error);
     }
 };
-    
+        
     // B. LOAD PINS
     window.loadPins = async () => {
         const now = new Date().toISOString();

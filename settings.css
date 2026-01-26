@@ -307,3 +307,17 @@
     padding: 0 20px;
     width: 100%;
     }
+
+/* When Ghost Mode is ON */
+[data-theme="ghost"] .message.sent {
+    background: transparent !important; /* Hollow fill */
+    border: 1.5px solid #007AFF; /* Electric Blue Outline */
+    color: #007AFF;
+    box-shadow: 0 0 10px rgba(0, 122, 255, 0.3); /* Soft blue glow */
+}
+
+[data-theme="ghost"] .message.received {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px); /* Heavy glass effect */
+        }

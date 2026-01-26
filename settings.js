@@ -249,3 +249,32 @@ window.handleWallpaperUpload = (input) => {
     }
 };
     
+window.toggleGhostMode = (isActive) => {
+    const root = document.documentElement;
+    
+    if (isActive) {
+        // 1. Apply the "Ghost" Visuals (Blue/Hollow)
+        root.setAttribute('data-theme', 'ghost');
+        localStorage.setItem('ghost-mode-active', 'true');
+        
+        // 2. Set the 24-hour Vanish Protocol
+        localStorage.setItem('message-expiry', '24'); 
+        alert("Ghost Mode Active: Messages vanish after 24 hours. 👻⚡");
+    } else {
+        // 1. Revert to Just•Abacha (Default)
+        root.setAttribute('data-theme', 'default');
+        localStorage.setItem('ghost-mode-active', 'false');
+        
+        // 2. Disable Vanish
+        localStorage.removeItem('message-expiry');
+        alert("Ghost Mode Deactivated.");
+    }
+};
+
+// RUN ON LOAD: Keep the toggle position correct
+document.addEventListener('DOMContentLoaded', () => {
+    const isGhost = localStorage.getItem('ghost-mode-active') === 'true';
+    const toggle = document.getElementById('ghost-toggle');
+    if (toggle) toggle.checked = isGhost;
+});
+    

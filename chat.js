@@ -1,3 +1,14 @@
+(function() {
+    const savedWall = localStorage.getItem('phestone-wallpaper');
+    if (savedWall) {
+        // Apply the saved image to the background
+        document.body.style.backgroundImage = `url(${savedWall})`;
+        document.body.style.backgroundSize = "cover";
+        document.body.style.backgroundPosition = "center";
+        document.body.style.backgroundAttachment = "fixed";
+    }
+})();
+
 // --- 1. GLOBALS & TUNNELING ---
 const urlParams = new URLSearchParams(window.location.search);
 const friendID = urlParams.get('friend_id');

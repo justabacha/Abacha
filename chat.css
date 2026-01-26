@@ -270,3 +270,37 @@ button, .action-item, .input-tile {
     transform: scale(1.02); /* Very subtle scale */
     transform-origin: inherit; /* Keeps it pinned to its flex side */
 }
+
+.floating-input-container {
+    position: fixed;
+    bottom: 30px;
+    left: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.input-tile {
+    position: relative !important; /* No longer fixed, container handles it */
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+}
+
+#reply-preview-container {
+    background: rgba(20, 20, 20, 0.8);
+    backdrop-filter: blur(15px);
+    border-radius: 15px 15px 0 0; /* Rounded top only */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: none;
+    margin-bottom: -10px; /* Merges into the input tile */
+    padding: 10px 15px 20px 15px;
+    display: none; /* Hidden until reply is set */
+}
+
+.msg-time {
+    font-size: 9px;
+    opacity: 0.5;
+    margin-top: 4px;
+    text-align: right;
+    width: 100%;
+}

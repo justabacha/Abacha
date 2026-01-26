@@ -271,32 +271,6 @@ button, .action-item, .input-tile {
     transform-origin: inherit; /* Keeps it pinned to its flex side */
 }
 
-.floating-input-container {
-    position: fixed;
-    bottom: 30px;
-    left: 20px;
-    right: 20px;
-    z-index: 1000;
-}
-
-.input-tile {
-    position: relative !important; /* No longer fixed, container handles it */
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-}
-
-#reply-preview-container {
-    background: rgba(20, 20, 20, 0.8);
-    backdrop-filter: blur(15px);
-    border-radius: 15px 15px 0 0; /* Rounded top only */
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-bottom: none;
-    margin-bottom: -10px; /* Merges into the input tile */
-    padding: 10px 15px 20px 15px;
-    display: none; /* Hidden until reply is set */
-}
-
 /* Make time more visible */
 .msg-time {
     font-size: 10px;
@@ -307,27 +281,43 @@ button, .action-item, .input-tile {
     display: block;
 }
 
-/* Fix the Reply Container to match Input Tile width */
-#reply-preview-container {
-    background: rgba(25, 25, 25, 0.95);
-    backdrop-filter: blur(20px);
-    border-radius: 20px 20px 0 0; 
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-bottom: none;
-    margin: 0 auto -5px auto; /* Centers it and pulls it into the tile */
-    padding: 12px 18px 15px 18px;
-    width: 100%; /* Matches the width of the input-tile perfectly */
-    box-sizing: border-box;
-}
-
-/* Ensure the floating container doesn't let things bleed to edges */
+/* Container for the whole bottom section */
 .floating-input-container {
     position: fixed;
-    bottom: 30px;
-    left: 20px;
-    right: 20px;
+    bottom: 25px;
+    left: 15px;
+    right: 15px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: calc(100% - 30px);
 }
 
+/* Reply box spans the full width of the input capsule */
+#reply-preview-container {
+    width: 100%; 
+    background: rgba(20, 20, 20, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px 20px 0 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: none;
+    padding: 12px 20px;
+    box-sizing: border-box;
+    margin-bottom: -10px; /* Pulls it into the capsule */
+    display: none; /* Hidden by default */
+}
+
+/* The main capsule */
+.input-tile {
+    width: 100% !important;
+    height: 55px; /* Fixed height for stability */
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(25px);
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-sizing: border-box;
+    }
+    

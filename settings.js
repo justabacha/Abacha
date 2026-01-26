@@ -233,16 +233,19 @@ window.handleWallpaperUpload = (input) => {
         reader.onload = (e) => {
             const imageUrl = e.target.result;
             
-            // 1. Apply it to the current page immediately so you see it
-            document.body.style.backgroundImage = `url(${imageUrl})`;
-            document.body.style.backgroundSize = "cover";
-            document.body.style.backgroundPosition = "center";
-
-            // 2. Save it to memory for the Chat page to find
+            // Save to memory
             localStorage.setItem('phestone-wallpaper', imageUrl);
             
-            alert("Wallpaper Updated! Check your chat. 🚀");
+            // Visual confirmation
+            alert("Wallpaper saved to memory! 🎭");
+            console.log("Image data saved under 'phestone-wallpaper'");
+            
+            // Immediate preview on settings page
+            document.body.style.backgroundImage = `url(${imageUrl})`;
         };
         reader.readAsDataURL(file);
+    } else {
+        console.error("No file selected.");
     }
 };
+    

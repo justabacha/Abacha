@@ -226,6 +226,17 @@ window.executePurgeSetting = (hours) => {
     };
 });
 
+// 1. Focused Toast System
+window.showGhostToast = (message) => {
+    const toast = document.getElementById('ghost-toast');
+    if (toast) {
+        toast.innerText = message;
+        toast.className = "ghost-toast show"; // Forces it to show
+        setTimeout(() => { toast.classList.remove('show'); }, 3000);
+    }
+};
+
+// 2. Focused Wallpaper System
 window.handleWallpaperUpload = (input) => {
     const file = input.files[0];
     if (file) {
@@ -233,19 +244,16 @@ window.handleWallpaperUpload = (input) => {
         reader.onload = (e) => {
             const imageUrl = e.target.result;
             
-            // 1. Save to memory
+            // Save to memory for the chat page
             localStorage.setItem('phestone-wallpaper', imageUrl);
             
-            // 2. Apply preview immediately
+            // Apply immediate preview to the settings background
             document.body.style.backgroundImage = `url(${imageUrl})`;
             document.body.style.backgroundSize = "cover";
+            document.body.style.backgroundPosition = "center";
 
-            // 3. TRIGGER THE NEW ALERT (Check if it exists first)
-            if (window.showGhostToast) {
-                window.showGhostToast("Wallpaper Synced 🎭✨");
-            } else {
-                console.error("The notification function 'showGhostToast' is missing!");
-            }
+            // Trigger the sleek notification
+            window.showGhostToast("Wallpaper Synced 🖼️✨");
         };
         reader.readAsDataURL(file);
     }

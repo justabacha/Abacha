@@ -325,3 +325,51 @@ button, .action-item, .input-tile {
     width: 100%;
     }
     
+/* Custom Ghost Prompt */
+#ghost-prompt-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    z-index: 20000;
+    justify-content: center;
+    align-items: center;
+}
+
+.ghost-prompt-tile {
+    background: rgba(25, 25, 25, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    width: 280px;
+    padding: 20px;
+    position: relative;
+    text-align: center;
+}
+
+.prompt-logo {
+    position: absolute;
+    top: 12px;
+    left: 15px;
+    font-size: 10px;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.prompt-text {
+    color: white;
+    font-size: 14px;
+    margin: 30px 0 20px 0;
+}
+
+.vibe-btn {
+    background: #34C759; /* Green layer */
+    color: white;
+    border: none;
+    padding: 10px 30px;
+    border-radius: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    }
+    

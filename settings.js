@@ -225,21 +225,38 @@ window.executePurgeSetting = (hours) => {
         window.location.href = 'index.html';
     };
 });
-// Add this at the VERY BOTTOM of settings.js, outside of any other blocks
-window.openThemePanel = function() {
+// Add this at the VERY BOTTOM of settings.js
+window.openThemePanel = () => {
     const panel = document.getElementById('theme-panel');
-    if (panel) {
-        panel.style.display = 'flex';
-        console.log("Opening Atmosphere Panel...");
+    if(panel) panel.style.display = 'flex';
+};
+
+window.closeThemePanel = () => {
+    const panel = document.getElementById('theme-panel');
+    if(panel) panel.style.display = 'none';
+};
+
+// This maps your existing function to the window so the button works
+window.setAppTheme = (name) => {
+    if (typeof applyTheme === 'function') {
+        applyTheme(name); 
     } else {
-        console.error("Panel not found! Check if the ID 'theme-panel' is correct in your HTML.");
+        console.error("applyTheme function not found!");
     }
 };
 
-window.closeThemePanel = function() {
-    const panel = document.getElementById('theme-panel');
-    if (panel) {
-        panel.style.display = 'none';
+window.handleWallpaperUpload = (input) => {
+    const file = input.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const imageUrl = e.target.result;
+            // Apply to body immediately
+            document.body.style.backgroundImage = `url(${imageUrl})`;
+            // Save to memory
+            localStorage.setItem('phestone-wallpaper', imageUrl);
+            alert("Wallpaper set! 🚀");
+        };
+        reader.readAsDataURL(file);
     }
 };
-

@@ -225,4 +225,21 @@ window.executePurgeSetting = (hours) => {
         window.location.href = 'index.html';
     };
 });
-        
+// Add this at the VERY BOTTOM of settings.js, outside of any other blocks
+window.openThemePanel = function() {
+    const panel = document.getElementById('theme-panel');
+    if (panel) {
+        panel.style.display = 'flex';
+        console.log("Opening Atmosphere Panel...");
+    } else {
+        console.error("Panel not found! Check if the ID 'theme-panel' is correct in your HTML.");
+    }
+};
+
+window.closeThemePanel = function() {
+    const panel = document.getElementById('theme-panel');
+    if (panel) {
+        panel.style.display = 'none';
+    }
+};
+

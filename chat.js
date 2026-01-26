@@ -127,9 +127,49 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isMe = msg.sender_id === user.id;
         const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+        // A. SYNC IDENTITY & HEADER LOCK
+    const syncReceiverHeader = async () => {
+        if (!friendID) return;
+        const { data: friend } = await supabaseClient
+            .from('profiles')
+            .select('username, avatar_url')
+            .eq('id', friendID) 
+            .maybeSingle();
+
+        if (friend) {
+            const headerName = document.querySelector('.chat-user-name');
+            const headerAvatar = document.querySelector('.chat-avatar');
+            if (headerName) headerName.innerText = `~${friend.username}`;
+            if (headerAvatar && friend.avatar_url) {
+                headerAvatar.style.backgroundImage = `url('${friend.avatar_url}')`;
+                headerAvatar.style.backgroundSize = "cover";
+            }
+        }
+    };
+    await syncReceiverHeader(); // Force the identity lock immediately
+
+    // B. LOAD PINS
+    window.loadPins = async () => {
+        const now = new Date().toISOString();
+        const { data: pins } = await supabaseClient.from('messages').select('*').gt('pinned_until', now);
+        currentPins = pins || [];
+        const pinBar = document.getElementById('pinned-bar');
+        if (currentPins.length > 0) {
+            pinBar.style.display = 'block';
+            pinBar.innerHTML = currentPins.map(p => `
+                <div class="pin-item">
+                    <span>📌 ${p.content.substring(0, 25)}...</span>
+                    <span onclick="window.unpinMessage('${p.id}')" style="cursor:pointer; padding:5px;">✕</span>
+                </div>`).join('');
+        } else { pinBar.style.display = 'none'; }
+    };
+
+    // C. DISPLAY BUBBLES ENGINE
+    const displayMessage = async (msg) => {
+        const isMe = msg.sender_id === user.id;
+        const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const wrapper = document.createElement('div');
         wrapper.className = `msg-wrapper ${isMe ? 'user-wrapper' : 'ai-wrapper'}`;
-        
         const { data: sender } = await supabaseClient.from('profiles').select('avatar_url').eq('id', msg.sender_id).maybeSingle();
         const avatarImg = sender?.avatar_url || 'https://i.postimg.cc/rpD4fgxR/IMG-5898-2.jpg';
 
@@ -140,7 +180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     ? `<div class="reply-quote">${msg.content.split(']\n')[0].replace('↳ [', '')}</div><div>${msg.content.split(']\n')[1] || ""}</div>`
                     : `<div>${msg.content}</div>`
                 }
-                <div class="msg-time" style="font-size:10px; opacity:0.8; margin-top:4px; text-align:right;">${timeStr}</div>
+                <div class="msg-time">${timeStr}</div>
             </div>`;
 
         const bubble = wrapper.querySelector('.message');
@@ -148,32 +188,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         chatBox.appendChild(wrapper);
     };
 
-    
-    // --- LOAD HISTORY ---
-const { data: history } = await supabaseClient.from('messages').select('*')
-    .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`)
-    .order('created_at', { ascending: true });
+    // D. LOAD HISTORY & AUTO-SCROLL TO LATEST
+    const { data: history } = await supabaseClient.from('messages').select('*')
+        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`)
+        .order('created_at', { ascending: true });
 
-if (history) {
-    chatBox.innerHTML = '';
-    // Use for...of to ensure order
-    for (const msg of history) { 
-        await displayMessage(msg); 
-    }
-    
-    // FORCE SCROLL TO BOTTOM
-    const scrollToLatest = () => {
-        chatBox.scrollTop = chatBox.scrollHeight;
-        chatBox.classList.add('ready'); // Show chat once at the bottom
-    };
-
-    // Run it twice to be sure: once immediately and once after a tiny delay
-    scrollToLatest();
-    setTimeout(scrollToLatest, 50); 
-    
-    window.loadPins();
-}
-    
+    if (history) {
+        chatBox.innerHTML = '';
+        for (const msg of history) { await displayMessage(msg); }
+        
+        // JUMP TO THE LATEST MESSAGE
+        const scrollToLatest = () => {
+            chatBox.scrollTop = chatBox.scrollHeight;
+            chatBox.classList.add('ready'); 
+        };
+        scrollToLatest();
+        setTimeout(scrollToLatest, 150); // Slight delay to ensure bubbles are fully painted
+        window.loadPins();
+        }
+        
     // E. ACTION MENU (Full Options)
     // --- New Ghost Prompt Logic ---
 window.showGhostPrompt = (message) => {

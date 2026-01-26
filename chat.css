@@ -373,3 +373,12 @@ button, .action-item, .input-tile {
     width: 100%;
     }
     
+#chat-box {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+#chat-box.ready {
+    opacity: 1;
+    }
+    

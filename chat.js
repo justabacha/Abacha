@@ -71,14 +71,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // A. SYNC IDENTITY
     const syncReceiverHeader = async () => {
-        const { data: friend } = await supabaseClient.from('profiles').select('avatar_url, username').eq('id', friendID).maybeSingle();
+        // Force-check that we are looking for the FRIEND, not the logged-in user
+        const { data: friend, error } = await supabaseClient
+            .from('profiles')
+            .select('avatar_url, username')
+            .eq('id', friendID)
+            .maybeSingle();
+
         if (friend) {
-            document.querySelector('.chat-user-name').innerText = `~${friend.username}`;
-            if (friend.avatar_url) document.querySelector('.chat-avatar').style.backgroundImage = `url(${friend.avatar_url})`;
+            const headerName = document.querySelector('.chat-user-name');
+            const headerAvatar = document.querySelector('.chat-avatar');
+            
+            // Apply friend's data specifically to the header
+            if (headerName) headerName.innerText = `~${friend.username}`;
+            if (headerAvatar && friend.avatar_url) {
+                headerAvatar.style.backgroundImage = `url(${friend.avatar_url})`;
+                headerAvatar.style.backgroundSize = "cover";
+            }
         }
     };
-    syncReceiverHeader();
-
+    
     // B. LOAD PINS
     window.loadPins = async () => {
         const now = new Date().toISOString();
@@ -135,10 +147,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // E. ACTION MENU (Full Options)
-    window.showActionMenu = (msg, clonedBubble) => {
+        window.showActionMenu = (msg, clonedBubble) => {
         const overlay = document.getElementById('chat-overlay');
         const menuContainer = document.getElementById('menu-content');
         const isMe = msg.sender_id === user.id;
+        
+        // CHECK IF ALREADY PINNED
+        const isPinned = currentPins.some(p => p.id === msg.id);
         
         menuContainer.innerHTML = '';
         menuContainer.style.alignItems = isMe ? 'flex-end' : 'flex-start';
@@ -149,15 +164,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         tile.innerHTML = `
             <div class="action-item" onclick="window.triggerReply('${msg.sender_id}', '${msg.content.replace(/'/g, "\\'")}')">Reply <span>✍️</span></div>
             <div class="action-item" onclick="navigator.clipboard.writeText('${msg.content}')">Copy <span>📑</span></div>
-            <div class="action-item" onclick="alert('Forwarding coming soon!')">Forward <span>📤</span></div>
-            <div class="action-item" onclick="window.openPinModal('${msg.id}', '${msg.content.replace(/'/g, "\\'")}')">Pin <span>📌</span></div>
+            <div class="action-item" onclick="${isPinned ? `window.unpinMessage('${msg.id}')` : `window.openPinModal('${msg.id}', '${msg.content.replace(/'/g, "\\'")}')`}">
+                ${isPinned ? 'Unpin' : 'Pin'} <span>📌</span>
+            </div>
             <div class="action-item delete" onclick="window.deleteMessage('${msg.id}')">Delete <span>🗑️</span></div>`;
 
         menuContainer.appendChild(clonedBubble);
         menuContainer.appendChild(tile);
         overlay.style.display = 'flex';
     };
-
+            
     // F. REPLY LOGIC (Identity Fix)
     window.triggerReply = async (senderId, content) => {
         let name = "Ghost";

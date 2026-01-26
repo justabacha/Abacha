@@ -71,14 +71,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // A. SYNC IDENTITY
     const syncReceiverHeader = async () => {
-        const { data: friend } = await supabaseClient.from('profiles').select('avatar_url, username').eq('id', friendID).maybeSingle();
-        if (friend) {
-            document.querySelector('.chat-user-name').innerText = `~${friend.username}`;
-            if (friend.avatar_url) document.querySelector('.chat-avatar').style.backgroundImage = `url(${friend.avatar_url})`;
-        }
-    };
-    syncReceiverHeader();
+    // FORCE look for the FRIEND'S ID from the URL, not the person logged in
+    const { data: friend, error } = await supabaseClient
+        .from('profiles')
+        .select('avatar_url, username')
+        .eq('id', friendID) // friendID is grabbed from URL params
+        .single();
 
+    if (friend) {
+        const headerName = document.querySelector('.chat-user-name');
+        const headerAvatar = document.querySelector('.chat-avatar');
+        
+        // Identity Lock: Only show the friend's username
+        if (headerName) headerName.innerText = `~${friend.username}`;
+        
+        // Identity Lock: Only show the friend's avatar
+        if (headerAvatar && friend.avatar_url) {
+            headerAvatar.style.backgroundImage = `url('${friend.avatar_url}')`;
+        }
+    }
+};
+    
     // B. LOAD PINS
     window.loadPins = async () => {
         const now = new Date().toISOString();
@@ -122,18 +135,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // D. HISTORY & REVERSE STORM FIX
-    const { data: history } = await supabaseClient.from('messages').select('*')
-        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`)
-        .order('created_at', { ascending: true });
-    
-    if (history) {
-        chatBox.innerHTML = '';
-        for (const msg of history) { await displayMessage(msg); }
-        chatBox.scrollTop = chatBox.scrollHeight;
-        chatBox.classList.add('ready');
-        window.loadPins();
-    }
+const { data: history } = await supabaseClient.from('messages').select('*')
+    .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`)
+    .order('created_at', { ascending: true });
 
+if (history) {
+    chatBox.innerHTML = '';
+    for (const msg of history) { await displayMessage(msg); }
+    
+    // THE FIX: Immediately jump to the latest message at the bottom
+    chatBox.scrollTop = chatBox.scrollHeight;
+    
+    // Reveal the chat only after we are at the bottom
+    setTimeout(() => {
+        chatBox.classList.add('ready');
+    }, 100);
+    
+    window.loadPins();
+}
+    
     // E. ACTION MENU (Full Options)
     // --- New Ghost Prompt Logic ---
 window.showGhostPrompt = (message) => {

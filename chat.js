@@ -71,24 +71,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // A. SYNC IDENTITY
     const syncReceiverHeader = async () => {
-    // FORCE look for the FRIEND'S ID from the URL, not the person logged in
+    if (!friendID) return;
+
+    // Explicitly query ONLY the friend's profile using the ID from the URL
     const { data: friend, error } = await supabaseClient
         .from('profiles')
-        .select('avatar_url, username')
-        .eq('id', friendID) // friendID is grabbed from URL params
+        .select('username, avatar_url')
+        .eq('id', friendID) 
         .single();
 
     if (friend) {
-        const headerName = document.querySelector('.chat-user-name');
-        const headerAvatar = document.querySelector('.chat-avatar');
+        // Force update the DOM elements
+        const nameEl = document.querySelector('.chat-user-name');
+        const avatarEl = document.querySelector('.chat-avatar');
         
-        // Identity Lock: Only show the friend's username
-        if (headerName) headerName.innerText = `~${friend.username}`;
-        
-        // Identity Lock: Only show the friend's avatar
-        if (headerAvatar && friend.avatar_url) {
-            headerAvatar.style.backgroundImage = `url('${friend.avatar_url}')`;
+        if (nameEl) nameEl.innerText = `~${friend.username}`;
+        if (avatarEl && friend.avatar_url) {
+            avatarEl.style.backgroundImage = `url('${friend.avatar_url}')`;
+            avatarEl.style.backgroundSize = "cover";
         }
+    } else {
+        console.error("Profile Sync Error:", error);
     }
 };
     
@@ -134,22 +137,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         chatBox.appendChild(wrapper);
     };
 
-    // D. HISTORY & REVERSE STORM FIX
+    
+    // --- LOAD HISTORY ---
 const { data: history } = await supabaseClient.from('messages').select('*')
     .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`)
     .order('created_at', { ascending: true });
 
 if (history) {
     chatBox.innerHTML = '';
-    for (const msg of history) { await displayMessage(msg); }
+    // Use for...of to ensure order
+    for (const msg of history) { 
+        await displayMessage(msg); 
+    }
     
-    // THE FIX: Immediately jump to the latest message at the bottom
-    chatBox.scrollTop = chatBox.scrollHeight;
-    
-    // Reveal the chat only after we are at the bottom
-    setTimeout(() => {
-        chatBox.classList.add('ready');
-    }, 100);
+    // FORCE SCROLL TO BOTTOM
+    const scrollToLatest = () => {
+        chatBox.scrollTop = chatBox.scrollHeight;
+        chatBox.classList.add('ready'); // Show chat once at the bottom
+    };
+
+    // Run it twice to be sure: once immediately and once after a tiny delay
+    scrollToLatest();
+    setTimeout(scrollToLatest, 50); 
     
     window.loadPins();
 }

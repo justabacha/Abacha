@@ -70,24 +70,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!user || !friendID) return;
 
     // A. SYNC IDENTITY
-    const syncReceiverHeader = async () => {
-        // Force-check that we are looking for the FRIEND, not the logged-in user
+        const syncReceiverHeader = async () => {
+        // We look for the profile of the person we are chatting WITH (friendID)
         const { data: friend, error } = await supabaseClient
             .from('profiles')
             .select('avatar_url, username')
-            .eq('id', friendID)
-            .maybeSingle();
+            .eq('id', friendID) 
+            .single();
 
         if (friend) {
             const headerName = document.querySelector('.chat-user-name');
             const headerAvatar = document.querySelector('.chat-avatar');
             
-            // Apply friend's data specifically to the header
-            if (headerName) headerName.innerText = `~${friend.username}`;
-            if (headerAvatar && friend.avatar_url) {
-                headerAvatar.style.backgroundImage = `url(${friend.avatar_url})`;
-                headerAvatar.style.backgroundSize = "cover";
+            // Set the Friend's Username
+            if (headerName) {
+                headerName.innerText = `~${friend.username}`;
+                headerName.style.color = "white"; // Ensure visibility
             }
+            
+            // Set the Friend's Avatar
+            if (headerAvatar && friend.avatar_url) {
+                headerAvatar.style.backgroundImage = `url('${friend.avatar_url}')`;
+                headerAvatar.style.backgroundSize = "cover";
+                headerAvatar.style.backgroundPosition = "center";
+            }
+        } else {
+            console.error("Ghost Layer Error: Could not sync friend profile", error);
         }
     };
     

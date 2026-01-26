@@ -281,33 +281,37 @@ button, .action-item, .input-tile {
     display: block;
 }
 
-/* Ensure the container takes full width minus margins */
+/* Container: Centered and lowered */
 .floating-input-container {
     position: fixed;
-    bottom: 30px;
-    left: 20px;
-    right: 20px;
+    bottom: 15px; /* Lowered from 30px */
+    left: 50%;
+    transform: translateX(-50%); /* Perfect centering */
+    width: 90%; /* Responsive width */
+    max-width: 500px; /* Desktop safety */
     display: flex;
     flex-direction: column;
+    align-items: center;
     z-index: 1000;
 }
 
-/* The Reply box matches the input tile exactly */
+/* Reply Box: Mounted ON TOP */
 #reply-preview-container {
-    background: rgba(25, 25, 25, 0.9);
+    display: none; /* Hidden by default */
+    background: rgba(20, 20, 20, 0.95);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-radius: 25px 25px 0 0; 
+    border-radius: 20px 20px 0 0; 
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-bottom: none;
-    padding: 15px 20px;
-    width: 100%; /* Full width of container */
+    padding: 10px 15px 25px 15px; /* Extra bottom padding to hide gap */
+    width: 95%; /* Slightly slimmer than capsule for a layered look */
     box-sizing: border-box;
-    margin-bottom: -15px; /* Merge into the tile below */
-    z-index: 999;
+    margin-bottom: -20px; /* Tucks it behind the top edge of the capsule */
+    z-index: 1001; /* Higher than input-tile */
 }
 
-/* The Input Tile (The Capsule) stays full size */
+/* The Capsule: The Base Layer */
 .input-tile {
     position: relative !important;
     width: 100%;
@@ -315,10 +319,11 @@ button, .action-item, .input-tile {
     backdrop-filter: blur(25px); 
     -webkit-backdrop-filter: blur(25px);
     border-radius: 30px; 
-    padding: 10px 20px;
+    padding: 12px 20px;
     display: flex; 
     align-items: center; 
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     box-sizing: border-box;
-}
-
+    z-index: 1002; /* Highest level so it stays in front of the reply gap */
+    }
+        

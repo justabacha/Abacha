@@ -297,14 +297,24 @@ button, .action-item, .input-tile {
 }
 
 #reply-preview-container {
-    background: rgba(20, 20, 20, 0.8);
+    background: rgba(20, 20, 20, 0.9);
     backdrop-filter: blur(15px);
-    border-radius: 15px 15px 0 0; /* Rounded top only */
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-bottom: none;
-    margin-bottom: -10px; /* Merges into the input tile */
-    padding: 10px 15px 20px 15px;
-    display: none; /* Hidden until reply is set */
+    -webkit-backdrop-filter: blur(15px);
+    
+    /* ROUND ALL CORNERS: 20px on top and bottom makes it a smooth pill */
+    border-radius: 20px; 
+    
+    /* Full border to define the shape */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    
+    /* Spacing adjustments */
+    margin-bottom: 8px; /* Adds a small gap so you see the bottom curve */
+    padding: 12px 18px;
+    width: 95%; /* Slightly narrower than the input bar for a better look */
+    box-sizing: border-box;
+    
+    display: none; /* Logic still handles showing/hiding */
+    z-index: 999;
 }
 
 .msg-time {

@@ -1,11 +1,12 @@
 (function() {
     const savedWall = localStorage.getItem('phestone-wallpaper');
     if (savedWall) {
-        // Apply the saved image to the background
-        document.body.style.backgroundImage = `url(${savedWall})`;
+        console.log("Wallpaper found! Applying now...");
+        document.body.style.setProperty('background-image', `url(${savedWall})`, 'important');
         document.body.style.backgroundSize = "cover";
-        document.body.style.backgroundPosition = "center";
         document.body.style.backgroundAttachment = "fixed";
+    } else {
+        console.log("No wallpaper found in memory.");
     }
 })();
 

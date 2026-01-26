@@ -237,8 +237,29 @@ window.handleWallpaperUpload = (input) => {
             localStorage.setItem('phestone-wallpaper', imageUrl);
             
             // Visual confirmation
-            alert("Wallpaper saved to memory! 🎭");
-            console.log("Image data saved under 'phestone-wallpaper'");
+            window.handleWallpaperUpload = (input) => {
+    const file = input.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const imageUrl = e.target.result;
+            
+            // Save to memory
+            localStorage.setItem('phestone-wallpaper', imageUrl);
+            
+            // Apply preview to settings page immediately
+            document.body.style.backgroundImage = `url(${imageUrl})`;
+            document.body.style.backgroundSize = "cover";
+            document.body.style.backgroundPosition = "center";
+
+            // 🔥 SLEEK NOTIFICATION (Replacing the boring alert)
+            if (window.showGhostToast) {
+                showGhostToast("Wallpaper Synced 🎭✨");
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+};
             
             // Immediate preview on settings page
             document.body.style.backgroundImage = `url(${imageUrl})`;

@@ -225,25 +225,6 @@ window.executePurgeSetting = (hours) => {
         window.location.href = 'index.html';
     };
 });
-// Add this at the VERY BOTTOM of settings.js
-window.openThemePanel = () => {
-    const panel = document.getElementById('theme-panel');
-    if(panel) panel.style.display = 'flex';
-};
-
-window.closeThemePanel = () => {
-    const panel = document.getElementById('theme-panel');
-    if(panel) panel.style.display = 'none';
-};
-
-// This maps your existing function to the window so the button works
-window.setAppTheme = (name) => {
-    if (typeof applyTheme === 'function') {
-        applyTheme(name); 
-    } else {
-        console.error("applyTheme function not found!");
-    }
-};
 
 window.handleWallpaperUpload = (input) => {
     const file = input.files[0];
@@ -251,11 +232,16 @@ window.handleWallpaperUpload = (input) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const imageUrl = e.target.result;
-            // Apply to body immediately
+            
+            // 1. Apply it to the current page immediately so you see it
             document.body.style.backgroundImage = `url(${imageUrl})`;
-            // Save to memory
+            document.body.style.backgroundSize = "cover";
+            document.body.style.backgroundPosition = "center";
+
+            // 2. Save it to memory for the Chat page to find
             localStorage.setItem('phestone-wallpaper', imageUrl);
-            alert("Wallpaper set! 🚀");
+            
+            alert("Wallpaper Updated! Check your chat. 🚀");
         };
         reader.readAsDataURL(file);
     }

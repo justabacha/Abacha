@@ -62,17 +62,18 @@
                 <div class="tile-right">›</div>
             </div>
 
-                      <div class="settings-tile">
+            <div class="settings-tile">
     <div class="tile-left">👻 <span>Ghost Mode</span></div>
     <div class="tile-right">
         <label class="ghost-switch">
             <input type="checkbox" id="ghost-toggle" onchange="toggleGhostMode(this.checked)">
-            <span class="switch-slider"></span>
+            <span class="switch-slider">
+                <span class="on-text">ON</span>
+                <span class="off-text">OFF</span>
+            </span>
         </label>
     </div>
-</div>
-
-<div id="ghost-toast" class="ghost-toast"></div>
+            </div>
             
         <div class="logout-section">
             <button class="logout-btn" onclick="showLogoutModal()">🔏 Logout⛓️‍💥</button>

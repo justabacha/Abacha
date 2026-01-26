@@ -352,13 +352,22 @@
 
 /* The "ON/OFF" Tiny Writing */
 .on-text, .off-text {
-    font-size: 8px;
-    font-weight: 800;
-    color: rgba(255, 255, 255, 0.4);
+    font-size: 10px; /* Slightly larger */
+    font-weight: 900; /* Extra Bold */
+    color: #fff; /* Pure White so it's not shy */
     user-select: none;
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    transition: opacity 0.2s;
 }
 
-.on-text { opacity: 0; } /* Hidden when off */
+/* Position them specifically inside the track */
+.on-text { left: -10px; opacity: 0; }
+.off-text { right: -10px; opacity: 1; }
+
+input:checked + .switch-slider .on-text { opacity: 1; }
+input:checked + .switch-slider .off-text { opacity: 0; }
 
 .switch-slider:before {
     position: absolute;

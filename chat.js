@@ -60,13 +60,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     window.executePin = async (hours) => {
-        const expiry = new Date();
-        expiry.setHours(expiry.getHours() + hours);
-        await supabaseClient.from('messages').update({ pinned_until: expiry.toISOString() }).eq('id', pendingPinMsg.id);
+    const expiry = new Date();
+    expiry.setHours(expiry.getHours() + hours);
+    
+    // Update DB
+    const { error } = await supabaseClient.from('messages').update({ pinned_until: expiry.toISOString() }).eq('id', pendingPinMsg.id);
+    
+    if(!error) {
         document.getElementById('pin-modal').style.display = 'none';
+        // Just update the bar—DO NOT RELOAD THE PAGE
         window.loadPins(); 
-    };
-
+    }
+};
+    
     window.unpinMessage = async (id) => {
         await supabaseClient.from('messages').update({ pinned_until: null }).eq('id', id);
         window.loadPins();
@@ -80,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const wrapper = document.createElement('div');
         wrapper.className = `msg-wrapper ${isMe ? 'user-wrapper' : 'ai-wrapper'}`;
         
-        const { data: sender } = await supabaseClient.from('profiles').select('avatar_url').eq('id', msg.sender_id).maybeSingle();
+        const { data: sender } = await supabaseClient.from('profiles').select('beSingle();
         const avatarImg = sender?.avatar_url || 'https://i.postimg.cc/rpD4fgxR/IMG-5898-2.jpg';
 
         wrapper.innerHTML = `
@@ -114,14 +120,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- 5. REALTIME ---
-    supabaseClient.channel('messages').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
+        supabaseClient.channel('messages').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
         if (payload.eventType === 'INSERT') {
-            if ((payload.new.sender_id === user.id && payload.new.receiver_id === friendID) || (payload.new.sender_id === friendID && payload.new.receiver_id === user.id)) {
+            if ((payload.new.sender_id === user.id && payload.new.receiver_id === friendID) || 
+                (payload.new.sender_id === friendID && payload.new.receiver_id === user.id)) {
                 displayMessage(payload.new).then(() => { chatBox.scrollTop = chatBox.scrollHeight; });
             }
-        } else { location.reload(); }
+        } else if (payload.eventType === 'DELETE') {
+            // Find the message in the UI and remove it without reloading
+            const allMessages = document.querySelectorAll('.msg-wrapper');
+            allMessages.forEach(el => {
+                // This assumes you might add an ID to the wrapper later, but for now:
+                location.reload(); // Deletes still need a reload unless we map IDs to elements
+            });
+        }
     }).subscribe();
-
+    
     // --- 6. SEND LOGIC ---
     const handleSend = async () => {
         const message = msgInput.value.trim();
@@ -167,12 +181,28 @@ window.showActionMenu = (msg, clonedBubble) => {
 
 window.deleteMessage = (id) => { messageToDelete = id; document.getElementById('delete-modal').style.display = 'flex'; document.getElementById('chat-overlay').style.display = 'none'; };
 window.confirmGhostDelete = async () => { if (messageToDelete) { await supabaseClient.from('messages').delete().eq('id', messageToDelete); location.reload(); } };
-window.setReply = async (email, content) => {
-    const { data: p } = await supabaseClient.from('profiles').select('username').eq('email', email).maybeSingle();
-    replyingTo = { sender: p ? p.username : "Ghost", content };
+window.setReply = (email, content) => {
+    // 1. Grab names directly from the screen for instant speed
+    const headerName = document.querySelector('.chat-user-name').innerText.replace('~', '');
+    const myEmail = localStorage.getItem('phestone-user-email'); // Ensure you save email to localStorage on login
+    
+    // 2. Logic: If email matches yours, it's "Me", otherwise it's the Friend's name
+    const displayName = (email === myEmail) ? "Me" : headerName;
+    
+    replyingTo = { sender: displayName, content };
+    
     const container = document.getElementById('reply-preview-container');
-    container.style.display = 'block';
-    container.innerHTML = `<div style="display:flex; justify-content:space-between; color:white;"><div style="border-left:2px solid #007AFF; padding-left:10px;"><div style="color:#007AFF; font-size:10px; font-weight:bold;">Replying to ${replyingTo.sender}</div><div style="font-size:12px; opacity:0.7;">${content.substring(0, 25)}...</div></div><span onclick="window.cancelReply()" style="color:#FF3B30; cursor:pointer;">✕</span></div>`;
+    if (container) {
+        container.style.display = 'block';
+        container.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; color:white;">
+                <div style="border-left:3px solid #007AFF; padding-left:10px; overflow:hidden;">
+                    <div style="color:#007AFF; font-size:11px; font-weight:bold;">Replying to ${displayName}</div>
+                    <div style="font-size:12px; opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${content}</div>
+                </div>
+                <span onclick="window.cancelReply()" style="color:#FF3B30; cursor:pointer; font-size:18px; padding-left:15px;">✕</span>
+            </div>`;
+    }
     document.getElementById('chat-overlay').style.display = 'none';
 };
 window.cancelReply = () => { document.getElementById('reply-preview-container').style.display = 'none'; replyingTo = null; };

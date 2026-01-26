@@ -281,40 +281,39 @@ button, .action-item, .input-tile {
     display: block;
 }
 
-/* 1. Centering & Bottom Placement */
+/* 1. Force Center and Near-Bottom */
 .floating-input-container {
-    position: fixed;
-    bottom: 10px; /* Very close to bottom */
-    left: 50%;
-    transform: translateX(-50%); /* Forces perfect horizontal center */
-    width: 92%; /* Equal spacing on both sides */
-    max-width: 500px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    z-index: 9999; /* Ensure it stays above chat bubbles */
+    position: fixed !important;
+    bottom: 8px !important; /* Forces it to the very bottom */
+    left: 4% !important; /* Creates equal 4% margin on left */
+    right: 4% !important; /* Creates equal 4% margin on right */
+    width: 92% !important; /* Takes up most of the width */
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    z-index: 9999 !important;
 }
 
-/* 2. The Reply Box (Mounted ON TOP) */
+/* 2. Force Reply Message ABOVE the tile */
 #reply-preview-container {
     display: none; 
-    background: rgba(20, 20, 20, 0.98);
+    background: rgba(15, 15, 15, 0.98);
     backdrop-filter: blur(25px);
     -webkit-backdrop-filter: blur(25px);
     border-radius: 20px 20px 0 0; 
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-bottom: none;
-    padding: 12px 18px 25px 18px; /* Extra bottom padding */
-    width: 96%; /* Slightly slimmer for that layered look */
+    padding: 12px 18px 20px 18px; /* Padding for internal text */
+    width: 96%; /* Slightly slimmer than the capsule base */
     box-sizing: border-box;
-    margin-bottom: -18px; /* This tucks the bottom edge into the capsule */
-    z-index: 10000; /* Lower than input-tile but high enough to be seen */
-    position: relative;
+    margin-bottom: -12px; /* Pulls it JUST enough into the capsule */
+    position: relative !important;
+    z-index: 9998 !important; /* Sits behind the capsule base but visible above it */
 }
 
-/* 3. The Input Capsule (The Front Layer) */
+/* 3. The Input Capsule (Front Layer) */
 .input-tile {
-    width: 100%;
+    width: 100% !important;
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(30px); 
     -webkit-backdrop-filter: blur(30px);
@@ -324,7 +323,7 @@ button, .action-item, .input-tile {
     align-items: center; 
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-sizing: border-box;
-    z-index: 10001; /* Highest layer to stay in front */
-    position: relative;
-        }
+    position: relative !important;
+    z-index: 10000 !important; /* Guaranteed front layer */
+                           }
     

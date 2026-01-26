@@ -21,6 +21,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         localStorage.setItem('ghost-theme', themeName);
     };
+
+    function openThemePanel() {
+    document.getElementById('theme-panel').style.display = 'block';
+}
+
+function closeThemePanel() {
+    document.getElementById('theme-panel').style.display = 'none';
+}
     
     // 3. HELP & CREDITS (Restored Phestone's Jan 16 Quote)
     window.openHelp = () => {

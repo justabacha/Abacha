@@ -1,3 +1,4 @@
+// --- 1. IMMEDIATE WALLPAPER LOAD ---
 (function() {
     const savedWall = localStorage.getItem('phestone-wallpaper');
     if (savedWall) {
@@ -7,6 +8,7 @@
     }
 })();
 
+// --- 2. GLOBALS ---
 const urlParams = new URLSearchParams(window.location.search);
 const friendID = urlParams.get('friend_id');
 let replyingTo = null;
@@ -14,6 +16,51 @@ let currentPins = [];
 let pendingPinMsg = null;
 let messageToDelete = null;
 
+// --- 3. GLOBAL UI HELPERS (Prevents "missing logic" errors) ---
+window.cancelReply = () => { 
+    document.getElementById('reply-preview-container').style.display = 'none'; 
+    replyingTo = null; 
+};
+
+window.closeGhostModal = () => { 
+    document.getElementById('delete-modal').style.display = 'none'; 
+    document.getElementById('pin-modal').style.display = 'none';
+};
+
+window.deleteMessage = (id) => { 
+    messageToDelete = id; 
+    document.getElementById('delete-modal').style.display = 'flex'; 
+    document.getElementById('chat-overlay').style.display = 'none'; 
+};
+
+window.confirmGhostDelete = async () => { 
+    if (messageToDelete) { 
+        await supabaseClient.from('messages').delete().eq('id', messageToDelete); 
+        location.reload(); // Hard refresh to sync state
+    } 
+};
+
+window.openPinModal = (id, content) => {
+    if (currentPins.length >= 2) { alert("Ghost Layer Limit: 2 Pins max."); return; }
+    pendingPinMsg = { id, content };
+    document.getElementById('pin-modal').style.display = 'flex';
+    document.getElementById('chat-overlay').style.display = 'none';
+};
+
+window.executePin = async (hours) => {
+    const expiry = new Date();
+    expiry.setHours(expiry.getHours() + hours);
+    await supabaseClient.from('messages').update({ pinned_until: expiry.toISOString() }).eq('id', pendingPinMsg.id);
+    window.closeGhostModal();
+    window.loadPins(); 
+};
+
+window.unpinMessage = async (id) => {
+    await supabaseClient.from('messages').update({ pinned_until: null }).eq('id', id);
+    window.loadPins();
+};
+
+// --- 4. MAIN CHAT ENGINE ---
 document.addEventListener('DOMContentLoaded', async () => {
     const { data: { user } } = await supabaseClient.auth.getUser();
     const chatBox = document.getElementById('chat-box');
@@ -22,7 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (!user || !friendID) return;
 
-    // --- 1. HEADER SYNC ---
+    // A. SYNC IDENTITY
     const syncReceiverHeader = async () => {
         const { data: friend } = await supabaseClient.from('profiles').select('avatar_url, username').eq('id', friendID).maybeSingle();
         if (friend) {
@@ -32,7 +79,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     syncReceiverHeader();
 
-    // --- 2. PINNING SYSTEM ---
+    // B. LOAD PINS
     window.loadPins = async () => {
         const now = new Date().toISOString();
         const { data: pins } = await supabaseClient.from('messages').select('*').gt('pinned_until', now);
@@ -44,49 +91,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="pin-item">
                     <span>📌 ${p.content.substring(0, 25)}...</span>
                     <span onclick="window.unpinMessage('${p.id}')" style="cursor:pointer; padding:5px;">✕</span>
-                </div>
-            `).join('');
+                </div>`).join('');
         } else { pinBar.style.display = 'none'; }
     };
 
-    window.openPinModal = (id, content) => {
-        if (currentPins.length >= 2) {
-            alert("Ghost Layer Limit: 2 Pins max.");
-            return;
-        }
-        pendingPinMsg = { id, content };
-        document.getElementById('pin-modal').style.display = 'flex';
-        document.getElementById('chat-overlay').style.display = 'none';
-    };
-
-    window.executePin = async (hours) => {
-    const expiry = new Date();
-    expiry.setHours(expiry.getHours() + hours);
-    
-    // Update DB
-    const { error } = await supabaseClient.from('messages').update({ pinned_until: expiry.toISOString() }).eq('id', pendingPinMsg.id);
-    
-    if(!error) {
-        document.getElementById('pin-modal').style.display = 'none';
-        // Just update the bar—DO NOT RELOAD THE PAGE
-        window.loadPins(); 
-    }
-};
-    
-    window.unpinMessage = async (id) => {
-        await supabaseClient.from('messages').update({ pinned_until: null }).eq('id', id);
-        window.loadPins();
-    };
-
-    // --- 3. DISPLAY MESSAGE ---
+    // C. DISPLAY BUBBLES
     const displayMessage = async (msg) => {
-        const isMe = msg.sender_id === user.id || msg.sender_email === user.email;
+        const isMe = msg.sender_id === user.id;
         const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         const wrapper = document.createElement('div');
         wrapper.className = `msg-wrapper ${isMe ? 'user-wrapper' : 'ai-wrapper'}`;
         
-        const { data: sender } = await supabaseClient.from('profiles').select('beSingle();
+        const { data: sender } = await supabaseClient.from('profiles').select('avatar_url').eq('id', msg.sender_id).maybeSingle();
         const avatarImg = sender?.avatar_url || 'https://i.postimg.cc/rpD4fgxR/IMG-5898-2.jpg';
 
         wrapper.innerHTML = `
@@ -96,17 +113,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     ? `<div class="reply-quote">${msg.content.split(']\n')[0].replace('↳ [', '')}</div><div>${msg.content.split(']\n')[1] || ""}</div>`
                     : `<div>${msg.content}</div>`
                 }
-                <div class="msg-time">${timeStr}</div>
-            </div>
-        `;
+                <div class="msg-time" style="font-size:10px; opacity:0.8; margin-top:4px; text-align:right;">${timeStr}</div>
+            </div>`;
 
         const bubble = wrapper.querySelector('.message');
         bubble.oncontextmenu = (e) => { e.preventDefault(); window.showActionMenu(msg, bubble.cloneNode(true)); };
-
         chatBox.appendChild(wrapper);
     };
 
-    // --- 4. LOAD HISTORY (The Storm Killer) ---
+    // D. HISTORY & REVERSE STORM FIX
     const { data: history } = await supabaseClient.from('messages').select('*')
         .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`)
         .order('created_at', { ascending: true });
@@ -119,92 +134,71 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.loadPins();
     }
 
-    // --- 5. REALTIME ---
-        supabaseClient.channel('messages').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
-        if (payload.eventType === 'INSERT') {
-            if ((payload.new.sender_id === user.id && payload.new.receiver_id === friendID) || 
-                (payload.new.sender_id === friendID && payload.new.receiver_id === user.id)) {
-                displayMessage(payload.new).then(() => { chatBox.scrollTop = chatBox.scrollHeight; });
-            }
-        } else if (payload.eventType === 'DELETE') {
-            // Find the message in the UI and remove it without reloading
-            const allMessages = document.querySelectorAll('.msg-wrapper');
-            allMessages.forEach(el => {
-                // This assumes you might add an ID to the wrapper later, but for now:
-                location.reload(); // Deletes still need a reload unless we map IDs to elements
-            });
+    // E. ACTION MENU (Full Options)
+    window.showActionMenu = (msg, clonedBubble) => {
+        const overlay = document.getElementById('chat-overlay');
+        const menuContainer = document.getElementById('menu-content');
+        const isMe = msg.sender_id === user.id;
+        
+        menuContainer.innerHTML = '';
+        menuContainer.style.alignItems = isMe ? 'flex-end' : 'flex-start';
+        clonedBubble.classList.add('popped-message');
+        
+        const tile = document.createElement('div');
+        tile.className = 'action-tile';
+        tile.innerHTML = `
+            <div class="action-item" onclick="window.triggerReply('${msg.sender_id}', '${msg.content.replace(/'/g, "\\'")}')">Reply <span>✍️</span></div>
+            <div class="action-item" onclick="navigator.clipboard.writeText('${msg.content}')">Copy <span>📑</span></div>
+            <div class="action-item" onclick="alert('Forwarding coming soon!')">Forward <span>📤</span></div>
+            <div class="action-item" onclick="window.openPinModal('${msg.id}', '${msg.content.replace(/'/g, "\\'")}')">Pin <span>📌</span></div>
+            <div class="action-item delete" onclick="window.deleteMessage('${msg.id}')">Delete <span>🗑️</span></div>`;
+
+        menuContainer.appendChild(clonedBubble);
+        menuContainer.appendChild(tile);
+        overlay.style.display = 'flex';
+    };
+
+    // F. REPLY LOGIC (Identity Fix)
+    window.triggerReply = async (senderId, content) => {
+        let name = "Ghost";
+        if (senderId === user.id) name = "Me";
+        else {
+            const { data: p } = await supabaseClient.from('profiles').select('username').eq('id', senderId).maybeSingle();
+            name = p ? p.username : "Ghost";
         }
-    }).subscribe();
-    
-    // --- 6. SEND LOGIC ---
+
+        replyingTo = { sender: name, content };
+        const container = document.getElementById('reply-preview-container');
+        container.style.display = 'block';
+        container.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; color:white;">
+                <div style="border-left:3px solid #007AFF; padding-left:10px;">
+                    <div style="color:#007AFF; font-size:10px; font-weight:bold;">Replying to ${name}</div>
+                    <div style="font-size:12px; opacity:0.8;">${content.substring(0, 30)}...</div>
+                </div>
+                <span onclick="window.cancelReply()" style="color:#FF3B30; cursor:pointer;">✕</span>
+            </div>`;
+        document.getElementById('chat-overlay').style.display = 'none';
+    };
+
+    // G. SEND LOGIC
     const handleSend = async () => {
         const message = msgInput.value.trim();
-        const vanishLimit = localStorage.getItem('message-expiry') === '24' ? 24 : 720;
-        if (message !== "" && friendID) {
+        if (message !== "") {
             let content = message;
             if (replyingTo) { content = `↳ [Replying to ${replyingTo.sender}: ${replyingTo.content}]\n${message}`; window.cancelReply(); }
-            await supabaseClient.from('messages').insert([{ content, sender_id: user.id, receiver_id: friendID, sender_email: user.email, vanish_hours: vanishLimit }]);
+            await supabaseClient.from('messages').insert([{ content, sender_id: user.id, receiver_id: friendID, sender_email: user.email }]);
             msgInput.value = "";
         }
     };
     sendBtn.onclick = handleSend;
     msgInput.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };
+
+    // H. REALTIME
+    supabaseClient.channel('messages').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+        if ((payload.new.sender_id === user.id && payload.new.receiver_id === friendID) || (payload.new.sender_id === friendID && payload.new.receiver_id === user.id)) {
+            displayMessage(payload.new).then(() => { chatBox.scrollTop = chatBox.scrollHeight; });
+        }
+    }).subscribe();
 });
-
-// --- GLOBAL HELPERS ---
-window.showActionMenu = (msg, clonedBubble) => {
-    const overlay = document.getElementById('chat-overlay');
-    const menuContainer = document.getElementById('menu-content');
-    const isMe = msg.sender_id === friendID ? false : true;
-    const isPinned = currentPins.some(p => p.id === msg.id);
     
-    menuContainer.innerHTML = '';
-    menuContainer.style.alignItems = isMe ? 'flex-end' : 'flex-start';
-    clonedBubble.classList.add('popped-message');
-    
-    const tile = document.createElement('div');
-    tile.className = 'action-tile';
-    tile.innerHTML = `
-        <div class="action-item" onclick="window.setReply('${msg.sender_email}', '${msg.content.replace(/'/g, "\\'")}')">Reply <span>✍️</span></div>
-        <div class="action-item" onclick="navigator.clipboard.writeText('${msg.content}')">Copy <span>📑</span></div>
-        <div class="action-item" onclick="alert('Forwarding coming soon to Ghost Layer!')">Forward <span>📤</span></div>
-        <div class="action-item" onclick="${isPinned ? `window.unpinMessage('${msg.id}')` : `window.openPinModal('${msg.id}', '${msg.content.replace(/'/g, "\\'")}')`}">
-            ${isPinned ? 'Unpin' : 'Pin'} <span>📌</span>
-        </div>
-        <div class="action-item delete" onclick="window.deleteMessage('${msg.id}')">Delete <span>🗑️</span></div>
-    `;
-
-    menuContainer.appendChild(clonedBubble);
-    menuContainer.appendChild(tile);
-    overlay.style.display = 'flex';
-};
-
-window.deleteMessage = (id) => { messageToDelete = id; document.getElementById('delete-modal').style.display = 'flex'; document.getElementById('chat-overlay').style.display = 'none'; };
-window.confirmGhostDelete = async () => { if (messageToDelete) { await supabaseClient.from('messages').delete().eq('id', messageToDelete); location.reload(); } };
-window.setReply = (email, content) => {
-    // 1. Grab names directly from the screen for instant speed
-    const headerName = document.querySelector('.chat-user-name').innerText.replace('~', '');
-    const myEmail = localStorage.getItem('phestone-user-email'); // Ensure you save email to localStorage on login
-    
-    // 2. Logic: If email matches yours, it's "Me", otherwise it's the Friend's name
-    const displayName = (email === myEmail) ? "Me" : headerName;
-    
-    replyingTo = { sender: displayName, content };
-    
-    const container = document.getElementById('reply-preview-container');
-    if (container) {
-        container.style.display = 'block';
-        container.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; color:white;">
-                <div style="border-left:3px solid #007AFF; padding-left:10px; overflow:hidden;">
-                    <div style="color:#007AFF; font-size:11px; font-weight:bold;">Replying to ${displayName}</div>
-                    <div style="font-size:12px; opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${content}</div>
-                </div>
-                <span onclick="window.cancelReply()" style="color:#FF3B30; cursor:pointer; font-size:18px; padding-left:15px;">✕</span>
-            </div>`;
-    }
-    document.getElementById('chat-overlay').style.display = 'none';
-};
-window.cancelReply = () => { document.getElementById('reply-preview-container').style.display = 'none'; replyingTo = null; };
-window.closeGhostModal = () => { document.getElementById('delete-modal').style.display = 'none'; };
-                    

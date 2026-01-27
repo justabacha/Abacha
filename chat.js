@@ -264,11 +264,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.cancelReply();
         }
 
-        await supabaseClient.from('messages').insert([{
-            content,
-            sender_id: user.id,
-            receiver_id: friendID
-        }]);
+      await supabaseClient.from('messages').insert([{
+    content,
+    sender_id: user.id,
+    receiver_id: friendID,
+    sender_email: user.email   // 🔥 THIS WAS MISSING
+}]);  
 
         msgInput.value = '';
     };

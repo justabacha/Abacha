@@ -135,29 +135,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // E. ACTION MENU (Full Options)
-    window.showActionMenu = (msg, clonedBubble) => {
-        const overlay = document.getElementById('chat-overlay');
-        const menuContainer = document.getElementById('menu-content');
-        const isMe = msg.sender_id === user.id;
-        
-        menuContainer.innerHTML = '';
-        menuContainer.style.alignItems = isMe ? 'flex-end' : 'flex-start';
-        clonedBubble.classList.add('popped-message');
-        
-        const tile = document.createElement('div');
-        tile.className = 'action-tile';
-        tile.innerHTML = `
-            <div class="action-item" onclick="window.triggerReply('${msg.sender_id}', '${msg.content.replace(/'/g, "\\'")}')">Reply <span>✍️</span></div>
-            <div class="action-item" onclick="navigator.clipboard.writeText('${msg.content}')">Copy <span>📑</span></div>
-            <div class="action-item" onclick="alert('Forwarding coming soon!')">Forward <span>📤</span></div>
-            <div class="action-item" onclick="window.openPinModal('${msg.id}', '${msg.content.replace(/'/g, "\\'")}')">Pin <span>📌</span></div>
-            <div class="action-item delete" onclick="window.deleteMessage('${msg.id}')">Delete <span>🗑️</span></div>`;
+// --- New Ghost Prompt Logic ---
+window.showGhostPrompt = (message) => {
+    const overlay = document.getElementById('ghost-prompt-overlay');
+    overlay.style.display = 'flex';
+    overlay.innerHTML = `
+        <div class="ghost-prompt-tile">
+            <div class="prompt-logo">|Just•Abacha😎|</div>
+            <div class="prompt-text">${message}</div>
+            <button class="vibe-btn" onclick="document.getElementById('ghost-prompt-overlay').style.display='none'">Vibe</button>
+        </div>
+    `;
+};
 
-        menuContainer.appendChild(clonedBubble);
-        menuContainer.appendChild(tile);
-        overlay.style.display = 'flex';
-    };
+// --- Updated Action Menu ---
+window.showActionMenu = (msg, clonedBubble) => {
+    const overlay = document.getElementById('chat-overlay');
+    const menuContainer = document.getElementById('menu-content');
+    const isMe = msg.sender_id === user.id;
+    const isPinned = currentPins.some(p => p.id === msg.id);
+    
+    menuContainer.innerHTML = '';
+    menuContainer.style.alignItems = isMe ? 'flex-end' : 'flex-start';
+    clonedBubble.classList.add('popped-message');
+    
+    const tile = document.createElement('div');
+    tile.className = 'action-tile';
+    tile.innerHTML = `
+        <div class="action-item" onclick="window.triggerReply('${msg.sender_id}', '${msg.content.replace(/'/g, "\\'")}')">Reply <span>✍️</span></div>
+        <div class="action-item" onclick="navigator.clipboard.writeText('${msg.content}')">Copy <span>📑</span></div>
+        
+        <div class="action-item" onclick="window.showGhostPrompt('This feature is coming soon.!🍻')">Forward <span>📤</span></div>
+        
+        <div class="action-item" onclick="${isPinned ? `window.unpinMessage('${msg.id}')` : `window.openPinModal('${msg.id}', '${msg.content.replace(/'/g, "\\'")}')`}">
+            ${isPinned ? 'Unpin' : 'Pin'} <span>📌</span>
+        </div>
+        
+        <div class="action-item delete" onclick="window.deleteMessage('${msg.id}')">Delete <span>🗑️</span></div>
+    `;
 
+    menuContainer.appendChild(clonedBubble);
+    menuContainer.appendChild(tile);
+    overlay.style.display = 'flex';
+};
+    
     // F. REPLY LOGIC (Identity Fix)
     window.triggerReply = async (senderId, content) => {
         let name = "Ghost";

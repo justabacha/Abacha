@@ -1,18 +1,11 @@
-const CACHE_NAME = 'just-abacha-v1.0.6';
+const CACHE_NAME = 'just-abacha-v1.0.7';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/chat-list.html',
+  '/style.css',
   '/chat-list.js',
-  '/hub.html',
-  '/chat.html',
-  '/settings.html',
-  '/requests.html',
-  '/profile.html',
-  '/style.css',        // Your main design
-  '/app.js',          // Your main logic
-  '/theme-engine.js',  // Your Ghost visuals
-  '/manifest.json'     // Your App Identity
+  '/app.js',
+  '/chat-list.js',
+  '/settings.js',
+  '/manifest.json'
 ];
 
 // Install Event
@@ -24,7 +17,21 @@ self.addEventListener('install', (e) => {
 
 // Fetch Event (Allows offline vibes)
 self.addEventListener('fetch', (e) => {
+  const url = new URL(e.request.url);
+
+  // 🔓 Always fetch fresh auth & navigation pages
+  if (
+    url.pathname === '/' ||
+    url.pathname.endsWith('.html')
+  ) {
+    e.respondWith(fetch(e.request));
+    return;
+  }
+
+  // 🎨 Cache-first for static assets
   e.respondWith(
-    caches.match(e.request).then((res) => res || fetch(e.request))
+    caches.match(e.request).then((res) => {
+      return res || fetch(e.request);
+    })
   );
 });

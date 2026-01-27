@@ -9,53 +9,69 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="theme-engine.js"></script>
 </head>
 <body class="login-page">
     
-<div id="splash-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif;">
-    <img src="https://i.postimg.cc/FRxyKMLn/406926809108a25dc5cc96988597fa8a-thumbnail-1766744509117.webp" style="width:120px; border-radius:30px; margin-bottom:20px;">
-    
-    <div style="position:absolute; bottom:50px; text-align:center; width:100%; opacity:0.7;">
-        <p style="font-size:14px; letter-spacing:2px; margin-bottom:10px;">•••Just•Abacha😎 v1.0•••</p>
-        <p style="font-size:10px;">Handcrafted by Phestone. Powered by Phesty Ghost Engine</p>
-        <p style="font-size:9px; margin-top:5px;">©2026 All Rights Reserved</p>
-    </div>
-</div>
-    
-    <div id="login-screen" class="glass-card">
-    <h2>Just•Abacha</h2>
-    <p>Secure Access Required</p>
-        <input type="email" id="email" placeholder="Email" style="width: 90%; margin-bottom: 10px;">
-        <input type="password" id="password" placeholder="Password" style="width: 90%; margin-bottom: 20px;">
-        <button id="login-btn" style="width: 100%;">Login</button>
-        <button id="signup-btn" style="width: 100%; margin-top: 10px; background: transparent;">Sign Up</button>
-    </div>
+    <div id="splash-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif;">
+        
+        <h1 style="font-size: 2.8rem; font-weight: 900; letter-spacing: -1.5px; margin-bottom: 5px; color: #fff;">Just•Abacha😎</h1>
+        
+        <div style="font-size: 1.4rem; display: flex; align-items: center; gap: 12px; opacity: 0.9; margin-top: 10px;">
+            <span style="filter: drop-shadow(0 0 8px rgba(255,255,255,0.4));">👻</span>
+            <span id="ghost-counter" style="font-family: monospace; font-weight: bold; min-width: 20px;">0</span>
+        </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js" defer></script>
+        <div style="position:absolute; bottom:50px; text-align:center; width:100%; opacity:0.6;">
+            <p style="font-size:14px; letter-spacing:2.5px; margin-bottom:10px; font-weight: bold; color: #007AFF;">•••Just•Abacha😎 v1.1•••</p>
+            <p style="font-size:10px; opacity: 0.8;">Handcrafted by Phestone. Powered by Phesty Ghost Engine</p>
+            <p style="font-size:9px; margin-top:5px; opacity: 0.5;">©2026 All Rights Reserved</p>
+        </div>
+    </div>
 
     <script>
-      document.addEventListener('DOMContentLoaded', async () => {
-          // Add this inside your existing <script> in index.html
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js')
-      .then(() => console.log("Ghost Service Worker: Active 👻"))
-      .catch((err) => console.log("Worker Failed:", err));
+    document.addEventListener('DOMContentLoaded', async () => {
+        // 1. REGISTER GHOST SERVICE WORKER
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log("Ghost Engine: Online 👻"))
+                .catch(err => console.log("Engine Error:", err));
         }
-          
-          const { data: { session } } = await supabaseClient.auth.getSession();
-          if (session) {
-              window.location.href = 'hub.html';
-          } else {
-              setTimeout(() => {
-                  document.getElementById('splash-screen').style.display = 'none';
-              }, 2000);
-          }
-      });
-    </script>
 
+        // 2. GHOST TAP-TAP COUNTER LOGIC
+        let count = 0;
+        const counterElement = document.getElementById('ghost-counter');
+        const ghostInterval = setInterval(() => {
+            count = (count % 5) + 1; // Loops 1...2...3...4...5
+            counterElement.innerText = count;
+        }, 800); // 0.8s rhythmic tap
+
+        // 3. SESSION CHECK & CINEMATIC DELAY
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        
+        // 20000 = 20 seconds of cinematic hype
+        const waitTime = 20000; 
+
+        setTimeout(() => {
+            clearInterval(ghostInterval); // Stop the tap-tap
+            if (session) {
+                window.location.href = 'hub.html';
+            } else {
+                // Smooth Fade Out
+                const splash = document.getElementById('splash-screen');
+                splash.style.transition = "opacity 1.5s ease, filter 1.5s ease";
+                splash.style.opacity = "0";
+                splash.style.filter = "blur(10px)";
+                setTimeout(() => {
+                    splash.style.display = 'none';
+                }, 1500);
+            }
+        }, waitTime);
+    });
+    </script>
+    
 </body>
 </html>
   

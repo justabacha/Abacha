@@ -38,6 +38,13 @@
 
     <script>
       document.addEventListener('DOMContentLoaded', async () => {
+          // Add this inside your existing <script> in index.html
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log("Ghost Service Worker: Active 👻"))
+      .catch((err) => console.log("Worker Failed:", err));
+        }
+          
           const { data: { session } } = await supabaseClient.auth.getSession();
           if (session) {
               window.location.href = 'hub.html';

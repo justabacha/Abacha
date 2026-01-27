@@ -2,10 +2,17 @@ const CACHE_NAME = 'just-abacha-v1';
 const ASSETS = [
   '/',
   '/index.html',
+  '/chat-list.html',
+  '/chat-list.js',
   '/hub.html',
   '/chat.html',
-  '/style.css',
-  '/app.js'
+  '/settings.html',
+  '/requests.html',
+  '/profile.html',
+  '/style.css',        // Your main design
+  '/app.js',          // Your main logic
+  '/theme-engine.js',  // Your Ghost visuals
+  '/manifest.json'     // Your App Identity
 ];
 
 // Install Event

@@ -70,34 +70,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!user || !friendID) return;
 
     // A. SYNC IDENTITY
-        const syncReceiverHeader = async () => {
-        // We look for the profile of the person we are chatting WITH (friendID)
-        const { data: friend, error } = await supabaseClient
-            .from('profiles')
-            .select('avatar_url, username')
-            .eq('id', friendID) 
-            .single();
+    const syncReceiverHeader = async () => {
+    const syncReceiverHeader = async () => {
+    // 1. Double check we have the Friend's ID from the URL
+    if (!friendID) {
+        console.error("Ghost Layer: No friendID found in URL");
+        return;
+    }
 
-        if (friend) {
-            const headerName = document.querySelector('.chat-user-name');
-            const headerAvatar = document.querySelector('.chat-avatar');
-            
-            // Set the Friend's Username
-            if (headerName) {
-                headerName.innerText = `~${friend.username}`;
-                headerName.style.color = "white"; // Ensure visibility
-            }
-            
-            // Set the Friend's Avatar
-            if (headerAvatar && friend.avatar_url) {
-                headerAvatar.style.backgroundImage = `url('${friend.avatar_url}')`;
-                headerAvatar.style.backgroundSize = "cover";
-                headerAvatar.style.backgroundPosition = "center";
-            }
-        } else {
-            console.error("Ghost Layer Error: Could not sync friend profile", error);
+    console.log("Syncing Header for Friend ID:", friendID);
+
+    // 2. Explicitly query ONLY the friend's profile
+    const { data: friend, error } = await supabaseClient
+        .from('profiles')
+        .select('username, avatar_url')
+        .eq('id', friendID) 
+        .maybeSingle();
+
+    if (friend) {
+        const headerName = document.querySelector('.chat-user-name');
+        const headerAvatar = document.querySelector('.chat-avatar');
+        
+        // 3. Force overwrite the DOM
+        if (headerName) {
+            headerName.innerText = `~${friend.username}`;
+            console.log("Header name set to:", friend.username);
         }
-    };
+        
+        if (headerAvatar && friend.avatar_url) {
+            headerAvatar.style.backgroundImage = `url('${friend.avatar_url}')`;
+            headerAvatar.style.backgroundSize = "cover";
+        }
+    } else {
+        console.error("Ghost Layer: Friend profile fetch failed", error);
+    }
+};
         
     // B. LOAD PINS
     window.loadPins = async () => {
@@ -109,8 +116,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             pinBar.style.display = 'block';
             pinBar.innerHTML = currentPins.map(p => `
                 <div class="pin-item">
-                    <span>ðŸ“Œ ${p.content.substring(0, 25)}...</span>
-                    <span onclick="window.unpinMessage('${p.id}')" style="cursor:pointer; padding:5px;">âœ•</span>
+                    <span>📌 ${p.content.substring(0, 25)}...</span>
+                    <span onclick="window.unpinMessage('${p.id}')" style="cursor:pointer; padding:5px;">✕</span>
                 </div>`).join('');
         } else { pinBar.style.display = 'none'; }
     };
@@ -129,8 +136,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         wrapper.innerHTML = `
             <img src="${avatarImg}" class="avatar">
             <div class="message ${isMe ? 'sent' : 'received'}">
-                ${msg.content.includes("â†³ [") 
-                    ? `<div class="reply-quote">${msg.content.split(']\n')[0].replace('â†³ [', '')}</div><div>${msg.content.split(']\n')[1] || ""}</div>`
+                ${msg.content.includes("↳ [") 
+                    ? `<div class="reply-quote">${msg.content.split(']\n')[0].replace('↳ [', '')}</div><div>${msg.content.split(']\n')[1] || ""}</div>`
                     : `<div>${msg.content}</div>`
                 }
                 <div class="msg-time" style="font-size:10px; opacity:0.8; margin-top:4px; text-align:right;">${timeStr}</div>
@@ -141,19 +148,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         chatBox.appendChild(wrapper);
     };
 
-    // D. HISTORY & REVERSE STORM FIX
-    const { data: history } = await supabaseClient.from('messages').select('*')
-        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`)
-        .order('created_at', { ascending: true });
     
-    if (history) {
-        chatBox.innerHTML = '';
-        for (const msg of history) { await displayMessage(msg); }
-        chatBox.scrollTop = chatBox.scrollHeight;
-        chatBox.classList.add('ready');
-        window.loadPins();
-    }
+    // --- LOAD HISTORY ---
+const { data: history } = await supabaseClient.from('messages').select('*')
+    .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`)
+    .order('created_at', { ascending: true });
 
+if (history) {
+    chatBox.innerHTML = '';
+    // Use for...of to ensure order
+    for (const msg of history) { 
+        await displayMessage(msg); 
+    }
+    
+    // FORCE SCROLL TO BOTTOM
+    const scrollToLatest = () => {
+        chatBox.scrollTop = chatBox.scrollHeight;
+        chatBox.classList.add('ready'); // Show chat once at the bottom
+    };
+
+    // Run it twice to be sure: once immediately and once after a tiny delay
+    scrollToLatest();
+    setTimeout(scrollToLatest, 50); 
+    
+    window.loadPins();
+}
+    
     // E. ACTION MENU (Full Options)
     // --- New Ghost Prompt Logic ---
 window.showGhostPrompt = (message) => {
@@ -161,7 +181,7 @@ window.showGhostPrompt = (message) => {
     overlay.style.display = 'flex';
     overlay.innerHTML = `
         <div class="ghost-prompt-tile">
-            <div class="prompt-logo">|Justâ€¢AbachaðŸ˜Ž|</div>
+            <div class="prompt-logo">|Just•Abacha😎|</div>
             <div class="prompt-text">${message}</div>
             <button class="vibe-btn" onclick="document.getElementById('ghost-prompt-overlay').style.display='none'">Vibe</button>
         </div>
@@ -182,16 +202,16 @@ window.showActionMenu = (msg, clonedBubble) => {
     const tile = document.createElement('div');
     tile.className = 'action-tile';
     tile.innerHTML = `
-        <div class="action-item" onclick="window.triggerReply('${msg.sender_id}', '${msg.content.replace(/'/g, "\\'")}')">Reply <span>âœï¸</span></div>
-        <div class="action-item" onclick="navigator.clipboard.writeText('${msg.content}')">Copy <span>ðŸ“‘</span></div>
+        <div class="action-item" onclick="window.triggerReply('${msg.sender_id}', '${msg.content.replace(/'/g, "\\'")}')">Reply <span>✍️</span></div>
+        <div class="action-item" onclick="navigator.clipboard.writeText('${msg.content}')">Copy <span>📑</span></div>
         
-        <div class="action-item" onclick="window.showGhostPrompt('This feature is coming soon.!ðŸ»')">Forward <span>ðŸ“¤</span></div>
+        <div class="action-item" onclick="window.showGhostPrompt('This feature is coming soon.!🍻')">Forward <span>📤</span></div>
         
         <div class="action-item" onclick="${isPinned ? `window.unpinMessage('${msg.id}')` : `window.openPinModal('${msg.id}', '${msg.content.replace(/'/g, "\\'")}')`}">
-            ${isPinned ? 'Unpin' : 'Pin'} <span>ðŸ“Œ</span>
+            ${isPinned ? 'Unpin' : 'Pin'} <span>📌</span>
         </div>
         
-        <div class="action-item delete" onclick="window.deleteMessage('${msg.id}')">Delete <span>ðŸ—‘ï¸</span></div>
+        <div class="action-item delete" onclick="window.deleteMessage('${msg.id}')">Delete <span>🗑️</span></div>
     `;
 
     menuContainer.appendChild(clonedBubble);
@@ -217,7 +237,7 @@ window.showActionMenu = (msg, clonedBubble) => {
                     <div style="color:#007AFF; font-size:10px; font-weight:bold;">Replying to ${name}</div>
                     <div style="font-size:12px; opacity:0.8;">${content.substring(0, 30)}...</div>
                 </div>
-                <span onclick="window.cancelReply()" style="color:#FF3B30; cursor:pointer;">âœ•</span>
+                <span onclick="window.cancelReply()" style="color:#FF3B30; cursor:pointer;">✕</span>
             </div>`;
         document.getElementById('chat-overlay').style.display = 'none';
     };
@@ -227,7 +247,7 @@ window.showActionMenu = (msg, clonedBubble) => {
         const message = msgInput.value.trim();
         if (message !== "") {
             let content = message;
-            if (replyingTo) { content = `â†³ [Replying to ${replyingTo.sender}: ${replyingTo.content}]\n${message}`; window.cancelReply(); }
+            if (replyingTo) { content = `↳ [Replying to ${replyingTo.sender}: ${replyingTo.content}]\n${message}`; window.cancelReply(); }
             await supabaseClient.from('messages').insert([{ content, sender_id: user.id, receiver_id: friendID, sender_email: user.email }]);
             msgInput.value = "";
         }

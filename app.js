@@ -2,6 +2,23 @@ const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// 👻 SPLASH VISIBILITY LOCK (MUST BE FIRST)
+document.body.style.visibility = "hidden";
+
+window.addEventListener('load', () => {
+  const splash = document.getElementById("splash-screen");
+  if (!splash) {
+    document.body.style.visibility = "visible";
+    return;
+  }
+
+  document.body.style.visibility = "visible";
+
+  splash.style.transition = "opacity 1.2s ease";
+  splash.style.opacity = "0";
+
+  setTimeout(() => splash.remove(), 1200);
+});
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("Ghost Engine: Online");
 

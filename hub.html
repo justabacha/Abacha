@@ -77,9 +77,17 @@ window.addEventListener('load', () => {
   const splash = document.getElementById('splash-screen');
   if (!splash) return;
 
-  splash.style.opacity = '0';
-  setTimeout(() => splash.remove(), 600);
+  // 👀 Let it breathe (1.8s visible)
+  setTimeout(() => {
+    splash.style.opacity = '0';
+
+    // 🎬 Fade duration
+    setTimeout(() => {
+      splash.remove();
+    }, 800);
+
+  }, 1800);
 });
-   </script> 
+                    </script>
 </body>
 </html>

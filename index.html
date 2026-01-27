@@ -31,46 +31,44 @@
         </div>
     </div>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-        // 1. REGISTER GHOST SERVICE WORKER
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(() => console.log("Ghost Engine: Online 👻"))
-                .catch(err => console.log("Engine Error:", err));
-        }
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. SERVICE WORKER REGISTRATION
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(err => console.log(err));
+    }
 
-        // 2. GHOST TAP-TAP COUNTER LOGIC
-        let count = 0;
-        const counterElement = document.getElementById('ghost-counter');
-        const ghostInterval = setInterval(() => {
-            count = (count % 5) + 1; // Loops 1...2...3...4...5
-            counterElement.innerText = count;
-        }, 800); // 0.8s rhythmic tap
+    // 2. GHOST TAP-TAP COUNTER
+    let count = 0;
+    const counterEl = document.getElementById('ghost-counter');
+    const ghostInterval = setInterval(() => {
+        count = (count % 5) + 1;
+        if(counterEl) counterEl.innerText = count;
+    }, 800);
 
-        // 3. SESSION CHECK & CINEMATIC DELAY
-        const { data: { session } } = await supabaseClient.auth.getSession();
+    // 3. THE MAGIC DELAY (Force 20 seconds of vibe)
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const waitTime = 20000; // 20 Seconds
+
+    setTimeout(() => {
+        clearInterval(ghostInterval); // Stop the tap-tap
         
-        // 20000 = 20 seconds of cinematic hype
-        const waitTime = 20000; 
-
-        setTimeout(() => {
-            clearInterval(ghostInterval); // Stop the tap-tap
-            if (session) {
-                window.location.href = 'hub.html';
-            } else {
-                // Smooth Fade Out
-                const splash = document.getElementById('splash-screen');
-                splash.style.transition = "opacity 1.5s ease, filter 1.5s ease";
-                splash.style.opacity = "0";
-                splash.style.filter = "blur(10px)";
-                setTimeout(() => {
-                    splash.style.display = 'none';
-                }, 1500);
-            }
-        }, waitTime);
-    });
-    </script>
+        if (session) {
+            // Logged in? Now you can go to the Hub
+            window.location.href = 'hub.html';
+        } else {
+            // Not logged in? Fade out to show the Login Screen
+            const splash = document.getElementById('splash-screen');
+            splash.style.transition = "opacity 1.5s ease, filter 1.5s ease";
+            splash.style.opacity = "0";
+            splash.style.filter = "blur(15px)";
+            setTimeout(() => {
+                splash.style.display = 'none';
+            }, 1500);
+        }
+    }, waitTime);
+});
+</script>
     
 </body>
 </html>

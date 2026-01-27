@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="theme-engine.js"></script>
+    <script src="theme-engine.js" defer></script>
 </head>
 <body class="login-page">
     <div id="splash-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:'Inter', sans-serif;">
@@ -26,41 +26,43 @@
     </div>
 
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <script>
-        // Start the counter immediately
-        let count = 0;
-        const counterEl = document.getElementById('ghost-counter');
-        const ghostInterval = setInterval(() => {
-            count = (count % 5) + 1;
-            if(counterEl) counterEl.innerText = count;
-        }, 800);
+        // 1. Ghost Tap-Tap Starts NOW
+        (function() {
+            let count = 0;
+            const counterEl = document.getElementById('ghost-counter');
+            const ghostInterval = setInterval(() => {
+                count = (count % 5) + 1;
+                if(counterEl) counterEl.innerText = count;
+            }, 800);
 
-        // LOCK THE USER HERE FOR 20 SECONDS
-        setTimeout(async () => {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            clearInterval(ghostInterval);
+            // 2. THE LOCK: We wait 20s before even DEFINING the move function
+            console.log("Ghost Engine: System Lock Engaged (20s)...");
+            
+            setTimeout(async () => {
+                // Only now do we check Supabase
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                clearInterval(ghostInterval);
 
-            if (session) {
-                // If logged in, go to hub
-                window.location.href = 'hub.html';
-            } else {
-                // If not, fade out the splash screen
-                const splash = document.getElementById('splash-screen');
-                splash.style.transition = "opacity 1.5s ease";
-                splash.style.opacity = "0";
-                setTimeout(() => { splash.style.display = 'none'; }, 1500);
-            }
-        }, 20000); // 20 Seconds
+                if (session) {
+                    console.log("Vibe Verified. Opening Hub.");
+                    window.location.href = 'hub.html';
+                } else {
+                    console.log("No Session. Stay on Login.");
+                    const splash = document.getElementById('splash-screen');
+                    splash.style.transition = "opacity 1.5s ease";
+                    splash.style.opacity = "0";
+                    setTimeout(() => { splash.style.display = 'none'; }, 1500);
+                }
+            }, 20000); // The 20-second wall
+        })();
 
-        // Register Service Worker
+        // Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(err => console.log(err));
         }
     </script>
-
-    <script src="app.js" defer></script>
-
+    
 </body>
 </html>
   

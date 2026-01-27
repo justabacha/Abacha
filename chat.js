@@ -184,13 +184,21 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   chatBox.innerHTML = "";
   if (history) {
-    for (const msg of history) await displayMessage(msg);
+  chatBox.innerHTML = "";
+chatBox.style.scrollBehavior = "auto";
 
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        chatBox.scrollTop = chatBox.scrollHeight;
-      }, 60);
-    });
+// Render ALL messages in parallel
+await Promise.all(
+  history.map(msg => displayMessage(msg))
+);
+
+// Scroll ONLY after layout fully settles
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    chatBox.scrollTop = chatBox.scrollHeight;
+    chatBox.classList.add('ready');
+  });
+});
 
     chatBox.classList.add("ready");
     window.loadPins();

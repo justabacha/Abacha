@@ -13,7 +13,7 @@
 </head>
 <body class="hub-page">
 
-   <div id="splash-screen" style="
+     <div id="splash-screen" style="
 position:fixed;
 top:0;left:0;
 width:100%;height:100%;
@@ -22,10 +22,11 @@ z-index:99999;
 display:flex;
 align-items:center;
 justify-content:center;
-color:white;">
+color:white;
+opacity:1;
+transition:opacity .6s ease;">
   <h1>Just•Abacha😎</h1>
-   </div> 
-    
+     </div>
     <div class="glass-card" id="weather-widget">
         <h1 id="time">00:00</h1>
         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -71,5 +72,14 @@ color:white;">
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js" defer></script>
+   <script>
+window.addEventListener('load', () => {
+  const splash = document.getElementById('splash-screen');
+  if (!splash) return;
+
+  splash.style.opacity = '0';
+  setTimeout(() => splash.remove(), 600);
+});
+   </script> 
 </body>
 </html>

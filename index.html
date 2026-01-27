@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <style>
+  body {
+    visibility: hidden;
+  }
+    </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phestone Ghost</title>
@@ -25,48 +30,42 @@
     </div>
 
     <script>
-    // 🔐 LOCAL SUPABASE CLIENT (NO DEPENDENCIES)
-    const supabaseClient = supabase.createClient(
-        "https://zvkretqhqmxuhgspddpu.supabase.co",
-        "sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY"
-    );
+const supabaseClient = supabase.createClient(
+  "https://zvkretqhqmxuhgspddpu.supabase.co",
+  "sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY"
+);
 
-    // 1. Ghost Tap-Tap Starts NOW
-    (function() {
-        let count = 0;
-        const counterEl = document.getElementById('ghost-counter');
-            const ghostInterval = setInterval(() => {
-                count = (count % 5) + 1;
-                if(counterEl) counterEl.innerText = count;
-            }, 800);
+document.addEventListener('DOMContentLoaded', () => {
+  // 🔓 Allow render ONLY now
+  document.body.style.visibility = 'visible';
 
-            // 2. THE LOCK: We wait 20s before even DEFINING the move function
-            console.log("Ghost Engine: System Lock Engaged (20s)...");
-            
-            setTimeout(async () => {
-                // Only now do we check Supabase
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                clearInterval(ghostInterval);
+  let count = 0;
+  const counterEl = document.getElementById('ghost-counter');
 
-                if (session) {
-                    console.log("Vibe Verified. Opening Hub.");
-                    window.location.href = 'hub.html';
-                } else {
-                    console.log("No Session. Stay on Login.");
-                    const splash = document.getElementById('splash-screen');
-                    splash.style.transition = "opacity 1.5s ease";
-                    splash.style.opacity = "0";
-                    setTimeout(() => { splash.style.display = 'none'; }, 1500);
-                }
-            }, 20000); // The 20-second wall
-        })();
+  const ghostInterval = setInterval(() => {
+    count = (count % 5) + 1;
+    counterEl.innerText = count;
+  }, 800);
 
-        // Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(err => console.log(err));
-        }
-    </script>
-    
+  console.log("👻 Splash locked. Timer started.");
+
+  setTimeout(async () => {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    clearInterval(ghostInterval);
+
+    if (session) {
+      console.log("✅ Session found → hub");
+      window.location.replace('hub.html'); // IMPORTANT
+    } else {
+      console.log("❌ No session → show login");
+      const splash = document.getElementById('splash-screen');
+      splash.style.transition = "opacity 1.5s ease";
+      splash.style.opacity = "0";
+      setTimeout(() => splash.remove(), 1500);
+    }
+  }, 20000);
+});
+             </script>
 </body>
 </html>
   

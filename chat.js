@@ -278,12 +278,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     msgInput.onkeypress = (e) => e.key === 'Enter' && handleSend();
 
     // --- H. REALTIME ---
-    supabaseClient
-        .channel(`chat:${user.id}:${friendID}`)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+supabaseClient
+  .channel('messages')
+  .on(
+    'postgres_changes',
+    { event: 'INSERT', schema: 'public', table: 'messages' },
+    payload => {
+        if (
+            (payload.new.sender_id === user.id && payload.new.receiver_id === friendID) ||
+            (payload.new.sender_id === friendID && payload.new.receiver_id === user.id)
+        ) {
             displayMessage(payload.new).then(() => {
                 chatBox.scrollTop = chatBox.scrollHeight;
             });
-        })
-        .subscribe();
-});
+        }
+    }
+  )
+  .subscribe();

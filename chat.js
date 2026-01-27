@@ -290,26 +290,27 @@ requestAnimationFrame(() => {
 };
   // H. SEND
   const handleSend = async () => {
-    const message = msgInput.value.trim();
-    if (!message) return;
+  const message = msgInput.value.trim();
+  if (!message) return;
 
-    let content = message;
-    if (replyingTo) {
-      content = `↳ [Replying to ${replyingTo.sender}: ${replyingTo.content}]\n${message}`;
-      window.cancelReply();
+  let content = message;
+
+  if (replyingTo) {
+    content = `↳ [Replying to ${replyingTo.name}: ${replyingTo.content}]\n${message}`;
+    window.cancelReply();
+  }
+
+  await supabaseClient.from('messages').insert([
+    {
+      content,
+      sender_id: user.id,
+      receiver_id: friendID,
+      sender_email: user.email
     }
+  ]);
 
-    await supabaseClient.from("messages").insert([
-      {
-        content,
-        sender_id: user.id,
-        receiver_id: friendID,
-        sender_email: user.email,
-      },
-    ]);
-
-    msgInput.value = "";
-  };
+  msgInput.value = "";
+};
 
   sendBtn.onclick = handleSend;
   msgInput.onkeypress = (e) => e.key === "Enter" && handleSend();

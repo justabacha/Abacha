@@ -87,23 +87,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // A. RECEIVER HEADER (STAYS FIXED)
   const syncReceiverHeader = async () => {
-    const { data: friend } = await supabaseClient
-      .from("profiles")
-      .select("avatar_url, username")
-      .eq("id", friendID)
-      .maybeSingle();
+  const { data: friend } = await supabaseClient
+    .from('profiles')
+    .select('avatar_url, username')
+    .eq('id', friendID)
+    .single();
 
-    if (friend) {
-      document.querySelector(".chat-user-name").innerText = `~${friend.username}`;
-      if (friend.avatar_url) {
-        document.querySelector(
-          ".chat-avatar"
-        ).style.backgroundImage = `url(${friend.avatar_url})`;
-      }
-    }
-  };
-  syncReceiverHeader();
+  if (!friend) return;
 
+  const nameEl = document.querySelector('.chat-user-name');
+  const avatarEl = document.querySelector('.chat-avatar');
+
+  if (nameEl) nameEl.textContent = `~${friend.username}`;
+  if (avatarEl && friend.avatar_url) {
+    avatarEl.style.backgroundImage = `url(${friend.avatar_url})`;
+  }
+};
+
+await syncReceiverHeader();
   // B. LOAD PINS
   window.loadPins = async () => {
     const now = new Date().toISOString();
@@ -253,32 +254,40 @@ requestAnimationFrame(() => {
 
   // G. REPLY
   window.triggerReply = async (senderId, content) => {
-    let name = senderId === user.id ? "Me" : "Ghost";
-    if (senderId !== user.id) {
-      const { data } = await supabaseClient
-        .from("profiles")
-        .select("username")
-        .eq("id", senderId)
-        .maybeSingle();
-      if (data) name = data.username;
-    }
+  let name;
 
-    replyingTo = { sender: name, content };
-    const container = document.getElementById("reply-preview-container");
-    container.style.display = "block";
-    container.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;color:white;">
-        <div style="border-left:3px solid #007AFF;padding-left:10px;">
-          <div style="color:#007AFF;font-size:10px;font-weight:bold;">Replying to ${name}</div>
-          <div style="font-size:12px;opacity:0.8;">${content.substring(
-            0,
-            30
-          )}...</div>
+  if (senderId === user.id) {
+    name = "You";
+  } else {
+    const { data: p } = await supabaseClient
+      .from('profiles')
+      .select('username')
+      .eq('id', senderId)
+      .single();
+
+    name = p?.username || "User";
+  }
+
+  replyingTo = { senderId, name, content };
+
+  const container = document.getElementById('reply-preview-container');
+  container.style.display = 'block';
+  container.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; color:white;">
+      <div style="border-left:3px solid #007AFF; padding-left:10px;">
+        <div style="color:#007AFF; font-size:10px; font-weight:bold;">
+          Replying to ${name}
         </div>
-        <span onclick="window.cancelReply()" style="color:#FF3B30;cursor:pointer;">✕</span>
-      </div>`;
-  };
+        <div style="font-size:12px; opacity:0.8;">
+          ${content.substring(0, 30)}...
+        </div>
+      </div>
+      <span onclick="window.cancelReply()" style="color:#FF3B30; cursor:pointer;">✕</span>
+    </div>
+  `;
 
+  document.getElementById('chat-overlay').style.display = 'none';
+};
   // H. SEND
   const handleSend = async () => {
     const message = msgInput.value.trim();

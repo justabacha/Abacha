@@ -33,12 +33,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. SERVICE WORKER REGISTRATION
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').catch(err => console.log(err));
-    }
-
-    // 2. GHOST TAP-TAP COUNTER
+    // 1. Start the Ghost Counter immediately
     let count = 0;
     const counterEl = document.getElementById('ghost-counter');
     const ghostInterval = setInterval(() => {
@@ -46,27 +41,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(counterEl) counterEl.innerText = count;
     }, 800);
 
-    // 3. THE MAGIC DELAY (Force 20 seconds of vibe)
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    const waitTime = 20000; // 20 Seconds
+    // 2. THE LOCK: Wait 20 seconds BEFORE checking the session
+    setTimeout(async () => {
+        // Stop the counter
+        clearInterval(ghostInterval);
 
-    setTimeout(() => {
-        clearInterval(ghostInterval); // Stop the tap-tap
-        
+        // ONLY NOW do we check if the user is logged in
+        const { data: { session } } = await supabaseClient.auth.getSession();
+
         if (session) {
-            // Logged in? Now you can go to the Hub
+            // If they are logged in, teleport to Hub
             window.location.href = 'hub.html';
         } else {
-            // Not logged in? Fade out to show the Login Screen
+            // If not, fade out the splash to show the Login Screen
             const splash = document.getElementById('splash-screen');
-            splash.style.transition = "opacity 1.5s ease, filter 1.5s ease";
+            splash.style.transition = "opacity 1.5s ease";
             splash.style.opacity = "0";
-            splash.style.filter = "blur(15px)";
             setTimeout(() => {
                 splash.style.display = 'none';
             }, 1500);
         }
-    }, waitTime);
+    }, 20000); // 20 Seconds of pure Vibe
+
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(err => console.log(err));
+    }
 });
 </script>
     

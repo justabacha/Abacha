@@ -157,14 +157,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- D. HISTORY (AUTO-SCROLL TO LATEST) ---
     const { data: history } = await supabaseClient
-        .from('messages')
-        .select('*')
-        .or(
-            `and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),
-             and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`
-        )
-        .order('created_at', { ascending: true });
-
+  .from('messages')
+  .select('*')
+  .or(
+    `and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`
+  )
+  .order('created_at', { ascending: true });
+    
     chatBox.innerHTML = '';
     if (history) {
         for (const msg of history) await displayMessage(msg);

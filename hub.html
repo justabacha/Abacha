@@ -1,142 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <style>
-html, body {
-  background: #000;
-}
-    </style>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ghost Hub</title>
-    <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#000000">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="stylesheet" href="style.css">
-    <script src="theme-engine.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ghost Hub</title>
+
+  <!-- PWA / Theme -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Ghost visuals -->
+  <script src="theme-engine.js"></script>
+
+  <style>
+    html, body {
+      background: #000;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
 </head>
+
 <body class="hub-page">
 
-     <div id="splash-screen" style="
-position:fixed;
-top:0;left:0;
-width:100%;height:100%;
-background:#000;
-z-index:99999;
-display:flex;
-align-items:center;
-justify-content:center;
-color:white;
-opacity:1;
-transition:opacity .6s ease;">
-  <h1>Just•Abacha😎</h1>
-     </div>
-    <div class="glass-card" id="weather-widget">
-        <h1 id="time">00:00</h1>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <p id="temp">--°C</p>
-            <p id="condition">Loading weather...</p>
-        </div>
-        <hr style="border: 0.5px solid var(--glass-border); margin: 15px 0;">
-        <p id="daily-quote" style="font-style: italic; opacity: 0.8;">"Loading inspiration..."</p>
+  <!-- 🔒 SPLASH SCREEN -->
+  <div id="splash-screen" style="
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    opacity: 1;
+    transition: opacity .6s ease;
+  ">
+    <h1>Just•Abacha😎</h1>
+  </div>
+
+  <!-- 🌦 WEATHER / TIME -->
+  <div class="glass-card" id="weather-widget">
+    <h1 id="time">00:00</h1>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <p id="temp">--°C</p>
+      <p id="condition">Loading weather...</p>
     </div>
+    <hr style="border:0.5px solid var(--glass-border); margin:15px 0;">
+    <p id="daily-quote" style="font-style:italic; opacity:0.8;">
+      "Loading inspiration..."
+    </p>
+  </div>
 
-    <div class="glass-card" style="margin: 10px; padding: 20px; border-radius: 35px;">
-        <p style="opacity: 0.6; font-size: 12px; margin-bottom: 15px; letter-spacing: 1px;">GHOST NAVIGATION</p>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <a href="chat-list.html" class="nav-tile">
-                <span style="font-size: 28px;">💬</span>
-                <p>Chat</p>
-            </a>
-            <a href="gallery.html" class="nav-tile">
-                <span style="font-size: 28px;">🎭</span>
-                <p>Gallery</p>
-            </a>
-            <a href="bucket.html" class="nav-tile">
-                <span style="font-size: 28px;">📝</span>
-                <p>Bucket</p>
-            </a>
-            <a href="settings.html" class="nav-tile">
-                <span style="font-size: 28px;">⚙️</span>
-                <p>Settings</p>
-            </a>
-        </div>
+  <!-- 🧭 NAVIGATION -->
+  <div class="glass-card" style="margin:10px; padding:20px; border-radius:35px;">
+    <p style="opacity:.6; font-size:12px; margin-bottom:15px; letter-spacing:1px;">
+      GHOST NAVIGATION
+    </p>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+      <a href="chat-list.html" class="nav-tile">💬<p>Chat</p></a>
+      <a href="gallery.html" class="nav-tile">🎭<p>Gallery</p></a>
+      <a href="bucket.html" class="nav-tile">📝<p>Bucket</p></a>
+      <a href="settings.html" class="nav-tile">⚙️<p>Settings</p></a>
     </div>
+  </div>
 
-    <div style="text-align: center; margin-top: 80px; margin-bottom: 30px; padding: 0 20px;">
-        <p style="font-size: 14px; color: #ffffff; margin-bottom: 5px; font-weight: 800; letter-spacing: 1.5px; text-shadow: 0px 0px 8px rgba(0,0,0,1), 0px 2px 4px rgba(0,0,0,1);">
-            ...Just•Abacha v1.0😎...
-        </p>
-        <p style="font-size: 11px; color: #ffffff; line-height: 1.6; margin: 0; text-shadow: 0px 0px 6px rgba(0,0,0,1);">
-            Handcrafted by Phestone. Powered by the Phesty Ghost Engine.<br>
-            <span style="font-size: 10px; font-weight: bold; opacity: 0.9; letter-spacing: 1px;">©2026 ALRIGHT RESERVED</span>
-        </p>
-    </div>
-    
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- 👣 FOOTER -->
+  <div style="text-align:center; margin:80px 0 30px; padding:0 20px;">
+    <p style="font-size:14px; font-weight:800; letter-spacing:1.5px;">
+      ...Just•Abacha v1.0😎...
+    </p>
+    <p style="font-size:11px; line-height:1.6;">
+      Handcrafted by Phestone. Powered by the Phesty Ghost Engine.<br>
+      <span style="font-size:10px; font-weight:bold;">©2026 ALL RIGHTS RESERVED</span>
+    </p>
+  </div>
 
-<script>
-const supabaseClient = supabase.createClient(
-  "https://zvkretqhqmxuhgspddpu.supabase.co",
-  "sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY"
-);
+  <!-- 🔑 SUPABASE -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const { data: { session } } = await supabaseClient.auth.getSession();
+  <!-- 🔐 AUTH GUARD + SPLASH CONTROL -->
+  <script>
+    const supabaseClient = supabase.createClient(
+      "https://zvkretqhqmxuhgspddpu.supabase.co",
+      "sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY"
+    );
 
-  if (!session) {
-    window.location.replace('index.html');
-    return;
-  }
+    document.addEventListener('DOMContentLoaded', async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
 
-  // ✅ AUTH PASSED — now allow splash
-  const splash = document.getElementById('splash-screen');
-  if (splash) {
-    setTimeout(() => {
-      splash.style.opacity = '0';
-      setTimeout(() => splash.remove(), 800);
-    }, 1500);
-  }
-});
-</script>
+      // 🚫 Not logged in → bounce
+      if (!session) {
+        window.location.replace('index.html');
+        return;
+      }
 
-<script src="app.js" defer></script>
-    
-    <script src="app.js" defer></script>
-   <script>
-window.addEventListener('load', () => {
-  const splash = document.getElementById('splash-screen');
-  if (!splash) return;
+      // ✅ Logged in → show splash briefly
+      const splash = document.getElementById('splash-screen');
+      if (splash) {
+        setTimeout(() => {
+          splash.style.opacity = '0';
+          setTimeout(() => splash.remove(), 600);
+        }, 1200);
+      }
+    });
+  </script>
 
-  // 👀 Let it breathe (1.8s visible)
-  setTimeout(() => {
-    splash.style.opacity = '0';
+  <!-- 🧠 MAIN APP LOGIC -->
+  <script src="app.js" defer></script>
 
-    // 🎬 Fade duration
-    setTimeout(() => {
-      splash.remove();
-    }, 800);
-
-  }, 1800);
-});
-                    </script>
-    <script>
-<script>
-window.addEventListener('load', () => {
-  const splash = document.getElementById('splash-screen');
-  if (!splash) return;
-
-  splash.style.opacity = '1';
-  splash.style.transition = 'opacity 1s ease';
-
-  // 👀 minimum visible time
-  setTimeout(() => {
-    splash.style.opacity = '0';
-    setTimeout(() => splash.remove(), 1000);
-  }, 1800);
-});
-</script>
 </body>
 </html>

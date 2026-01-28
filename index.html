@@ -18,61 +18,48 @@
 
 <body class="login-page">
 
-  <!-- 👻 SPLASH (VISUAL ONLY) -->
-  <div id="splash-screen" style="
-    position:fixed;
-    inset:0;
-    background:#000;
-    z-index:9999;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:white;
-  ">
-    <h1>Just•Abacha😎</h1>
+  <div id="splash-screen" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family: sans-serif;">
+    <h1 style="font-size: 3rem; font-weight: 900;">Just•Abacha😎</h1>
+    <div style="font-size: 1.5rem; margin-top: 20px;">
+      <span>👻</span> <span id="ghost-counter">0</span>
+    </div>
   </div>
 
-  <!-- 🔐 LOGIN UI (NOT IN SPLASH) -->
-  <div id="login-container" style="display:none;">
-    <input id="email" type="email" placeholder="Email" />
+  <div id="login-container" class="login-screen">
+    <h2>Just•Abacha😎</h2>
+    <p>Secure Access Required</p>
+    <input id="email" type="email" placeholder="Ghost Email" />
     <input id="password" type="password" placeholder="Password" />
-    <button id="login-btn">Login</button>
-    <button id="signup-btn">Sign up</button>
+    <button id="login-btn" style="pointer-events: none; opacity: 0.6;">Vibe</button>
+    <button id="signup-btn" style="pointer-events: none; opacity: 0.6;">Join</button>
   </div>
 
   <script>
-  const supabaseClient = supabase.createClient(
-    "https://zvkretqhqmxuhgspddpu.supabase.co",
-    "sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY"
-  );
+    // 1. Ghost Tap-Tap Logic
+    let count = 0;
+    const counterEl = document.getElementById('ghost-counter');
+    const ghostInterval = setInterval(() => {
+        count = (count % 5) + 1;
+        if(counterEl) counterEl.innerText = count;
+    }, 800);
 
-  (async () => {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    // 2. THE LOCK: 20-Second Cinematic Wait
+    setTimeout(async () => {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        clearInterval(ghostInterval);
 
-    // already logged in
-    if (session) {
-      window.location.replace('hub.html');
-      return;
-    }
-
-    // show page
-    document.body.style.visibility = 'visible';
-    document.getElementById('login-container').style.display = 'block';
-
-    // splash
-    const splash = document.getElementById('splash-screen');
-
-    setTimeout(() => {
-      splash.style.transition = 'opacity 1s ease';
-      splash.style.opacity = '0';
-      splash.style.pointerEvents = 'none';
-
-      setTimeout(() => splash.remove(), 1000);
-    }, 1200);
-
-  })();  // 🔥🔥🔥 THIS WAS MISSING
+        if (session) {
+            window.location.replace('hub.html');
+        } else {
+            const splash = document.getElementById('splash-screen');
+            splash.style.transition = 'opacity 1s ease';
+            splash.style.opacity = '0';
+            setTimeout(() => splash.remove(), 1000);
+        }
+    }, 20000); // Back to your 20-second cinematic vibe
   </script>
 
   <script src="app.js" defer></script>
 </body>
+  
 </html>

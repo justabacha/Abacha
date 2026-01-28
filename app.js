@@ -11,6 +11,10 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('👻 Ghost Engine: Online');
 
+  document.getElementById('login-btn')?.addEventListener('click', () => {
+  alert('LOGIN CLICKED');
+});
+
   // ================================
   // LOGIN PAGE LOGIC
   // ================================

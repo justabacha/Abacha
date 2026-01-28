@@ -2,7 +2,7 @@
   "name": "Just•Abacha😎",
   "short_name": "Vibe",
   "description": "High-end Ghost Layer messaging experience.",
-  "start_url": "/index.html",
+  "start_url": "/index.html?boot=true",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",

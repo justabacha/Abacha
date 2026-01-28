@@ -44,30 +44,21 @@ const supabaseClient = supabase.createClient(
   const { data: { session } } = await supabaseClient.auth.getSession();
 
   if (session) {
-    // ✅ already logged in → skip login
     window.location.replace('hub.html');
     return;
   }
 
-  // ❌ not logged in → show login UI
+  // ✅ Not logged in → show page
   document.body.style.visibility = 'visible';
+  document.getElementById('login-container').style.display = 'block';
 
-  // splash animation ONLY for unauth users
-  let count = 0;
-  const counterEl = document.getElementById('ghost-counter');
-
-  const ghostInterval = setInterval(() => {
-    count = (count % 5) + 1;
-    counterEl.innerText = count;
-  }, 800);
-
-  setTimeout(() => {
-    clearInterval(ghostInterval);
-    const splash = document.getElementById('splash-screen');
-    splash.style.transition = "opacity 1.2s ease";
-    splash.style.opacity = "0";
+  // splash fade
+  const splash = document.getElementById('splash-screen');
+  if (splash) {
+    splash.style.transition = 'opacity 1.2s ease';
+    splash.style.opacity = '0';
     setTimeout(() => splash.remove(), 1200);
-  }, 2000);
+  }
 })();
 </script>
 </body>

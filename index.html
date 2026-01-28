@@ -48,11 +48,14 @@ const supabaseClient = supabase.createClient(
     return;
   }
 
-  // ✅ Not logged in → show page
+  // 🔓 UNHIDE BODY FIRST (THIS WAS MISSING)
   document.body.style.visibility = 'visible';
-  document.getElementById('login-container').style.display = 'block';
 
-  // splash fade
+  // show login UI
+  const login = document.getElementById('login-container');
+  if (login) login.style.display = 'block';
+
+  // fade splash
   const splash = document.getElementById('splash-screen');
   if (splash) {
     splash.style.transition = 'opacity 1.2s ease';

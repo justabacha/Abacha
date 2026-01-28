@@ -26,24 +26,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     const signupButton = document.getElementById('signup-btn');
 
     // 🔥 Button color logic (RESTORED)
-    if (passwordInput) {
-      passwordInput.addEventListener('input', () => {
-        if (passwordInput.value.length >= 6) {
-          loginButton.style.background = "#32D74B";
-          loginButton.style.color = "white";
+if (passwordInput) {
+  passwordInput.addEventListener('input', () => {
+    if (passwordInput.value.length >= 6) {
+      loginButton.style.background = "#32D74B";
+      loginButton.style.color = "white";
 
-          signupButton.style.background = "#007AFF";
-          signupButton.style.border = "none";
-        } else {
-          loginButton.style.background = "white";
-          loginButton.style.color = "black";
+      signupButton.style.background = "#007AFF";
+      signupButton.style.border = "none";
 
-          signupButton.style.background = "transparent";
-          signupButton.style.border = "1px solid rgba(255,255,255,0.4)";
-        }
-      });
+      // 🔓 ENABLE CLICKS
+      loginButton.style.pointerEvents = "auto";
+      signupButton.style.pointerEvents = "auto";
+      loginButton.style.opacity = "1";
+      signupButton.style.opacity = "1";
+
+    } else {
+      loginButton.style.background = "white";
+      loginButton.style.color = "black";
+
+      signupButton.style.background = "transparent";
+      signupButton.style.border = "1px solid rgba(255,255,255,0.4)";
+
+      // 🔒 DISABLE CLICKS
+      loginButton.style.pointerEvents = "none";
+      signupButton.style.pointerEvents = "none";
+      loginButton.style.opacity = "0.6";
+      signupButton.style.opacity = "0.6";
     }
-
+  });
+}
     // 🔐 LOGIN
     if (loginButton) {
     if (loginButton) {

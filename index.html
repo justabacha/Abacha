@@ -1,61 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <style>
-body {
-  visibility: hidden;
-}
-    </style>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phestone Ghost</title>
-    <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#000000">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@800;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phestone Ghost</title>
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body { visibility: hidden; }
+  </style>
 </head>
+
 <body class="login-page">
-    <div id="splash-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:'Inter', sans-serif;">
-<div id="login-container" style="display:none;">
-  <input id="email" type="email" placeholder="Email" />
-  <input id="password" type="password" placeholder="Password" />
 
-  <button id="login-btn">Login</button>
-  <button id="signup-btn">Sign up</button>
-</div>
-        <script>
-const supabaseClient = supabase.createClient(
-  "https://zvkretqhqmxuhgspddpu.supabase.co",
-  "sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY"
-);
+  <!-- 🔒 SPLASH (TEMP ONLY) -->
+  <div id="splash-screen" style="
+    position:fixed;
+    inset:0;
+    background:#000;
+    z-index:99999;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-family:'Inter', sans-serif;
+  ">
+    <h1>Just•Abacha😎</h1>
+  </div>
 
-(async () => {
-  const { data: { session } } = await supabaseClient.auth.getSession();
+  <!-- 🔑 LOGIN UI (REAL CONTENT) -->
+  <div id="login-container" style="display:none;">
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
 
-  if (session) {
-    window.location.replace('hub.html');
-    return;
-  }
+    <button id="login-btn">Login</button>
+    <button id="signup-btn">Sign up</button>
+  </div>
 
-  // 🔓 UNHIDE BODY FIRST (THIS WAS MISSING)
-  document.body.style.visibility = 'visible';
+  <script>
+    const supabaseClient = supabase.createClient(
+      "https://zvkretqhqmxuhgspddpu.supabase.co",
+      "sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY"
+    );
 
-  // show login UI
-  const login = document.getElementById('login-container');
-  if (login) login.style.display = 'block';
+    (async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
 
-  // fade splash
-  const splash = document.getElementById('splash-screen');
-  if (splash) {
-    splash.style.transition = 'opacity 1.2s ease';
-    splash.style.opacity = '0';
-    setTimeout(() => splash.remove(), 1200);
-  }
-})();
-</script>
+      if (session) {
+        window.location.replace('hub.html');
+        return;
+      }
+
+      // show page + login
+      document.body.style.visibility = 'visible';
+      document.getElementById('login-container').style.display = 'block';
+
+      // fade splash
+      const splash = document.getElementById('splash-screen');
+      splash.style.transition = 'opacity 1s ease';
+      splash.style.opacity = '0';
+      setTimeout(() => splash.remove(), 1000);
+    })();
+  </script>
+
 </body>
 </html>
-  

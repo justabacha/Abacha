@@ -1,3 +1,13 @@
+if (document.body.classList.contains('login-page')) {
+  console.log('Login page detected — skipping splash logic');
+} else {
+  const splash = document.getElementById("splash-screen");
+  if (splash) {
+    document.body.style.visibility = "visible";
+    splash.style.opacity = "0";
+    setTimeout(() => splash.remove(), 1200);
+  }
+}
 const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);

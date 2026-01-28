@@ -19,19 +19,14 @@ self.addEventListener('install', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
-  // 🔓 Always fetch fresh auth & navigation pages
-  if (
-    url.pathname === '/' ||
-    url.pathname.endsWith('.html')
-  ) {
+  // 🚫 NEVER cache HTML navigation
+  if (e.request.mode === 'navigate') {
     e.respondWith(fetch(e.request));
     return;
   }
 
-  // 🎨 Cache-first for static assets
+  // 🎨 Cache static assets only
   e.respondWith(
-    caches.match(e.request).then((res) => {
-      return res || fetch(e.request);
-    })
+    caches.match(e.request).then(res => res || fetch(e.request))
   );
 });

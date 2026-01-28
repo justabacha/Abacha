@@ -61,12 +61,14 @@
 
       // fade splash
       const splash = document.getElementById('splash-screen');
-      setTimeout(() => {
-        splash.style.opacity = '0';
-        splash.style.transition = 'opacity 1s ease';
-        setTimeout(() => splash.remove(), 1000);
-      }, 1200);
-    })();
+
+setTimeout(() => {
+  splash.style.transition = 'opacity 1s ease';
+  splash.style.opacity = '0';
+  splash.style.pointerEvents = 'none'; // 🔥 THIS LINE
+  
+  setTimeout(() => splash.remove(), 1000);
+}, 1200);
   </script>
 
   <script src="app.js" defer></script>

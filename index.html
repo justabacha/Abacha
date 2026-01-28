@@ -34,23 +34,25 @@ html, body {
         </div>
     </div>
 
-    <script>
+<script>
 const supabaseClient = supabase.createClient(
   "https://zvkretqhqmxuhgspddpu.supabase.co",
   "sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY"
 );
 
-document.addEventListener('DOMContentLoaded', () => {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+(async () => {
+  const { data: { session } } = await supabaseClient.auth.getSession();
 
-if (session) {
-  window.location.replace('hub.html');
-} else {
-  // stay on login
-        }
-  // 🔓 Allow render ONLY now
+  if (session) {
+    // ✅ already logged in → skip login
+    window.location.replace('hub.html');
+    return;
+  }
+
+  // ❌ not logged in → show login UI
   document.body.style.visibility = 'visible';
 
+  // splash animation ONLY for unauth users
   let count = 0;
   const counterEl = document.getElementById('ghost-counter');
 
@@ -59,25 +61,15 @@ if (session) {
     counterEl.innerText = count;
   }, 800);
 
-  console.log("👻 Splash locked. Timer started.");
-
-  setTimeout(async () => {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+  setTimeout(() => {
     clearInterval(ghostInterval);
-
-    if (session) {
-      console.log("✅ Session found → hub");
-      window.location.replace('hub.html'); // IMPORTANT
-    } else {
-      console.log("❌ No session → show login");
-      const splash = document.getElementById('splash-screen');
-      splash.style.transition = "opacity 1.5s ease";
-      splash.style.opacity = "0";
-      setTimeout(() => splash.remove(), 1500);
-    }
-  }, 20000);
-});
-             </script>
+    const splash = document.getElementById('splash-screen');
+    splash.style.transition = "opacity 1.2s ease";
+    splash.style.opacity = "0";
+    setTimeout(() => splash.remove(), 1200);
+  }, 2000);
+})();
+</script>
 </body>
 </html>
   

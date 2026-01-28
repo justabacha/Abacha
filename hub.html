@@ -75,8 +75,9 @@ transition:opacity .6s ease;">
         </p>
     </div>
     
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
 const supabaseClient = supabase.createClient(
   "https://zvkretqhqmxuhgspddpu.supabase.co",
   "sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY"
@@ -87,9 +88,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (!session) {
     window.location.replace('index.html');
+    return;
+  }
+
+  // ✅ AUTH PASSED — now allow splash
+  const splash = document.getElementById('splash-screen');
+  if (splash) {
+    setTimeout(() => {
+      splash.style.opacity = '0';
+      setTimeout(() => splash.remove(), 800);
+    }, 1500);
   }
 });
-    </script>
+</script>
+
+<script src="app.js" defer></script>
+    
     <script src="app.js" defer></script>
    <script>
 window.addEventListener('load', () => {

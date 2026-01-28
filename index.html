@@ -41,34 +41,36 @@
   </div>
 
   <script>
-    const supabaseClient = supabase.createClient(
-      "https://zvkretqhqmxuhgspddpu.supabase.co",
-      "sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY"
-    );
+  const supabaseClient = supabase.createClient(
+    "https://zvkretqhqmxuhgspddpu.supabase.co",
+    "sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY"
+  );
 
-    (async () => {
-      const { data: { session } } = await supabaseClient.auth.getSession();
+  (async () => {
+    const { data: { session } } = await supabaseClient.auth.getSession();
 
-      // already logged in
-      if (session) {
-        window.location.replace('hub.html');
-        return;
-      }
+    // already logged in
+    if (session) {
+      window.location.replace('hub.html');
+      return;
+    }
 
-      // show page
-      document.body.style.visibility = 'visible';
-      document.getElementById('login-container').style.display = 'block';
+    // show page
+    document.body.style.visibility = 'visible';
+    document.getElementById('login-container').style.display = 'block';
 
-      // fade splash
-      const splash = document.getElementById('splash-screen');
+    // splash
+    const splash = document.getElementById('splash-screen');
 
-setTimeout(() => {
-  splash.style.transition = 'opacity 1s ease';
-  splash.style.opacity = '0';
-  splash.style.pointerEvents = 'none'; // 🔥 THIS LINE
-  
-  setTimeout(() => splash.remove(), 1000);
-}, 1200);
+    setTimeout(() => {
+      splash.style.transition = 'opacity 1s ease';
+      splash.style.opacity = '0';
+      splash.style.pointerEvents = 'none';
+
+      setTimeout(() => splash.remove(), 1000);
+    }, 1200);
+
+  })();  // 🔥🔥🔥 THIS WAS MISSING
   </script>
 
   <script src="app.js" defer></script>

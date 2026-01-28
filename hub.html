@@ -76,6 +76,20 @@ transition:opacity .6s ease;">
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+const supabaseClient = supabase.createClient(
+  "https://zvkretqhqmxuhgspddpu.supabase.co",
+  "sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY"
+);
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+
+  if (!session) {
+    window.location.replace('index.html');
+  }
+});
+    </script>
     <script src="app.js" defer></script>
    <script>
 window.addEventListener('load', () => {
@@ -95,20 +109,20 @@ window.addEventListener('load', () => {
 });
                     </script>
     <script>
+<script>
 window.addEventListener('load', () => {
   const splash = document.getElementById('splash-screen');
   if (!splash) return;
 
   splash.style.opacity = '1';
+  splash.style.transition = 'opacity 1s ease';
 
-  // ⏱ HARD MINIMUM DISPLAY TIME
+  // 👀 minimum visible time
   setTimeout(() => {
-    splash.style.transition = 'opacity 1s ease';
     splash.style.opacity = '0';
-
     setTimeout(() => splash.remove(), 1000);
-  }, 2000); // 👀 2 FULL SECONDS, no rushing
+  }, 1800);
 });
-    </script>
+</script>
 </body>
 </html>

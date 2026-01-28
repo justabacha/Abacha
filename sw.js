@@ -1,4 +1,4 @@
-const CACHE_NAME = 'just-abacha-v1.1.4';
+const CACHE_NAME = 'just-abacha-v1.1.5';
 const ASSETS = [
   '/style.css',
   '/chat-list.js',

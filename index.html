@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <style>
+body {
+  visibility: hidden;
+}
+    </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phestone Ghost</title>
@@ -14,7 +19,14 @@
 </head>
 <body class="login-page">
     <div id="splash-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:'Inter', sans-serif;">
-<script>
+<div id="login-container" style="display:none;">
+  <input id="email" type="email" placeholder="Email" />
+  <input id="password" type="password" placeholder="Password" />
+
+  <button id="login-btn">Login</button>
+  <button id="signup-btn">Sign up</button>
+</div>
+        <script>
 const supabaseClient = supabase.createClient(
   "https://zvkretqhqmxuhgspddpu.supabase.co",
   "sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY"

@@ -46,21 +46,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 🔐 LOGIN
     if (loginButton) {
-      loginButton.onclick = async () => {
-        const email = emailInput.value;
-        const password = passwordInput.value;
+    if (loginButton) {
+  loginButton.addEventListener('click', async () => {
+    const email = emailInput.value;
+    const password = passwordInput.value;
 
-        const { error } = await supabaseClient.auth.signInWithPassword({
-          email,
-          password
-        });
+    const { error } = await supabaseClient.auth.signInWithPassword({
+      email,
+      password
+    });
 
-        if (error) {
-          alert("Ghost Access Denied: " + error.message);
-        } else {
-          window.location.href = 'hub.html';
-        }
-      };
+    if (error) {
+      alert("Ghost Access Denied: " + error.message);
+    } else {
+      window.location.href = 'hub.html';
+    }
+  });
     }
 
     // ✨ SIGNUP

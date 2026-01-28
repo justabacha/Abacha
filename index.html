@@ -41,6 +41,13 @@ const supabaseClient = supabase.createClient(
 );
 
 document.addEventListener('DOMContentLoaded', () => {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+if (session) {
+  window.location.replace('hub.html');
+} else {
+  // stay on login
+        }
   // 🔓 Allow render ONLY now
   document.body.style.visibility = 'visible';
 

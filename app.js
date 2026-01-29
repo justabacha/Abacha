@@ -16,29 +16,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loginButton = document.getElementById('login-btn');
     const signupButton = document.getElementById('signup-btn');
 
-    // 1. 🔥 BUTTON COLOR & UNLOCK LOGIC (RESTORED)
+    // 1. 🔥 BUTTON COLOR & UNLOCK LOGIC
     if (passwordInput && loginButton && signupButton) {
         passwordInput.addEventListener('input', () => {
             if (passwordInput.value.length >= 6) {
-                // UNLOCKED STATE: GREEN "VIBE"
-                loginButton.style.background = "#32D74B";
+                // UNLOCKED: Login is Green, Signup is Blue
+                loginButton.style.background = "#32D74B"; // Green per instructions
                 loginButton.style.color = "white";
                 loginButton.style.pointerEvents = "auto";
                 loginButton.style.opacity = "1";
 
-                // UNLOCKED STATE: BLUE "JOIN"
-                signupButton.style.background = "#007AFF";
+                signupButton.style.background = "#007AFF"; // Blue per instructions
+                signupButton.style.color = "white";
                 signupButton.style.border = "none";
                 signupButton.style.pointerEvents = "auto";
                 signupButton.style.opacity = "1";
             } else {
-                // LOCKED STATE: GRAYED OUT
+                // LOCKED: Reset to default
                 loginButton.style.background = "white";
                 loginButton.style.color = "black";
                 loginButton.style.pointerEvents = "none";
                 loginButton.style.opacity = "0.6";
 
                 signupButton.style.background = "transparent";
+                signupButton.style.color = "white";
                 signupButton.style.border = "1px solid rgba(255,255,255,0.4)";
                 signupButton.style.pointerEvents = "none";
                 signupButton.style.opacity = "0.6";
@@ -46,14 +47,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 2. 🔐 LOGIN ACTION
+    // 2. 🔐 LOGIN ACTION (Matches your original flow)
     if (loginButton) {
         loginButton.addEventListener('click', async () => {
-            const { error } = await supabaseClient.auth.signInWithPassword({
-                email: emailInput.value,
-                password: passwordInput.value
-            });
-
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            
             if (error) alert("Ghost Access Denied: " + error.message);
             else window.location.href = 'hub.html';
         });
@@ -61,15 +61,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 3. ✨ SIGNUP ACTION
     if (signupButton) {
-        signupButton.addEventListener('click', async () => {
-            const { error } = await supabaseClient.auth.signUp({
-                email: emailInput.value,
-                password: passwordInput.value
-            });
-
+        signupButton.onclick = async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            const { error } = await supabaseClient.auth.signUp({ email, password });
+            
             if (error) alert("Signup Error: " + error.message);
             else alert("Welcome! Verify your email to login.");
-        });
+        };
     }
 
     // 4. 🚀 HUB IDENTITY SYNC (Runs only on Hub.html)
@@ -87,7 +86,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             .maybeSingle();
 
         if (profile) {
-            // Sync Avatars
             document.querySelectorAll('#user-avatar, .avatar-circle, .nav-avatar, .chat-avatar').forEach(el => {
                 if (profile.avatar_url) {
                     el.style.backgroundImage = `url(${profile.avatar_url})`;
@@ -95,19 +93,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     el.style.backgroundPosition = 'center';
                 }
             });
-
-            // Sync Usernames
             document.querySelectorAll('#display-username, .ghost-alias-text, .chat-user-name').forEach(el => {
                 if (profile.username) el.innerText = profile.username;
             });
-
-            // Sync City
             const cityElement = document.getElementById('hub-city-label');
             if (cityElement && profile.city) cityElement.innerText = profile.city;
         }
     }
 
-    // 5. ⏰ HUB CLOCK
+    // 5. ⏰ CLOCK
     const timeEl = document.getElementById('time');
     if (timeEl) {
         setInterval(() => {
@@ -116,4 +110,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 1000);
     }
 });
-                          
+    

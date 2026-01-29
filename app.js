@@ -185,53 +185,54 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
     
-        // --- 5. HUB SYNC & GHOST IDENTITY CHECK ---
+    // --- 5. HUB SYNC & GHOST IDENTITY CHECK ---
+    // Only run this if we are NOT on the login page
     if (!document.body.classList.contains('login-page')) {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        
-        // Safety: If no user session, kick back to login
-        if (!user) { 
-            window.location.replace('index.html'); 
-            return; 
-        }
-
-        // Fetch the profile
-        const { data: profile } = await supabaseClient
-            .from('profiles')
-            .select('avatar_url, username, city')
-            .eq('id', user.id)
-            .maybeSingle();
-
-        if (profile) {
-            // A. Update UI Elements (Avatars & Names)
-            document.querySelectorAll('#user-avatar, .avatar-circle, .nav-avatar, .chat-avatar').forEach(el => {
-                if (profile.avatar_url) { 
-                    el.style.backgroundImage = `url(${profile.avatar_url})`; 
-                    el.style.backgroundSize = 'cover'; 
+        const syncHub = async () => {
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                
+                if (!user) { 
+                    window.location.replace('index.html'); 
+                    return; 
                 }
-            });
 
-            document.querySelectorAll('#display-username, .ghost-alias-text, .chat-user-name').forEach(el => {
-                if (profile.username) el.innerText = profile.username;
-            });
+                const { data: profile } = await supabaseClient
+                    .from('profiles')
+                    .select('avatar_url, username, city')
+                    .eq('id', user.id)
+                    .maybeSingle();
 
-            // B. THE IDENTITY GATEKEEPER
-            // If username is missing or default, they need to set up their identity
-            const isNewGhost = !profile.username || profile.username === "" || profile.username.includes("New Ghost");
-            
-            if (isNewGhost) {
-                console.log("👻 Identity Missing. Redirecting to Ghost Layer...");
-                
-                // Optional: Show a quick prompt before redirecting
-                ghostPrompt("Welcome! Let's lock in your Ghost Identity first.", "success");
-                
-                setTimeout(() => {
-                    window.location.href = 'profile.html';
-                }, 2000);
+                if (profile) {
+                    // Update Avatars
+                    document.querySelectorAll('#user-avatar, .avatar-circle, .nav-avatar, .chat-avatar').forEach(el => {
+                        if (profile.avatar_url) { 
+                            el.style.backgroundImage = `url(${profile.avatar_url})`; 
+                            el.style.backgroundSize = 'cover'; 
+                        }
+                    });
+
+                    // Update Names
+                    document.querySelectorAll('#display-username, .ghost-alias-text, .chat-user-name').forEach(el => {
+                        if (profile.username) el.innerText = profile.username;
+                    });
+
+                    // IDENTITY GATEKEEPER
+                    const isNewGhost = !profile.username || profile.username === "" || profile.username.includes("New Ghost");
+                    
+                    if (isNewGhost) {
+                        ghostPrompt("First Vibe: Setting up your Ghost Identity...", "success");
+                        setTimeout(() => { window.location.href = 'profile.html'; }, 2000);
+                    }
+                }
+            } catch (err) {
+                console.error("Hub Sync Error:", err);
             }
-        }
-    }
+        };
 
+        syncHub(); // Run it in the background so the splash screen can finish
+    }
+    
     // --- 6. GHOST CLOCK ---
     const timeEl = document.getElementById('time');
     if (timeEl) {

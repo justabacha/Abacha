@@ -8,8 +8,7 @@ function ghostPrompt(message, type = "success") {
     if (!container) {
         container = document.createElement('div');
         container.id = 'ghost-prompt-container';
-        // Updated container style for that perfect top-drop vibe
-container.style = "position:fixed; top:60px; right:20px; z-index:100000; display:flex; flex-direction:column; gap:12px; align-items: flex-end;";
+        container.style = "position:fixed; top:60px; left:50%; transform:translateX(-50%); z-index:100000; display:flex; flex-direction:column; gap:12px; align-items: center; width: 100%; pointer-events: none;";
         document.body.appendChild(container);
     }
 
@@ -18,20 +17,21 @@ container.style = "position:fixed; top:60px; right:20px; z-index:100000; display
     const btnColor = isSuccess ? "#32D74B" : "#007AFF"; 
     const btnText = isSuccess ? "vibe" : "ok";
 
-    tile.style = `
-        background: rgba(28, 28, 30, 0.85);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 16px;
-        border-radius: 18px;
-        width: 260px;
-        color: white;
-        font-family: -apple-system, sans-serif;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        animation: ghostSlide 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    `;
-
+tile.style = `
+    background: rgba(28, 28, 30, 0.85);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 16px;
+    border-radius: 18px;
+    width: 280px; /* Slightly wider for better centering */
+    color: white;
+    font-family: -apple-system, sans-serif;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    animation: ghostSlide 0.4s ease-out;
+    pointer-events: auto; /* 🚨 Crucial: This makes the buttons clickable! */
+`;
+    
     tile.innerHTML = `
         <div style="color:gray; font-size:10px; margin-bottom:8px; display:flex; justify-content:space-between;">
             <span>|Just•Abacha😎|</span>
@@ -46,13 +46,12 @@ container.style = "position:fixed; top:60px; right:20px; z-index:100000; display
     if (!document.getElementById('ghost-anim')) {
         const style = document.createElement('style');
         style.id = 'ghost-anim';
-        style.innerHTML = `
+ style.innerHTML = `
     @keyframes ghostSlide { 
-        from { transform: translateY(-50px) scale(0.9); opacity: 0; } 
-        to { transform: translateY(0) scale(1); opacity: 1; } 
+        from { transform: translateY(-30px); opacity: 0; } 
+        to { transform: translateY(0); opacity: 1; } 
     }
 `;
-        
         document.head.appendChild(style);
     }
 

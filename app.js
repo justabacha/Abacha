@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- 2. GHOST LAYER VERIFICATION UI ---
-    window.showGhostVerify = (email) => {
+        window.showGhostVerify = (email) => {
         const layer = document.createElement('div');
         layer.id = "ghost-layer";
         layer.style = "position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";
@@ -47,28 +47,50 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div style="color:gray; font-size:12px; margin-bottom:10px; text-align:left;">|Just•Abacha😎|</div>
                 <h3 style="color:white; margin:0 0 10px;">Verify Ghost</h3>
                 <p style="color:gray; font-size:14px; margin-bottom:20px;">Enter the code sent to your email.</p>
-                <input id="otp-input" type="text" placeholder="JA-0000-ABA" style="width:100%; padding:12px; border-radius:10px; background:#2c2c2e; border:none; color:white; text-align:center; font-weight:bold; margin-bottom:20px;">
+                <input id="otp-input" type="text" placeholder="JA-0000-ABA" style="width:100%; padding:12px; border-radius:10px; background:#2c2c2e; border:none; color:white; text-align:center; font-weight:bold; margin-bottom:20px; text-transform: uppercase;">
                 <div style="display:flex; gap:10px;">
-                    <button id="vibe-verify-btn" style="flex:1; padding:12px; border-radius:12px; background:#32D74B; border:none; color:white; font-weight:bold;">Vibe</button>
-                    <button onclick="document.getElementById('ghost-layer').remove()" style="flex:1; padding:12px; border-radius:12px; background:#007AFF; border:none; color:white; font-weight:bold;">No</button>
+                    <button id="vibe-verify-btn" style="flex:1; padding:12px; border-radius:12px; background:#32D74B; border:none; color:white; font-weight:bold; cursor:pointer;">Vibe</button>
+                    <button onclick="document.getElementById('ghost-layer').remove()" style="flex:1; padding:12px; border-radius:12px; background:#007AFF; border:none; color:white; font-weight:bold; cursor:pointer;">No</button>
                 </div>
             </div>
         `;
         document.body.appendChild(layer);
 
         document.getElementById('vibe-verify-btn').onclick = async () => {
+            const btn = document.getElementById('vibe-verify-btn');
+            btn.innerText = "Checking...";
+            
             const inputCode = document.getElementById('otp-input').value.trim();
-            const { data, error } = await supabaseClient.from('profiles').select('otp_code').eq('email', email).single();
+            
+            // 🚨 Fetch the code from the database
+            const { data, error } = await supabaseClient
+                .from('profiles')
+                .select('otp_code')
+                .eq('email', email)
+                .maybeSingle();
+
+            console.log("Database Check:", data); // Check your console to see if data exists!
 
             if (data && data.otp_code === inputCode) {
-                await supabaseClient.from('profiles').update({ is_approved: true }).eq('email', email);
-                alert("Verified! Logging in...");
-                window.location.href = 'hub.html';
+                // ✅ MATCH! Update approval
+                const { error: updateErr } = await supabaseClient
+                    .from('profiles')
+                    .update({ is_approved: true })
+                    .eq('email', email);
+
+                if (updateErr) {
+                    alert("Approval Error: " + updateErr.message);
+                } else {
+                    alert("Ghost Verified! You can now log in.");
+                    location.reload(); // Refresh to let them log in properly
+                }
             } else {
-                alert("Wrong Code. Check your email again.");
+                btn.innerText = "Vibe";
+                alert("Wrong Code. Check your email again 👿");
             }
         };
     };
+    
     // --- 3. LOGIN ACTION (THE GATEKEEPER) ---
     if (loginButton) {
         loginButton.addEventListener('click', async () => {

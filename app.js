@@ -1,9 +1,9 @@
 const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 // --- GHOST PROMPT ENGINE ---
 function ghostPrompt(message, type = "success") {
-    // Create container if it doesn't exist
     let container = document.getElementById('ghost-prompt-container');
     if (!container) {
         container = document.createElement('div');
@@ -14,7 +14,7 @@ function ghostPrompt(message, type = "success") {
 
     const tile = document.createElement('div');
     const isSuccess = type === "success";
-    const btnColor = isSuccess ? "#32D74B" : "#007AFF"; // Green for vibe, Blue for ok
+    const btnColor = isSuccess ? "#32D74B" : "#007AFF"; 
     const btnText = isSuccess ? "vibe" : "ok";
 
     tile.style = `
@@ -42,7 +42,6 @@ function ghostPrompt(message, type = "success") {
         </button>
     `;
 
-    // Add Slide Animation to CSS
     if (!document.getElementById('ghost-anim')) {
         const style = document.createElement('style');
         style.id = 'ghost-anim';
@@ -62,7 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loginButton = document.getElementById('login-btn');
     const signupButton = document.getElementById('signup-btn');
 
-    // --- 1. BUTTON COLOR & UNLOCK LOGIC (UNCHANGED) ---
+    // --- 1. BUTTON COLOR & UNLOCK LOGIC ---
     if (passwordInput && loginButton && signupButton) {
         passwordInput.addEventListener('input', () => {
             if (passwordInput.value.length >= 6) {
@@ -90,7 +89,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- 2. GHOST LAYER VERIFICATION UI ---
-        window.showGhostVerify = (email) => {
+    window.showGhostVerify = (email) => {
         const layer = document.createElement('div');
         layer.id = "ghost-layer";
         layer.style = "position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";
@@ -111,30 +110,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('vibe-verify-btn').onclick = async () => {
             const btn = document.getElementById('vibe-verify-btn');
             btn.innerText = "Checking...";
-            
             const inputCode = document.getElementById('otp-input').value.trim();
             
-            // 🚨 Fetch the code from the database
-            const { data, error } = await supabaseClient
-                .from('profiles')
-                .select('otp_code')
-                .eq('email', email)
-                .maybeSingle();
-
-            console.log("Database Check:", data); // Check your console to see if data exists!
+            const { data, error } = await supabaseClient.from('profiles').select('otp_code').eq('email', email).maybeSingle();
 
             if (data && data.otp_code === inputCode) {
-                // ✅ MATCH! Update approval
-                const { error: updateErr } = await supabaseClient
-                    .from('profiles')
-                    .update({ is_approved: true })
-                    .eq('email', email);
+                const { error: updateErr } = await supabaseClient.from('profiles').update({ is_approved: true }).eq('email', email);
 
                 if (updateErr) {
-                    alert("Approval Error: " + updateErr.message);
+                    ghostPrompt("System Error: " + updateErr.message, "error"); // 🎯 Fixed!
                 } else {
-                ghostPrompt("Verified! Access granted to the Hub.", "success");
-                    location.reload(); // Refresh to let them log in properly
+                    ghostPrompt("Verified! Access granted to the Hub.", "success");
+                    setTimeout(() => location.reload(), 1500); 
                 }
             } else {
                 btn.innerText = "Vibe";
@@ -142,14 +129,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         };
     };
-    
-    // --- 3. LOGIN ACTION (THE GATEKEEPER) ---
+
+    // --- 3. LOGIN ACTION ---
     if (loginButton) {
         loginButton.addEventListener('click', async () => {
             const email = emailInput.value;
             const password = passwordInput.value;
-            
-            console.log("👻 Attempting Login for:", email);
             const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
             
             if (error) {
@@ -157,66 +142,48 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // Check the 'is_approved' column in the database
-            const { data: profile, error: pError } = await supabaseClient
-                .from('profiles')
-                .select('is_approved')
-                .eq('id', data.user.id)
-                .single();
+            const { data: profile } = await supabaseClient.from('profiles').select('is_approved').eq('id', data.user.id).single();
 
             if (profile && profile.is_approved) {
-                console.log("✅ Ghost Approved. Entering Hub...");
                 window.location.href = 'hub.html';
             } else {
-                console.log("❌ Not Approved. Locking Gate and Sending Code.");
-                // FORCE SIGN OUT so they can't bypass via refresh
                 await supabaseClient.auth.signOut();
-                
-                // Fire the Email Engine
                 fetch('/api/send-code', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: email })
                 });
-                
-                // Show the Ghost Layer Pop-up
                 showGhostVerify(email);
             }
         });
     }
 
-    // --- 4. SIGNUP ACTION (THE BLOCKER) ---
+    // --- 4. SIGNUP ACTION ---
     if (signupButton) {
         signupButton.onclick = async () => {
             const email = emailInput.value;
             const password = passwordInput.value;
-            
-            console.log("👻 Creating New Ghost:", email);
             const { data, error } = await supabaseClient.auth.signUp({ email, password });
             
             if (error) {
                 ghostPrompt("Signup Error: " + error.message, "error");
             } else {
-                // IMMEDIATELY KILL THE SESSION
                 await supabaseClient.auth.signOut();
-                
-                console.log("📩 Triggering Ghost Mailer...");
                 await fetch('/api/send-code', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: email })
                 });
-                
-                // Show the pop-up
                 showGhostVerify(email);
             }
         };
-                }
-                
-    // --- 5. HUB SYNC & CLOCK (UNCHANGED) ---
+    }
+    
+    // --- 5. HUB SYNC & CLOCK ---
     if (!document.body.classList.contains('login-page')) {
         const { data: { user } } = await supabaseClient.auth.getUser();
         if (!user) { window.location.replace('index.html'); return; }
+        // Fetching profile data for the hub
         const { data: profile } = await supabaseClient.from('profiles').select('avatar_url, username, city').eq('id', user.id).maybeSingle();
         if (profile) {
             document.querySelectorAll('#user-avatar, .avatar-circle, .nav-avatar, .chat-avatar').forEach(el => {
@@ -236,4 +203,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 1000);
     }
 });
-                    
+        

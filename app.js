@@ -8,7 +8,8 @@ function ghostPrompt(message, type = "success") {
     if (!container) {
         container = document.createElement('div');
         container.id = 'ghost-prompt-container';
-        container.style = "position:fixed; top:20px; right:20px; z-index:100000; display:flex; flex-direction:column; gap:10px;";
+        // Updated container style for that perfect top-drop vibe
+container.style = "position:fixed; top:60px; right:20px; z-index:100000; display:flex; flex-direction:column; gap:12px; align-items: flex-end;";
         document.body.appendChild(container);
     }
 
@@ -45,7 +46,13 @@ function ghostPrompt(message, type = "success") {
     if (!document.getElementById('ghost-anim')) {
         const style = document.createElement('style');
         style.id = 'ghost-anim';
-        style.innerHTML = `@keyframes ghostSlide { from { transform: translateX(110%); } to { transform: translateX(0); } }`;
+        style.innerHTML = `
+    @keyframes ghostSlide { 
+        from { transform: translateY(-50px) scale(0.9); opacity: 0; } 
+        to { transform: translateY(0) scale(1); opacity: 1; } 
+    }
+`;
+        
         document.head.appendChild(style);
     }
 

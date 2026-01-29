@@ -185,22 +185,54 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
     
-    // --- 5. HUB SYNC & CLOCK ---
+        // --- 5. HUB SYNC & GHOST IDENTITY CHECK ---
     if (!document.body.classList.contains('login-page')) {
         const { data: { user } } = await supabaseClient.auth.getUser();
-        if (!user) { window.location.replace('index.html'); return; }
-        // Fetching profile data for the hub
-        const { data: profile } = await supabaseClient.from('profiles').select('avatar_url, username, city').eq('id', user.id).maybeSingle();
+        
+        // Safety: If no user session, kick back to login
+        if (!user) { 
+            window.location.replace('index.html'); 
+            return; 
+        }
+
+        // Fetch the profile
+        const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('avatar_url, username, city')
+            .eq('id', user.id)
+            .maybeSingle();
+
         if (profile) {
+            // A. Update UI Elements (Avatars & Names)
             document.querySelectorAll('#user-avatar, .avatar-circle, .nav-avatar, .chat-avatar').forEach(el => {
-                if (profile.avatar_url) { el.style.backgroundImage = `url(${profile.avatar_url})`; el.style.backgroundSize = 'cover'; }
+                if (profile.avatar_url) { 
+                    el.style.backgroundImage = `url(${profile.avatar_url})`; 
+                    el.style.backgroundSize = 'cover'; 
+                }
             });
+
             document.querySelectorAll('#display-username, .ghost-alias-text, .chat-user-name').forEach(el => {
                 if (profile.username) el.innerText = profile.username;
             });
+
+            // B. THE IDENTITY GATEKEEPER
+            // If username is missing or default, they need to set up their identity
+            const isNewGhost = !profile.username || profile.username === "" || profile.username.includes("New Ghost");
+            
+            if (isNewGhost) {
+                console.log("👻 Identity Missing. Redirecting to Ghost Layer...");
+                
+                // Optional: Show a quick prompt before redirecting
+                ghostPrompt("Welcome! Let's lock in your Ghost Identity first.", "success");
+                
+                setTimeout(() => {
+                    window.location.href = 'profile.html';
+                }, 2000);
+            }
         }
     }
 
+    // --- 6. GHOST CLOCK ---
     const timeEl = document.getElementById('time');
     if (timeEl) {
         setInterval(() => {
@@ -208,5 +240,5 @@ document.addEventListener('DOMContentLoaded', async () => {
             timeEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }, 1000);
     }
-});
-        
+    
+    

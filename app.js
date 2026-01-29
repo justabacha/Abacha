@@ -69,12 +69,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         };
     };
-
-    // --- 3. LOGIN ACTION (WITH APPROVAL CHECK) ---
+    // --- 3. LOGIN ACTION (THE GATEKEEPER) ---
     if (loginButton) {
         loginButton.addEventListener('click', async () => {
             const email = emailInput.value;
             const password = passwordInput.value;
+            
+            console.log("👻 Attempting Login for:", email);
             const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
             
             if (error) {
@@ -82,48 +83,62 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            const { data: profile } = await supabaseClient.from('profiles').select('is_approved').eq('id', data.user.id).single();
-            
+            // Check the 'is_approved' column in the database
+            const { data: profile, error: pError } = await supabaseClient
+                .from('profiles')
+                .select('is_approved')
+                .eq('id', data.user.id)
+                .single();
+
             if (profile && profile.is_approved) {
+                console.log("✅ Ghost Approved. Entering Hub...");
                 window.location.href = 'hub.html';
             } else {
-                // 🚨 SURGERY: Force logout so they can't sneak into the Hub
+                console.log("❌ Not Approved. Locking Gate and Sending Code.");
+                // FORCE SIGN OUT so they can't bypass via refresh
                 await supabaseClient.auth.signOut();
                 
+                // Fire the Email Engine
                 fetch('/api/send-code', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: email })
                 });
+                
+                // Show the Ghost Layer Pop-up
                 showGhostVerify(email);
             }
         });
     }
-    
-    // --- 4. SIGNUP ACTION (TRIGGERS EMAIL) ---
+
+    // --- 4. SIGNUP ACTION (THE BLOCKER) ---
     if (signupButton) {
         signupButton.onclick = async () => {
             const email = emailInput.value;
             const password = passwordInput.value;
-            const { error } = await supabaseClient.auth.signUp({ email, password });
+            
+            console.log("👻 Creating New Ghost:", email);
+            const { data, error } = await supabaseClient.auth.signUp({ email, password });
             
             if (error) {
                 alert("Signup Error: " + error.message);
             } else {
-                // 🚨 SURGERY: Force logout immediately after account creation
+                // IMMEDIATELY KILL THE SESSION
                 await supabaseClient.auth.signOut();
-
-                // Trigger the email engine
+                
+                console.log("📩 Triggering Ghost Mailer...");
                 await fetch('/api/send-code', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: email })
                 });
+                
+                // Show the pop-up
                 showGhostVerify(email);
             }
         };
-    }
-    
+                }
+                
     // --- 5. HUB SYNC & CLOCK (UNCHANGED) ---
     if (!document.body.classList.contains('login-page')) {
         const { data: { user } } = await supabaseClient.auth.getUser();

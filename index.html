@@ -41,17 +41,37 @@
     }, 800);
 
     setTimeout(async () => {
+        setTimeout(async () => {
         const { data: { session } } = await supabaseClient.auth.getSession();
+        
         if (session) {
-            window.location.replace('hub.html');
+            // 🚨 Check if the Ghost is approved before jumping to Hub
+            const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('is_approved')
+                .eq('id', session.user.id)
+                .single();
+
+            if (profile && profile.is_approved) {
+                window.location.replace('hub.html');
+            } else {
+                // Not approved? Kill the session and show the login container
+                await supabaseClient.auth.signOut();
+                showLoginUI();
+            }
         } else {
-            clearInterval(ghostInterval);
-            document.getElementById('splash-screen').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('splash-screen').remove();
-                document.getElementById('login-container').style.opacity = '1';
-            }, 1000);
+            showLoginUI();
         }
+    }, 20000); // 20 SECONDS
+
+    function showLoginUI() {
+        clearInterval(ghostInterval);
+        document.getElementById('splash-screen').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('splash-screen').remove();
+            document.getElementById('login-container').style.opacity = '1';
+        }, 1000);
+    }
     }, 20000); // 20 SECONDS
   </script>
 </body>

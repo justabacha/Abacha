@@ -1,4 +1,4 @@
-const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
+Const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -185,63 +185,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
     
-    // --- 5. HUB SYNC & GHOST IDENTITY CHECK ---
+    // --- 5. HUB SYNC & CLOCK ---
     if (!document.body.classList.contains('login-page')) {
-        // We use a self-invoking function so it doesn't block your splash screen
-        (async () => {
-            try {
-                const { data: { user } } = await supabaseClient.auth.getUser();
-                if (!user) { 
-                    window.location.replace('index.html'); 
-                    return; 
-                }
-
-                const { data: profile } = await supabaseClient
-                    .from('profiles')
-                    .select('avatar_url, username, city')
-                    .eq('id', user.id)
-                    .maybeSingle();
-
-                if (profile) {
-                    // Update UI Elements (Avatars)
-                    document.querySelectorAll('#user-avatar, .avatar-circle, .nav-avatar, .chat-avatar').forEach(el => {
-                        if (profile.avatar_url) { 
-                            el.style.backgroundImage = `url(${profile.avatar_url})`; 
-                            el.style.backgroundSize = 'cover'; 
-                        }
-                    });
-
-                    // Update UI Elements (Usernames)
-                    document.querySelectorAll('#display-username, .ghost-alias-text, .chat-user-name').forEach(el => {
-                        if (profile.username) el.innerText = profile.username;
-                    });
-
-                    // 🚨 THE IDENTITY GATEKEEPER
-                    // If they have no username, send them to the profile page
-                    if (!profile.username || profile.username === "" || profile.username.includes("New Ghost")) {
-                        console.log("👻 New Ghost detected. Moving to Identity setup...");
-                        
-                        // We wait 3 seconds so they can actually see the Hub before the redirect
-                        setTimeout(() => {
-                            ghostPrompt("Vibe Check: Let's set up your Ghost Identity.", "success");
-                            setTimeout(() => {
-                                window.location.href = 'profile.html';
-                            }, 2000);
-                        }, 1000);
-                    }
-                }
-            } catch (err) {
-                console.error("Sync Error:", err);
-            }
-        })();
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!user) { window.location.replace('index.html'); return; }
+        // Fetching profile data for the hub
+        const { data: profile } = await supabaseClient.from('profiles').select('avatar_url, username, city').eq('id', user.id).maybeSingle();
+        if (profile) {
+            document.querySelectorAll('#user-avatar, .avatar-circle, .nav-avatar, .chat-avatar').forEach(el => {
+                if (profile.avatar_url) { el.style.backgroundImage = `url(${profile.avatar_url})`; el.style.backgroundSize = 'cover'; }
+            });
+            document.querySelectorAll('#display-username, .ghost-alias-text, .chat-user-name').forEach(el => {
+                if (profile.username) el.innerText = profile.username;
+            });
+        }
     }
 
-    // --- 6. GHOST CLOCK ---
     const timeEl = document.getElementById('time');
     if (timeEl) {
         setInterval(() => {
             const now = new Date();
             timeEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }, 1000);
-                    }
-            
+    }
+});
+        
+//--here

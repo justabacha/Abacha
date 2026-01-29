@@ -1,12 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
-    // 🚨 Security: Only Vercel or You should be able to trigger this
-    const authHeader = req.headers.get('authorization');
+    // 🚨 Vercel sends a special header for Cron Jobs
+    const authHeader = req.headers['authorization']; 
+    
+    // This checks if the request is coming from your Vercel project's cron
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        return res.status(401).json({ error: 'Unauthorized: Ghost access only.' });
     }
-
+    
+    // ... rest of the code
+    
     const supabase = createClient(
         process.env.SUPABASE_URL, 
         process.env.SUPABASE_SERVICE_ROLE_KEY // Needs admin power to delete

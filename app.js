@@ -1,6 +1,58 @@
 const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// --- GHOST PROMPT ENGINE ---
+function ghostPrompt(message, type = "success") {
+    // Create container if it doesn't exist
+    let container = document.getElementById('ghost-prompt-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'ghost-prompt-container';
+        container.style = "position:fixed; top:20px; right:20px; z-index:100000; display:flex; flex-direction:column; gap:10px;";
+        document.body.appendChild(container);
+    }
+
+    const tile = document.createElement('div');
+    const isSuccess = type === "success";
+    const btnColor = isSuccess ? "#32D74B" : "#007AFF"; // Green for vibe, Blue for ok
+    const btnText = isSuccess ? "vibe" : "ok";
+
+    tile.style = `
+        background: rgba(28, 28, 30, 0.85);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 16px;
+        border-radius: 18px;
+        width: 260px;
+        color: white;
+        font-family: -apple-system, sans-serif;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        animation: ghostSlide 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    `;
+
+    tile.innerHTML = `
+        <div style="color:gray; font-size:10px; margin-bottom:8px; display:flex; justify-content:space-between;">
+            <span>|Just•Abacha😎|</span>
+            <span onclick="this.parentElement.parentElement.remove()" style="cursor:pointer;">✕</span>
+        </div>
+        <div style="font-size: 14px; margin-bottom: 12px; line-height:1.4;">${message}</div>
+        <button onclick="this.parentElement.remove()" style="width:100%; padding:10px; border-radius:10px; border:none; background:${btnColor}; color:white; font-weight:bold; cursor:pointer;">
+            ${btnText}
+        </button>
+    `;
+
+    // Add Slide Animation to CSS
+    if (!document.getElementById('ghost-anim')) {
+        const style = document.createElement('style');
+        style.id = 'ghost-anim';
+        style.innerHTML = `@keyframes ghostSlide { from { transform: translateX(110%); } to { transform: translateX(0); } }`;
+        document.head.appendChild(style);
+    }
+
+    container.appendChild(tile);
+    setTimeout(() => { if(tile) tile.remove(); }, 6000);
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('👻 Ghost Engine: Online');
@@ -81,12 +133,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (updateErr) {
                     alert("Approval Error: " + updateErr.message);
                 } else {
-                    alert("Ghost Verified! You can now log in.");
+                ghostPrompt("Verified! Access granted to the Hub.", "success");
                     location.reload(); // Refresh to let them log in properly
                 }
             } else {
                 btn.innerText = "Vibe";
-                alert("Wrong Code. Check your email again 👿");
+                ghostPrompt("Ghost Denied: Code mismatch. Check your DM 👿", "error");
             }
         };
     };
@@ -101,7 +153,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
             
             if (error) {
-                alert("Ghost Access Denied: " + error.message);
+                ghostPrompt("Access Denied: " + error.message, "error");
                 return;
             }
 
@@ -143,7 +195,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const { data, error } = await supabaseClient.auth.signUp({ email, password });
             
             if (error) {
-                alert("Signup Error: " + error.message);
+                ghostPrompt("Signup Error: " + error.message, "error");
             } else {
                 // IMMEDIATELY KILL THE SESSION
                 await supabaseClient.auth.signOut();

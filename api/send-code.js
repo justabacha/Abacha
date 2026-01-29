@@ -12,14 +12,15 @@ export default async function handler(req, res) {
     const ghostCode = `JA-${randomDigits}-ABA`;
 
     try {
-        // 2. Save code to Supabase
+        // 🚨 SURGERY: Changed .update to .upsert
+        // This ensures that even if the profile row doesn't exist yet, it gets created.
         const { error: dbError } = await supabase
             .from('profiles')
-            .update({ 
+            .upsert({ 
+                email: email, 
                 otp_code: ghostCode, 
                 otp_created_at: new Date().toISOString() 
-            })
-            .eq('email', email);
+            }, { onConflict: 'email' }); // This matches by email
 
         if (dbError) throw dbError;
 
@@ -55,4 +56,4 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: error.message });
     }
 }
-  
+    

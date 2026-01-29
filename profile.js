@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) return;
+    if (!user) {
+        window.location.href = 'index.html';
+        return;
+    }
 
     // 1. INITIAL DATA LOAD
     const { data: profile } = await supabaseClient
@@ -18,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (profile.avatar_url) {
             document.getElementById('profile-avatar-preview').style.backgroundImage = `url(${profile.avatar_url})`;
+            document.getElementById('profile-avatar-preview').style.backgroundSize = 'cover';
         }
     }
 
@@ -27,7 +31,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (file) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                document.getElementById('profile-avatar-preview').style.backgroundImage = `url(${e.target.result})`;
+                const preview = document.getElementById('profile-avatar-preview');
+                preview.style.backgroundImage = `url(${e.target.result})`;
+                preview.style.backgroundSize = 'cover';
             };
             reader.readAsDataURL(file);
         }
@@ -37,13 +43,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 // --- CUSTOM MODAL LOGIC ---
 const showSuccessModal = () => {
     const modalHTML = `
-        <div class="ghost-modal-overlay" id="success-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(5px);">
-            <div class="metamorphism-card" style="background:rgba(255,255,255,0.05); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.1); border-radius:25px; padding:25px; width:280px; box-shadow:0 20px 50px rgba(0,0,0,0.5);">
-                <div class="modal-header-mini" style="font-size:12px; color:rgba(255,255,255,0.5); margin-bottom:15px; font-weight:bold;">Just•Abacha😎</div>
-                <div class="modal-body-ghost">
-                    <p style="color:white; font-size:18px; margin-bottom:20px; font-weight:500;">Identity locked up in ghost layer 🔏</p>
-                    <button class="vibe-btn" onclick="closeSuccessModal()" style="width:100%; padding:15px; background:#007AFF; border:none; border-radius:15px; color:white; font-weight:bold; cursor:pointer; box-shadow: 0 5px 15px rgba(0,122,255,0.3);">vibe 😎</button>
-                </div>
+        <div class="ghost-modal-overlay" id="success-modal" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); display:flex; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(10px);">
+            <div class="metamorphism-card" style="background:rgba(255,255,255,0.05); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.1); border-radius:25px; padding:25px; width:280px; text-align:center;">
+                <div style="font-size:10px; color:gray; margin-bottom:15px; text-align:left;">|Just•Abacha😎|</div>
+                <p style="color:white; font-size:18px; margin-bottom:20px; font-weight:500;">Identity locked up in ghost layer 🔏</p>
+                <button onclick="closeSuccessModal()" style="width:100%; padding:15px; background:#007AFF; border:none; border-radius:15px; color:white; font-weight:bold; cursor:pointer;">vibe 😎</button>
             </div>
         </div>
     `;
@@ -53,12 +57,21 @@ const showSuccessModal = () => {
 window.closeSuccessModal = () => {
     const modal = document.getElementById('success-modal');
     if(modal) modal.remove();
-    window.location.href = 'settings.html'; 
+    
+    // BACK PROTOCOL: If they came straight from the Hub (new user), go back to Hub.
+    // If they came from Settings, go back to Settings.
+    if (document.referrer.includes('settings.html')) {
+        window.location.href = 'settings.html';
+    } else {
+        window.location.href = 'hub.html';
+    }
 };
 
 // 3. THE BIG SAVE FUNCTION
 window.saveGhostProfile = async () => {
     const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
+
     const avatarFile = document.getElementById('avatar-input').files[0];
     let avatarUrl = null;
 
@@ -68,21 +81,19 @@ window.saveGhostProfile = async () => {
     saveBtn.disabled = true;
 
     try {
-        // --- AUTO-DELETE OLD AVATAR LOGIC ---
+        // --- AVATAR UPLOAD LOGIC ---
         if (avatarFile) {
-            const { data: oldProfile } = await supabaseClient.from('profiles').select('avatar_url').eq('id', user.id).single();
-            if (oldProfile?.avatar_url) {
-                const oldFileName = oldProfile.avatar_url.split('/').pop().split('?')[0]; // Clean URL
-                await supabaseClient.storage.from('avatars').remove([`${user.id}/${oldFileName}`]);
-            }
-
+            // Optional: Delete old one logic can go here
             const fileExt = avatarFile.name.split('.').pop();
-            const fileName = `${user.id}/${Date.now()}.${fileExt}`; // Added folder path
-            const { error: uploadError } = await supabaseClient.storage.from('avatars').upload(fileName, avatarFile);
+            const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+            
+            const { error: uploadError } = await supabaseClient.storage
+                .from('avatars')
+                .upload(fileName, avatarFile);
 
             if (!uploadError) {
                 const { data } = supabaseClient.storage.from('avatars').getPublicUrl(fileName);
-                avatarUrl = `${data.publicUrl}?v=${Date.now()}`; // Added Cache Buster
+                avatarUrl = `${data.publicUrl}?v=${Date.now()}`;
             }
         }
 
@@ -101,11 +112,15 @@ window.saveGhostProfile = async () => {
 
         if (error) throw error;
         
-        // REPLACED ALERT WITH CUSTOM MODAL
         showSuccessModal();
         
     } catch (err) {
-        alert("Sync Error: " + err.message);
+        // Use your ghostPrompt here if app.js is loaded, otherwise alert
+        if (typeof ghostPrompt === "function") {
+            ghostPrompt("Sync Error: " + err.message, "error");
+        } else {
+            alert("Sync Error: " + err.message);
+        }
     } finally {
         saveBtn.innerText = originalText;
         saveBtn.disabled = false;

@@ -186,12 +186,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     // --- 5. HUB SYNC & GHOST IDENTITY CHECK ---
-    // Only run this if we are NOT on the login page
     if (!document.body.classList.contains('login-page')) {
-        const syncHub = async () => {
+        // We use a self-invoking function so it doesn't block your splash screen
+        (async () => {
             try {
                 const { data: { user } } = await supabaseClient.auth.getUser();
-                
                 if (!user) { 
                     window.location.replace('index.html'); 
                     return; 
@@ -204,7 +203,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     .maybeSingle();
 
                 if (profile) {
-                    // Update Avatars
+                    // Update UI Elements (Avatars)
                     document.querySelectorAll('#user-avatar, .avatar-circle, .nav-avatar, .chat-avatar').forEach(el => {
                         if (profile.avatar_url) { 
                             el.style.backgroundImage = `url(${profile.avatar_url})`; 
@@ -212,27 +211,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     });
 
-                    // Update Names
+                    // Update UI Elements (Usernames)
                     document.querySelectorAll('#display-username, .ghost-alias-text, .chat-user-name').forEach(el => {
                         if (profile.username) el.innerText = profile.username;
                     });
 
-                    // IDENTITY GATEKEEPER
-                    const isNewGhost = !profile.username || profile.username === "" || profile.username.includes("New Ghost");
-                    
-                    if (isNewGhost) {
-                        ghostPrompt("First Vibe: Setting up your Ghost Identity...", "success");
-                        setTimeout(() => { window.location.href = 'profile.html'; }, 2000);
+                    // 🚨 THE IDENTITY GATEKEEPER
+                    // If they have no username, send them to the profile page
+                    if (!profile.username || profile.username === "" || profile.username.includes("New Ghost")) {
+                        console.log("👻 New Ghost detected. Moving to Identity setup...");
+                        
+                        // We wait 3 seconds so they can actually see the Hub before the redirect
+                        setTimeout(() => {
+                            ghostPrompt("Vibe Check: Let's set up your Ghost Identity.", "success");
+                            setTimeout(() => {
+                                window.location.href = 'profile.html';
+                            }, 2000);
+                        }, 1000);
                     }
                 }
             } catch (err) {
-                console.error("Hub Sync Error:", err);
+                console.error("Sync Error:", err);
             }
-        };
-
-        syncHub(); // Run it in the background so the splash screen can finish
+        })();
     }
-    
+
     // --- 6. GHOST CLOCK ---
     const timeEl = document.getElementById('time');
     if (timeEl) {
@@ -240,6 +243,5 @@ document.addEventListener('DOMContentLoaded', async () => {
             const now = new Date();
             timeEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }, 1000);
-    }
-    
-    
+                    }
+            

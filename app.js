@@ -83,10 +83,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const { data: profile } = await supabaseClient.from('profiles').select('is_approved').eq('id', data.user.id).single();
+            
             if (profile && profile.is_approved) {
                 window.location.href = 'hub.html';
             } else {
-                // Not approved: Send code and show pop-up
+                // 🚨 SURGERY: Force logout so they can't sneak into the Hub
+                await supabaseClient.auth.signOut();
+                
                 fetch('/api/send-code', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -96,7 +99,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
-
+    
     // --- 4. SIGNUP ACTION (TRIGGERS EMAIL) ---
     if (signupButton) {
         signupButton.onclick = async () => {
@@ -107,6 +110,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (error) {
                 alert("Signup Error: " + error.message);
             } else {
+                // 🚨 SURGERY: Force logout immediately after account creation
+                await supabaseClient.auth.signOut();
+
                 // Trigger the email engine
                 await fetch('/api/send-code', {
                     method: 'POST',
@@ -117,7 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         };
     }
-
+    
     // --- 5. HUB SYNC & CLOCK (UNCHANGED) ---
     if (!document.body.classList.contains('login-page')) {
         const { data: { user } } = await supabaseClient.auth.getUser();

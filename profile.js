@@ -1,4 +1,4 @@
-Document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return;
 
@@ -53,9 +53,14 @@ const showSuccessModal = () => {
 window.closeSuccessModal = () => {
     const modal = document.getElementById('success-modal');
     if(modal) modal.remove();
-    window.location.href = 'settings.html'; 
+    
+    // BACK PROTOCOL: Go to hub if we just set up, otherwise settings
+    if (document.referrer.includes('settings.html')) {
+        window.location.href = 'settings.html';
+    } else {
+        window.location.href = 'hub.html';
+    }
 };
-
 // 3. THE BIG SAVE FUNCTION
 window.saveGhostProfile = async () => {
     const { data: { user } } = await supabaseClient.auth.getUser();

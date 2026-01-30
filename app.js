@@ -1,3 +1,17 @@
+// --- FORCE KILL SPLASH ---
+// This runs instantly, before anything else.
+(function() {
+    const killSplash = () => {
+        const splash = document.querySelector('.splash-screen') || document.getElementById('splash');
+        if (splash) {
+            splash.style.display = 'none'; 
+            console.log("👻 Splash Force-Killed");
+        }
+    };
+    // If it's still there after 3 seconds, kill it no matter what.
+    setTimeout(killSplash, 3000);
+})();
+
 Const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -185,29 +199,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
     
-    // --- 5. HUB SYNC & CLOCK ---
+    // --- 5. HUB SYNC (Silent Mode) ---
     if (!document.body.classList.contains('login-page')) {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        if (!user) { window.location.replace('index.html'); return; }
-        // Fetching profile data for the hub
-        const { data: profile } = await supabaseClient.from('profiles').select('avatar_url, username, city').eq('id', user.id).maybeSingle();
-        if (profile) {
-            document.querySelectorAll('#user-avatar, .avatar-circle, .nav-avatar, .chat-avatar').forEach(el => {
-                if (profile.avatar_url) { el.style.backgroundImage = `url(${profile.avatar_url})`; el.style.backgroundSize = 'cover'; }
-            });
-            document.querySelectorAll('#display-username, .ghost-alias-text, .chat-user-name').forEach(el => {
-                if (profile.username) el.innerText = profile.username;
-            });
-        }
-    }
+        const runSync = async () => {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            
+            // If no session, don't throw an error, just go to login
+            if (!session) {
+                window.location.href = 'index.html';
+                return;
+            }
 
-    const timeEl = document.getElementById('time');
-    if (timeEl) {
-        setInterval(() => {
-            const now = new Date();
-            timeEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }, 1000);
-    }
-});
-        
-//--here
+            const { data: profile, error } = await supabaseClient
+                .from('profiles')
+                .select('username, avatar_url')
+                .eq('id', session.user.id)
+                .maybeSingle();
+
+            if (profile) {
+                // Update UI
+                document.querySelectorAll('.avatar-circle, #user-avatar').forEach(el => {
+                    if (profile.avatar_url) el.style.backgroundImage = `url(${profile.avatar_url})`;
+                });
+                
+                // Identity Gatekeeper
+                if (!profile.username || profile.username === "") {
+                    // Only redirect if we aren't ALREADY on the profile page
+                    if (!window.location.href.includes('profile.html')) {
+                        window.location.href = 'profile.html';
+                    }
+                }
+            }
+        };
+        runSync();
+                }
+                

@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (profile.avatar_url) el.style.backgroundImage = `url(${profile.avatar_url})`;
                 });
                 
-                // Identity Gatekeeper
+                                // Identity Gatekeeper
                 if (!profile.username || profile.username === "") {
                     // Only redirect if we aren't ALREADY on the profile page
                     if (!window.location.href.includes('profile.html')) {
@@ -232,5 +232,5 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         };
         runSync();
-                }
-                
+    } // This closes the !login-page check
+}); // This closes the DOMContentLoaded listener 🚨 (MISSING IN YOURS)

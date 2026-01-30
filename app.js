@@ -1,18 +1,18 @@
 // --- FORCE KILL SPLASH ---
-// This runs instantly, before anything else.
 (function() {
     const killSplash = () => {
-        const splash = document.querySelector('.splash-screen') || document.getElementById('splash');
+        const splash = document.getElementById('splash-screen');
         if (splash) {
-            splash.style.display = 'none'; 
+            splash.style.opacity = '0';
+            setTimeout(() => splash.remove(), 1000);
             console.log("👻 Splash Force-Killed");
         }
     };
-    // If it's still there after 3 seconds, kill it no matter what.
+    // Kill it after 3 seconds if index.html's script fails
     setTimeout(killSplash, 3000);
 })();
 
-Const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
+const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 

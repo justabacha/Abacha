@@ -64,56 +64,76 @@ window.closeSuccessModal = () => {
 // 3. THE BIG SAVE FUNCTION
 window.saveGhostProfile = async () => {
     const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
+
     const avatarFile = document.getElementById('avatar-input').files[0];
     let avatarUrl = null;
 
     const saveBtn = document.querySelector('.lock-identity-btn');
-    const originalText = saveBtn.innerText;
     saveBtn.innerText = "Syncing...";
     saveBtn.disabled = true;
 
     try {
-        // --- AUTO-DELETE OLD AVATAR LOGIC ---
+        // --- 1. AUTO-DELETE OLD AVATAR ---
         if (avatarFile) {
-            const { data: oldProfile } = await supabaseClient.from('profiles').select('avatar_url').eq('id', user.id).single();
+            // Fetch current profile to find the old image path
+            const { data: oldProfile } = await supabaseClient
+                .from('profiles')
+                .select('avatar_url')
+                .eq('id', user.id)
+                .single();
+
             if (oldProfile?.avatar_url) {
-                const oldFileName = oldProfile.avatar_url.split('/').pop().split('?')[0]; // Clean URL
-                await supabaseClient.storage.from('avatars').remove([`${user.id}/${oldFileName}`]);
+                try {
+                    // Extract filename from URL (e.g., "12345/image.png")
+                    const urlParts = oldProfile.avatar_url.split('/avatars/');
+                    if (urlParts.length > 1) {
+                        const filePath = urlParts[1].split('?')[0]; // Remove cache buster ?v=...
+                        await supabaseClient.storage.from('avatars').remove([filePath]);
+                        console.log("🗑️ Old Ghost Identity purged.");
+                    }
+                } catch (purgeError) {
+                    console.error("Purge failed (might be first upload):", purgeError);
+                }
             }
 
+            // --- 2. UPLOAD NEW AVATAR ---
             const fileExt = avatarFile.name.split('.').pop();
-            const fileName = `${user.id}/${Date.now()}.${fileExt}`; // Added folder path
-            const { error: uploadError } = await supabaseClient.storage.from('avatars').upload(fileName, avatarFile);
+            const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+            const { error: uploadError } = await supabaseClient.storage
+                .from('avatars')
+                .upload(fileName, avatarFile);
 
-            if (!uploadError) {
-                const { data } = supabaseClient.storage.from('avatars').getPublicUrl(fileName);
-                avatarUrl = `${data.publicUrl}?v=${Date.now()}`; // Added Cache Buster
-            }
+            if (uploadError) throw uploadError;
+
+            const { data } = supabaseClient.storage.from('avatars').getPublicUrl(fileName);
+            avatarUrl = `${data.publicUrl}?v=${Date.now()}`;
         }
 
+        // --- 3. DATABASE UPDATE ---
         const updates = {
-            username: document.getElementById('username-input').value,
-            bio: document.getElementById('status-input').value,
-            favourite_user: document.getElementById('fav-input').value,
+            username: document.getElementById('username-input').value.trim(),
+            bio: document.getElementById('status-input').value.trim(),
+            favourite_user: document.getElementById('fav-input').value.trim(),
             city: document.getElementById('city-input').value,
-            phone: document.getElementById('phone-input').value,
+            phone: document.getElementById('phone-input').value.trim(),
             updated_at: new Date()
         };
 
         if (avatarUrl) updates.avatar_url = avatarUrl;
 
         const { error } = await supabaseClient.from('profiles').update(updates).eq('id', user.id);
-
         if (error) throw error;
-        
-        // REPLACED ALERT WITH CUSTOM MODAL
+
+        // Force Hub/Settings refresh
+        localStorage.setItem('ghost_identity_updated', Date.now());
         showSuccessModal();
         
     } catch (err) {
         alert("Sync Error: " + err.message);
     } finally {
-        saveBtn.innerText = originalText;
+        saveBtn.innerText = "Update Identity 👌";
         saveBtn.disabled = false;
     }
 };
-        //here the profile js now let's start the process so we can set up the whole thing from login screen we start here,,what do i change and what so i replace it with
+        

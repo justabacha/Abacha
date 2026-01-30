@@ -59,26 +59,15 @@ tile.style = `
     setTimeout(() => { if(tile) tile.remove(); }, 6000);
 }
 
-            // ... (Supabase Init and Ghost Prompt Engine stay exactly the same)
-
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('👻 Ghost Engine: Online');
-
-    // 🚨 1. IMMEDIATELY HIDE SPLASH (Added this to the top)
-    const splash = document.querySelector('.splash-screen') || document.getElementById('splash');
-    if (splash) {
-        setTimeout(() => {
-            splash.style.opacity = '0';
-            setTimeout(() => splash.remove(), 500);
-        }, 800); // 0.8s vibe then vanish
-    }
 
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const loginButton = document.getElementById('login-btn');
     const signupButton = document.getElementById('signup-btn');
 
-    // --- 1. BUTTON COLOR & UNLOCK LOGIC --- (Keep your original code)
+    // --- 1. BUTTON COLOR & UNLOCK LOGIC ---
     if (passwordInput && loginButton && signupButton) {
         passwordInput.addEventListener('input', () => {
             if (passwordInput.value.length >= 6) {
@@ -105,57 +94,113 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // --- 2. GHOST LAYER VERIFICATION UI --- (Keep your original code)
-    // ... (Your showGhostVerify function)
+    // --- 2. GHOST LAYER VERIFICATION UI ---
+    window.showGhostVerify = (email) => {
+        const layer = document.createElement('div');
+        layer.id = "ghost-layer";
+        layer.style = "position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";
+        layer.innerHTML = `
+            <div style="background:#1c1c1e; padding:30px; border-radius:24px; width:85%; max-width:350px; text-align:center; border:1px solid #333;">
+                <div style="color:gray; font-size:12px; margin-bottom:10px; text-align:left;">|Just•Abacha😎|</div>
+                <h3 style="color:white; margin:0 0 10px;">Verify Ghost</h3>
+                <p style="color:gray; font-size:14px; margin-bottom:20px;">Enter the code sent to your email.</p>
+                <input id="otp-input" type="text" placeholder="JA-0000-ABA" style="width:100%; padding:12px; border-radius:10px; background:#2c2c2e; border:none; color:white; text-align:center; font-weight:bold; margin-bottom:20px; text-transform: uppercase;">
+                <div style="display:flex; gap:10px;">
+                    <button id="vibe-verify-btn" style="flex:1; padding:12px; border-radius:12px; background:#32D74B; border:none; color:white; font-weight:bold; cursor:pointer;">Vibe</button>
+                    <button onclick="document.getElementById('ghost-layer').remove()" style="flex:1; padding:12px; border-radius:12px; background:#007AFF; border:none; color:white; font-weight:bold; cursor:pointer;">No</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(layer);
 
-    // --- 3. LOGIN ACTION --- (Keep your original code)
-    // ... (Your loginButton.addEventListener)
+        document.getElementById('vibe-verify-btn').onclick = async () => {
+            const btn = document.getElementById('vibe-verify-btn');
+            btn.innerText = "Checking...";
+            const inputCode = document.getElementById('otp-input').value.trim();
+            
+            const { data, error } = await supabaseClient.from('profiles').select('otp_code').eq('email', email).maybeSingle();
 
-    // --- 4. SIGNUP ACTION --- (Keep your original code)
-    // ... (Your signupButton.onclick)
-    
-    // --- 5. HUB SYNC & IDENTITY GATEKEEPER --- (The Fixed Version)
-    if (!document.body.classList.contains('login-page')) {
-        try {
-            const { data: { user } } = await supabaseClient.auth.getUser();
-            if (!user) { 
-                window.location.replace('index.html'); 
-                return; 
-            }
+            if (data && data.otp_code === inputCode) {
+                const { error: updateErr } = await supabaseClient.from('profiles').update({ is_approved: true }).eq('email', email);
 
-            const { data: profile } = await supabaseClient
-                .from('profiles')
-                .select('avatar_url, username, city')
-                .eq('id', user.id)
-                .maybeSingle();
-
-            if (profile) {
-                // Sync UI elements (Your original querySelectors)
-                document.querySelectorAll('#user-avatar, .avatar-circle, .nav-avatar, .chat-avatar').forEach(el => {
-                    if (profile.avatar_url) { 
-                        el.style.backgroundImage = `url(${profile.avatar_url})`; 
-                        el.style.backgroundSize = 'cover'; 
-                    }
-                });
-                document.querySelectorAll('#display-username, .ghost-alias-text, .chat-user-name').forEach(el => {
-                    if (profile.username) el.innerText = profile.username;
-                });
-
-                // 🚨 NEW IDENTITY CHECK
-                // If they haven't set a username, send them to the profile page
-                if (!profile.username || profile.username === "" || profile.username === "New Ghost") {
-                    ghostPrompt("Identity Sync Required...", "success");
-                    setTimeout(() => {
-                        window.location.href = 'profile.html';
-                    }, 1500);
+                if (updateErr) {
+                    ghostPrompt("System Error: " + updateErr.message, "error"); // 🎯 Fixed!
+                } else {
+                    ghostPrompt("Verified! Access granted to the Hub.", "success");
+                    setTimeout(() => location.reload(), 1500); 
                 }
+            } else {
+                btn.innerText = "Vibe";
+                ghostPrompt("Ghost Denied: Code mismatch. Check your DM 👿", "error");
             }
-        } catch (err) {
-            console.error("Engine Sync Failure:", err);
+        };
+    };
+
+    // --- 3. LOGIN ACTION ---
+    if (loginButton) {
+        loginButton.addEventListener('click', async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            
+            if (error) {
+                ghostPrompt("Access Denied: " + error.message, "error");
+                return;
+            }
+
+            const { data: profile } = await supabaseClient.from('profiles').select('is_approved').eq('id', data.user.id).single();
+
+            if (profile && profile.is_approved) {
+                window.location.href = 'hub.html';
+            } else {
+                await supabaseClient.auth.signOut();
+                fetch('/api/send-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                showGhostVerify(email);
+            }
+        });
+    }
+
+    // --- 4. SIGNUP ACTION ---
+    if (signupButton) {
+        signupButton.onclick = async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            const { data, error } = await supabaseClient.auth.signUp({ email, password });
+            
+            if (error) {
+                ghostPrompt("Signup Error: " + error.message, "error");
+            } else {
+                await supabaseClient.auth.signOut();
+                await fetch('/api/send-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                showGhostVerify(email);
+            }
+        };
+    }
+    
+    // --- 5. HUB SYNC & CLOCK ---
+    if (!document.body.classList.contains('login-page')) {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!user) { window.location.replace('index.html'); return; }
+        // Fetching profile data for the hub
+        const { data: profile } = await supabaseClient.from('profiles').select('avatar_url, username, city').eq('id', user.id).maybeSingle();
+        if (profile) {
+            document.querySelectorAll('#user-avatar, .avatar-circle, .nav-avatar, .chat-avatar').forEach(el => {
+                if (profile.avatar_url) { el.style.backgroundImage = `url(${profile.avatar_url})`; el.style.backgroundSize = 'cover'; }
+            });
+            document.querySelectorAll('#display-username, .ghost-alias-text, .chat-user-name').forEach(el => {
+                if (profile.username) el.innerText = profile.username;
+            });
         }
     }
 
-    // --- 6. CLOCK --- (Keep your original code)
     const timeEl = document.getElementById('time');
     if (timeEl) {
         setInterval(() => {
@@ -164,3 +209,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 1000);
     }
 });
+        
+//--here

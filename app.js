@@ -234,3 +234,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         runSync();
     }
 }); // End of DOMContentLoaded
+// --- HUB AUTO-REFRESH PROTOCOL ---
+// This listens for when you come back to the Hub/Settings after an identity update
+window.onfocus = function() {
+    if (localStorage.getItem('ghost_identity_updated')) {
+        console.log("🔄 Ghost Identity change detected. Refreshing Vibe...");
+        localStorage.removeItem('ghost_identity_updated');
+        location.reload(); 
+    }
+};
+
+// --- GHOST CLOCK (Optional but keeps the Hub alive) ---
+const timeEl = document.getElementById('time');
+if (timeEl) {
+    setInterval(() => {
+        const now = new Date();
+        timeEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }, 1000);
+}
+

@@ -8,7 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <script>
-    // 1. INSTANT GHOST CHECK (Starts immediately in the head)
+    // 1. INSTANT GHOST CHECK (Starts in the head for that "Gasp" effect)
     const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
     const SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -17,27 +17,29 @@
     window.finalTarget = null;
 
     (async function() {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) {
-            const { data: profile } = await supabaseClient
-                .from('profiles')
-                .select('is_approved')
-                .eq('id', session.user.id)
-                .single();
+        try {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                const { data: profile } = await supabaseClient
+                    .from('profiles')
+                    .select('is_approved, username')
+                    .eq('id', session.user.id)
+                    .single();
 
-            if (profile && profile.is_approved) {
-                window.finalTarget = 'hub.html';
-            } else {
-                await supabaseClient.auth.signOut();
+                if (profile && profile.is_approved) {
+                    window.finalTarget = profile.username ? 'hub.html' : 'profile.html';
+                } else {
+                    await supabaseClient.auth.signOut();
+                }
             }
-        }
+        } catch (e) { console.error("Ghost Check Error", e); }
         window.isDatabaseReady = true;
-        // If the loader is already at 100%, trigger now
         if (window.isLoaderFinished) proceed();
     })();
   </script>
 
   <style>
+    /* SPLASH STYLES */
     .ghost-row { display: flex; gap: 15px; font-size: 3rem; margin-top: 30px; justify-content: center; }
     .ghost-emoji { animation: ghostPulse 1.8s infinite ease-in-out; }
     .new-ghost { opacity: 0; animation: ghostEnter 0.5s forwards ease-out, ghostPulse 1.8s infinite ease-in-out; }
@@ -46,22 +48,65 @@
     
     .loader-container { width: 280px; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 20px; margin-top: 40px; overflow: hidden; }
     #loader-fill { width: 0%; height: 100%; background: #32D74B; box-shadow: 0 0 20px #32D74B; transition: width 7s linear; }
+
+    /* LOGIN UI STYLES (RESTORED) */
+    #login-container {
+        opacity: 0;
+        transition: opacity 1s ease;
+        display: none; /* Hidden until loader ends */
+        text-align: center;
+        padding-top: 100px;
+    }
+    .login-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+    input {
+        padding: 15px;
+        width: 280px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.05);
+        color: white;
+        outline: none;
+    }
+    button {
+        padding: 12px 30px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        background: #444; /* Default dark */
+        color: white;
+    }
+    /* app.js will handle the 'active' class for colors */
+    button.active {
+        background: #32D74B;
+        box-shadow: 0 0 15px #32D74B;
+    }
   </style>
 </head>
 
 <body class="login-page">
-  <div id="splash-screen" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; transition: opacity 0.8s ease;">
+  <div id="splash-screen" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif; transition: opacity 0.8s ease;">
     <h1 style="font-size: 3.5rem; font-weight: 900;">Just•Abacha😎</h1>
     <div class="ghost-row" id="ghost-row"><span class="ghost-emoji">👻</span></div>
     <div class="loader-container"><div id="loader-fill"></div></div>
   </div>
 
-  <div id="login-container" style="opacity:0; transition: opacity 1s ease; display:none;">
-    <div style="text-align:center; padding-top:100px;">
-      <input id="email" type="email" placeholder="Email" style="..." />
-      <input id="password" type="password" placeholder="Password" style="..." />
-      <button id="login-btn">Login</button>
-      <button id="signup-btn">Sign up</button>
+  <div id="login-container">
+    <div style="position:absolute; top:20px; left:20px; font-weight:900; color:white;">|Just•Abacha😎|</div>
+    
+    <div class="login-box">
+      <input id="email" type="email" placeholder="Email" />
+      <input id="password" type="password" placeholder="Password" />
+      <div style="margin-top:20px; display: flex; gap: 10px;">
+        <button id="login-btn">Login</button>
+        <button id="signup-btn">Sign up</button>
+      </div>
     </div>
   </div>
 
@@ -71,23 +116,21 @@
     const loaderFill = document.getElementById('loader-fill');
     window.isLoaderFinished = false;
 
-    // Start the 7-second crawl immediately
-    setTimeout(() => {
-        loaderFill.style.width = "100%";
-    }, 100);
+    // Start 7-second crawl
+    setTimeout(() => { loaderFill.style.width = "100%"; }, 100);
 
     // Listen for the PHYSICAL end of the bar
     loaderFill.addEventListener('transitionend', () => {
-        window.isLoaderFinished = true;
-        if (window.isDatabaseReady) proceed();
+        if (loaderFill.style.width === "100%") {
+            window.isLoaderFinished = true;
+            if (window.isDatabaseReady) proceed();
+        }
     });
 
     function proceed() {
         if (window.finalTarget) {
-            // MAGIC: Verified user goes straight to Hub
             window.location.replace(window.finalTarget);
         } else {
-            // Show login UI only for unverified/new users
             showLoginUI();
         }
     }
@@ -97,13 +140,13 @@
         const login = document.getElementById('login-container');
         if (splash) splash.style.opacity = '0';
         setTimeout(() => {
-            splash.remove();
+            if (splash) splash.remove();
             login.style.display = 'block';
             setTimeout(() => { login.style.opacity = '1'; }, 50);
         }, 800);
     }
 
-    // Ghost Rhythm logic
+    // Ghost Rhythm (Tap-Tap)
     let ghostCount = 1;
     const ghostInterval = setInterval(() => {
         if (ghostCount < 5) {

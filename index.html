@@ -7,45 +7,18 @@
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#000000" />
   <link rel="stylesheet" href="style.css" />
-  
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <script>
-    // SPEED CHECK: Redirect logged-in users before the page even loads
-    const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    (async function() {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) {
-            const { data: profile } = await supabaseClient
-                .from('profiles')
-                .select('is_approved, username')
-                .eq('id', session.user.id)
-                .single();
-
-            if (profile && profile.is_approved) {
-                if (!profile.username) {
-                    window.location.replace('profile.html');
-                } else {
-                    window.location.replace('hub.html');
-                }
-            }
-        }
-    })();
-  </script>
 </head>
 
 <body class="login-page">
-  <div id="splash-screen" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif; transition: opacity 0.8s ease;">
+  <div id="splash-screen" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif;">
     <h1 style="font-size: 3rem; font-weight: 900;">Just•Abacha😎</h1>
     <div style="font-size: 1.5rem; margin-top: 20px;">
       <span>👻</span> <span id="ghost-counter">0</span>
     </div>
   </div>
 
-  <div id="login-container" style="opacity:0; transition: opacity 1s ease; display:none;">
+  <div id="login-container" style="opacity:0; transition: opacity 1s ease;">
     <div style="position:absolute; top:20px; left:20px; font-weight:900; color:white;">|Just•Abacha😎|</div>
     
     <div style="text-align:center; padding-top:100px;">
@@ -59,8 +32,9 @@
   </div>
 
   <script src="app.js" defer></script>
-  
+
   <script>
+    // 1. YOUR EXACT GHOST COUNTER
     let count = 0;
     const counterEl = document.getElementById('ghost-counter');
     const ghostInterval = setInterval(() => {
@@ -68,27 +42,46 @@
         if(counterEl) counterEl.innerText = count;
     }, 800);
 
-    // REVEAL LOGIC
-    setTimeout(() => {
-        showLoginUI();
-    }, 1500); 
+    // 2. YOUR EXACT NESTED TIMEOUT STRUCTURE
+    setTimeout(async () => {
+        // Re-initializing the client inside the script to ensure it's ready
+        const supabaseClient = window.supabase.createClient('https://zvkretqhqmxuhgspddpu.supabase.co', 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY');
 
-    function showLoginUI() {
-        clearInterval(ghostInterval);
-        const splash = document.getElementById('splash-screen');
-        const loginBox = document.getElementById('login-container');
-        
-        if (splash) splash.style.opacity = '0';
-        
-        setTimeout(() => {
-            if (splash) splash.remove();
-            if (loginBox) {
-                loginBox.style.display = 'block'; // 🚨 RE-ACTIVATED
-                // Small delay to trigger the opacity transition smoothly
-                setTimeout(() => { loginBox.style.opacity = '1'; }, 50);
+        setTimeout(async () => {
+            // Check session
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            
+            if (session) {
+                // Check approval
+                const { data: profile } = await supabaseClient
+                    .from('profiles')
+                    .select('is_approved')
+                    .eq('id', session.user.id)
+                    .single();
+
+                if (profile && profile.is_approved) {
+                    window.location.replace('hub.html');
+                } else {
+                    // Not approved? Sign out and show login
+                    await supabaseClient.auth.signOut();
+                    showLoginUI();
+                }
+            } else {
+                showLoginUI();
             }
-        }, 800);
-    }
+        }, 5000); // YOUR 5 SECONDS
+
+        function showLoginUI() {
+            clearInterval(ghostInterval);
+            const splash = document.getElementById('splash-screen');
+            if (splash) splash.style.opacity = '0';
+            setTimeout(() => {
+                if (splash) splash.remove();
+                const container = document.getElementById('login-container');
+                if (container) container.style.opacity = '1';
+            }, 1000);
+        }
+    }, 2000); // YOUR 2 SECONDS
   </script>
 </body>
 </html>

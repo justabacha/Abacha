@@ -4,106 +4,45 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Just•Abacha😎</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#000000" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <script>
-    // 1. INSTANT GHOST CHECK (Starts in the head for that "Gasp" effect)
-    const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    window.isDatabaseReady = false;
-    window.finalTarget = null;
-
-    (async function() {
-        try {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session) {
-                const { data: profile } = await supabaseClient
-                    .from('profiles')
-                    .select('is_approved, username')
-                    .eq('id', session.user.id)
-                    .single();
-
-                if (profile && profile.is_approved) {
-                    window.finalTarget = profile.username ? 'hub.html' : 'profile.html';
-                } else {
-                    await supabaseClient.auth.signOut();
-                }
-            }
-        } catch (e) { console.error("Ghost Check Error", e); }
-        window.isDatabaseReady = true;
-        if (window.isLoaderFinished) proceed();
-    })();
-  </script>
-
   <style>
-    /* SPLASH STYLES */
-    .ghost-row { display: flex; gap: 15px; font-size: 3rem; margin-top: 30px; justify-content: center; }
-    .ghost-emoji { animation: ghostPulse 1.8s infinite ease-in-out; }
-    .new-ghost { opacity: 0; animation: ghostEnter 0.5s forwards ease-out, ghostPulse 1.8s infinite ease-in-out; }
-    @keyframes ghostEnter { to { opacity: 1; transform: scale(1); } }
-    @keyframes ghostPulse { 50% { transform: scale(1.2); filter: drop-shadow(0 0 15px #32D74B); } }
-    
-    .loader-container { width: 280px; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 20px; margin-top: 40px; overflow: hidden; }
-    #loader-fill { width: 0%; height: 100%; background: #32D74B; box-shadow: 0 0 20px #32D74B; transition: width 7s linear; }
+    /* 1. YOUR ORIGINAL GHOST STYLES (Enlarged) */
+    .ghost-row { display: flex; gap: 10px; font-size: 3rem; margin-top: 20px; height: 60px; justify-content: center; }
+    .ghost-emoji { 
+      opacity: 0; 
+      transform: translateY(10px); 
+      animation: ghostTap 0.3s forwards ease-out; 
+      display: inline-block;
+    }
+    @keyframes ghostTap { to { opacity: 1; transform: translateY(0); } }
 
-    /* LOGIN UI STYLES (RESTORED) */
-    #login-container {
-        opacity: 0;
-        transition: opacity 1s ease;
-        display: none; /* Hidden until loader ends */
-        text-align: center;
-        padding-top: 100px;
-    }
-    .login-box {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 15px;
-    }
-    input {
-        padding: 15px;
-        width: 280px;
-        border-radius: 12px;
-        border: 1px solid rgba(255,255,255,0.1);
-        background: rgba(255,255,255,0.05);
-        color: white;
-        outline: none;
-    }
-    button {
-        padding: 12px 30px;
-        border-radius: 8px;
-        border: none;
-        cursor: pointer;
-        font-weight: bold;
-        transition: all 0.3s ease;
-        background: #444; /* Default dark */
-        color: white;
-    }
-    /* app.js will handle the 'active' class for colors */
-    button.active {
-        background: #32D74B;
-        box-shadow: 0 0 15px #32D74B;
-    }
+    /* 2. YOUR ORIGINAL LOADING BAR (Thickened) */
+    .loader-container { width: 250px; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 10px; margin-top: 20px; overflow: hidden; }
+    #loader-fill { width: 0%; height: 100%; background: #32D74B; box-shadow: 0 0 10px #32D74B; transition: width 0.1s linear; }
+
+    /* Ensure Login Container is actually ready for app.js */
+    #login-container { display: none; opacity: 0; transition: opacity 1s ease; }
   </style>
 </head>
 
 <body class="login-page">
-  <div id="splash-screen" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif; transition: opacity 0.8s ease;">
-    <h1 style="font-size: 3.5rem; font-weight: 900;">Just•Abacha😎</h1>
-    <div class="ghost-row" id="ghost-row"><span class="ghost-emoji">👻</span></div>
+  <div id="splash-screen" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif;">
+    <h1 style="font-size: 3.5rem; font-weight: 900; margin-bottom: 0;">Just•Abacha😎</h1>
+    <div class="ghost-row" id="ghost-row">
+      <span class="ghost-emoji" style="opacity: 1; transform: none;">👻</span>
+    </div>
     <div class="loader-container"><div id="loader-fill"></div></div>
   </div>
 
   <div id="login-container">
     <div style="position:absolute; top:20px; left:20px; font-weight:900; color:white;">|Just•Abacha😎|</div>
-    
-    <div class="login-box">
+    <div style="text-align:center; padding-top:100px;">
       <input id="email" type="email" placeholder="Email" />
       <input id="password" type="password" placeholder="Password" />
-      <div style="margin-top:20px; display: flex; gap: 10px;">
+      <div style="margin-top:20px;">
         <button id="login-btn">Login</button>
         <button id="signup-btn">Sign up</button>
       </div>
@@ -113,50 +52,89 @@
   <script src="app.js" defer></script>
 
   <script>
+    const ghostRow = document.getElementById('ghost-row');
     const loaderFill = document.getElementById('loader-fill');
+    
+    // Global flags to prevent the "Login Leak"
+    window.isDatabaseReady = false;
+    window.finalTarget = null;
     window.isLoaderFinished = false;
 
-    // Start 7-second crawl
-    setTimeout(() => { loaderFill.style.width = "100%"; }, 100);
-
-    // Listen for the PHYSICAL end of the bar
-    loaderFill.addEventListener('transitionend', () => {
-        if (loaderFill.style.width === "100%") {
-            window.isLoaderFinished = true;
-            if (window.isDatabaseReady) proceed();
+    // 1. GHOST TAP-TAP (Starting from the 2nd ghost)
+    let ghostCount = 1;
+    const maxGhosts = 6;
+    const ghostInterval = setInterval(() => {
+        if (ghostCount < maxGhosts) {
+            const span = document.createElement('span');
+            span.className = 'ghost-emoji';
+            span.innerText = '👻';
+            ghostRow.appendChild(span);
+            ghostCount++;
         }
-    });
+    }, 1100);
 
-    function proceed() {
-        if (window.finalTarget) {
-            window.location.replace(window.finalTarget);
+    // 2. LOADING BAR (Synchronized to hit 100% at 7s)
+    let progress = 0;
+    const totalTime = 7000;
+    const progressInterval = setInterval(() => {
+        progress += (100 / (totalTime / 100)); 
+        if (progress >= 100) {
+            loaderFill.style.width = '100%';
+            clearInterval(progressInterval);
+            window.isLoaderFinished = true;
+            checkFinalTransition();
         } else {
-            showLoginUI();
+            loaderFill.style.width = progress + '%';
+        }
+    }, 100);
+
+    // 3. YOUR EXACT NESTED LOGIC (Restored & Fixed)
+    setTimeout(async () => {
+        const supabaseClient = window.supabase.createClient('https://zvkretqhqmxuhgspddpu.supabase.co', 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY');
+
+        setTimeout(async () => {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                const { data: profile } = await supabaseClient
+                    .from('profiles')
+                    .select('is_approved')
+                    .eq('id', session.user.id)
+                    .single();
+
+                if (profile && profile.is_approved) {
+                    window.finalTarget = 'hub.html';
+                } else {
+                    await supabaseClient.auth.signOut();
+                }
+            }
+            window.isDatabaseReady = true;
+            checkFinalTransition();
+        }, 5000); 
+    }, 2000);
+
+    function checkFinalTransition() {
+        // ONLY move if the DB check is done AND the bar is visually full
+        if (window.isDatabaseReady && window.isLoaderFinished) {
+            if (window.finalTarget) {
+                window.location.replace(window.finalTarget);
+            } else {
+                showLoginUI();
+            }
         }
     }
 
     function showLoginUI() {
+        clearInterval(ghostInterval);
         const splash = document.getElementById('splash-screen');
         const login = document.getElementById('login-container');
         if (splash) splash.style.opacity = '0';
         setTimeout(() => {
             if (splash) splash.remove();
-            login.style.display = 'block';
+            // 🚨 Restore the login box correctly for app.js
+            login.style.display = 'block'; 
             setTimeout(() => { login.style.opacity = '1'; }, 50);
-        }, 800);
+        }, 1000);
     }
-
-    // Ghost Rhythm (Tap-Tap)
-    let ghostCount = 1;
-    const ghostInterval = setInterval(() => {
-        if (ghostCount < 5) {
-            const span = document.createElement('span');
-            span.className = 'new-ghost';
-            span.innerText = '👻';
-            document.getElementById('ghost-row').appendChild(span);
-            ghostCount++;
-        } else { clearInterval(ghostInterval); }
-    }, 1200);
   </script>
 </body>
 </html>

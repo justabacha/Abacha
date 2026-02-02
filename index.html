@@ -9,45 +9,51 @@
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* The Ghost Row Animation */
+    /* 1. SMOOTH GHOST FADE-IN */
     .ghost-row {
       display: flex;
-      gap: 10px;
-      font-size: 2rem;
-      margin-top: 20px;
-      height: 40px;
+      gap: 12px;
+      font-size: 2.2rem;
+      margin-top: 25px;
+      height: 50px;
     }
     .ghost-emoji {
       opacity: 0;
-      transform: translateY(10px);
-      animation: ghostTap 0.3s forwards ease-out;
+      filter: blur(5px);
+      transform: scale(0.8);
+      animation: ghostFadeIn 0.6s forwards ease-out;
     }
-    @keyframes ghostTap {
-      to { opacity: 1; transform: translateY(0); }
+    @keyframes ghostFadeIn {
+      to { 
+        opacity: 1; 
+        filter: blur(0);
+        transform: scale(1);
+      }
     }
 
-    /* The Tiny Loading Bar */
+    /* 2. PRECISION LOADING BAR */
     .loader-container {
-      width: 200px;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      margin-top: 20px;
+      width: 220px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      margin-top: 30px;
       overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.05);
     }
     #loader-fill {
       width: 0%;
       height: 100%;
-      background: #32D74B; /* Ghost Green */
-      box-shadow: 0 0 10px #32D74B;
-      transition: width 0.1s linear;
+      background: #32D74B; 
+      box-shadow: 0 0 15px rgba(50, 215, 75, 0.6);
+      transition: width 0.1s linear; /* Keeps the movement fluid */
     }
   </style>
 </head>
 
 <body class="login-page">
-  <div id="splash-screen" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif;">
-    <h1 style="font-size: 3rem; font-weight: 900; margin-bottom: 0;">Just•Abacha😎</h1>
+  <div id="splash-screen" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif; transition: opacity 1s ease;">
+    <h1 style="font-size: 2.5rem; font-weight: 900; letter-spacing: -1px; margin-bottom: 0;">Just•Abacha😎</h1>
     
     <div class="ghost-row" id="ghost-row"></div>
 
@@ -56,13 +62,13 @@
     </div>
   </div>
 
-  <div id="login-container" style="opacity:0; transition: opacity 1s ease;">
-    <div style="position:absolute; top:20px; left:20px; font-weight:900; color:white;">|Just•Abacha😎|</div>
+  <div id="login-container" style="opacity:0; transition: opacity 1.2s ease;">
+    <div style="position:absolute; top:20px; left:20px; font-weight:900; color:white; opacity:0.5;">|Just•Abacha😎|</div>
     
     <div style="text-align:center; padding-top:100px;">
-      <input id="email" type="email" placeholder="Email" />
-      <input id="password" type="password" placeholder="Password" />
-      <div style="margin-top:20px;">
+      <input id="email" type="email" placeholder="Email" style="display:block; margin: 10px auto; padding:15px; width:250px; border-radius:12px; border:none; background:rgba(255,255,255,0.1); color:white;" />
+      <input id="password" type="password" placeholder="Password" style="display:block; margin: 10px auto; padding:15px; width:250px; border-radius:12px; border:none; background:rgba(255,255,255,0.1); color:white;" />
+      <div style="margin-top:25px;">
         <button id="login-btn">Login</button>
         <button id="signup-btn">Sign up</button>
       </div>
@@ -72,13 +78,15 @@
   <script src="app.js" defer></script>
 
   <script>
-    // 1. GHOST TAP-TAP LOGIC
     const ghostRow = document.getElementById('ghost-row');
     const loaderFill = document.getElementById('loader-fill');
+    
+    // 1. ANIMATION STATE
     let ghostCount = 0;
-    const maxGhosts = 7; // One for each second roughly
-
-    // Add a ghost every 900ms
+    const maxGhosts = 5; 
+    const totalTime = 7000; // Your 2s + 5s flow
+    
+    // 2. GHOST TAP-TAP (Fades in over time)
     const ghostInterval = setInterval(() => {
         if (ghostCount < maxGhosts) {
             const span = document.createElement('span');
@@ -87,54 +95,60 @@
             ghostRow.appendChild(span);
             ghostCount++;
         }
-    }, 900);
+    }, 1200);
 
-    // 2. LOADING BAR PROGRESS (7 Seconds Total)
-    let progress = 0;
-    const totalTime = 7000; // 2s + 5s from your nested timeouts
-    const progressInterval = setInterval(() => {
-        progress += (100 / (totalTime / 100)); 
-        if (progress <= 100) {
-            loaderFill.style.width = progress + '%';
-        } else {
-            clearInterval(progressInterval);
+    // 3. SMOOTH LOADER (Fills precisely to 100% at 7 seconds)
+    let startTime = Date.now();
+    const updateLoader = () => {
+        let elapsed = Date.now() - startTime;
+        let percentage = Math.min((elapsed / totalTime) * 100, 100);
+        loaderFill.style.width = percentage + '%';
+
+        if (percentage < 100) {
+            requestAnimationFrame(updateLoader);
         }
-    }, 100);
+    };
+    requestAnimationFrame(updateLoader);
 
-    // 3. YOUR NESTED TIMEOUTS (RESTORED LINE-FOR-LINE)
+    // 4. THE NESTED PROTOCOL (RESTORED)
     setTimeout(async () => {
         const supabaseClient = window.supabase.createClient('https://zvkretqhqmxuhgspddpu.supabase.co', 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY');
 
         setTimeout(async () => {
             const { data: { session } } = await supabaseClient.auth.getSession();
             
-            if (session) {
-                const { data: profile } = await supabaseClient
-                    .from('profiles')
-                    .select('is_approved')
-                    .eq('id', session.user.id)
-                    .single();
+            // Wait for loader to finish visually (adds a tiny 200ms buffer for vibe)
+            setTimeout(async () => {
+                if (session) {
+                    const { data: profile } = await supabaseClient
+                        .from('profiles')
+                        .select('is_approved')
+                        .eq('id', session.user.id)
+                        .single();
 
-                if (profile && profile.is_approved) {
-                    window.location.replace('hub.html');
+                    if (profile && profile.is_approved) {
+                        window.location.replace('hub.html');
+                    } else {
+                        await supabaseClient.auth.signOut();
+                        showLoginUI();
+                    }
                 } else {
-                    await supabaseClient.auth.signOut();
                     showLoginUI();
                 }
-            } else {
-                showLoginUI();
-            }
+            }, 300); 
         }, 5000); 
 
         function showLoginUI() {
             clearInterval(ghostInterval);
-            clearInterval(progressInterval);
             const splash = document.getElementById('splash-screen');
             if (splash) splash.style.opacity = '0';
+            
             setTimeout(() => {
                 if (splash) splash.remove();
                 const container = document.getElementById('login-container');
-                if (container) container.style.opacity = '1';
+                if (container) {
+                    container.style.opacity = '1';
+                }
             }, 1000);
         }
     }, 2000); 

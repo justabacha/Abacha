@@ -8,13 +8,51 @@
   <meta name="theme-color" content="#000000" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* The Ghost Row Animation */
+    .ghost-row {
+      display: flex;
+      gap: 10px;
+      font-size: 2rem;
+      margin-top: 20px;
+      height: 40px;
+    }
+    .ghost-emoji {
+      opacity: 0;
+      transform: translateY(10px);
+      animation: ghostTap 0.3s forwards ease-out;
+    }
+    @keyframes ghostTap {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* The Tiny Loading Bar */
+    .loader-container {
+      width: 200px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      margin-top: 20px;
+      overflow: hidden;
+    }
+    #loader-fill {
+      width: 0%;
+      height: 100%;
+      background: #32D74B; /* Ghost Green */
+      box-shadow: 0 0 10px #32D74B;
+      transition: width 0.1s linear;
+    }
+  </style>
 </head>
 
 <body class="login-page">
   <div id="splash-screen" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif;">
-    <h1 style="font-size: 3rem; font-weight: 900;">Just•Abacha😎</h1>
-    <div style="font-size: 1.5rem; margin-top: 20px;">
-      <span>👻</span> <span id="ghost-counter">0</span>
+    <h1 style="font-size: 3rem; font-weight: 900; margin-bottom: 0;">Just•Abacha😎</h1>
+    
+    <div class="ghost-row" id="ghost-row"></div>
+
+    <div class="loader-container">
+      <div id="loader-fill"></div>
     </div>
   </div>
 
@@ -34,25 +72,43 @@
   <script src="app.js" defer></script>
 
   <script>
-    // 1. YOUR EXACT GHOST COUNTER
-    let count = 0;
-    const counterEl = document.getElementById('ghost-counter');
-    const ghostInterval = setInterval(() => {
-        count = (count % 5) + 1;
-        if(counterEl) counterEl.innerText = count;
-    }, 800);
+    // 1. GHOST TAP-TAP LOGIC
+    const ghostRow = document.getElementById('ghost-row');
+    const loaderFill = document.getElementById('loader-fill');
+    let ghostCount = 0;
+    const maxGhosts = 7; // One for each second roughly
 
-    // 2. YOUR EXACT NESTED TIMEOUT STRUCTURE
+    // Add a ghost every 900ms
+    const ghostInterval = setInterval(() => {
+        if (ghostCount < maxGhosts) {
+            const span = document.createElement('span');
+            span.className = 'ghost-emoji';
+            span.innerText = '👻';
+            ghostRow.appendChild(span);
+            ghostCount++;
+        }
+    }, 900);
+
+    // 2. LOADING BAR PROGRESS (7 Seconds Total)
+    let progress = 0;
+    const totalTime = 7000; // 2s + 5s from your nested timeouts
+    const progressInterval = setInterval(() => {
+        progress += (100 / (totalTime / 100)); 
+        if (progress <= 100) {
+            loaderFill.style.width = progress + '%';
+        } else {
+            clearInterval(progressInterval);
+        }
+    }, 100);
+
+    // 3. YOUR NESTED TIMEOUTS (RESTORED LINE-FOR-LINE)
     setTimeout(async () => {
-        // Re-initializing the client inside the script to ensure it's ready
         const supabaseClient = window.supabase.createClient('https://zvkretqhqmxuhgspddpu.supabase.co', 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY');
 
         setTimeout(async () => {
-            // Check session
             const { data: { session } } = await supabaseClient.auth.getSession();
             
             if (session) {
-                // Check approval
                 const { data: profile } = await supabaseClient
                     .from('profiles')
                     .select('is_approved')
@@ -62,17 +118,17 @@
                 if (profile && profile.is_approved) {
                     window.location.replace('hub.html');
                 } else {
-                    // Not approved? Sign out and show login
                     await supabaseClient.auth.signOut();
                     showLoginUI();
                 }
             } else {
                 showLoginUI();
             }
-        }, 5000); // YOUR 5 SECONDS
+        }, 5000); 
 
         function showLoginUI() {
             clearInterval(ghostInterval);
+            clearInterval(progressInterval);
             const splash = document.getElementById('splash-screen');
             if (splash) splash.style.opacity = '0';
             setTimeout(() => {
@@ -81,7 +137,7 @@
                 if (container) container.style.opacity = '1';
             }, 1000);
         }
-    }, 2000); // YOUR 2 SECONDS
+    }, 2000); 
   </script>
 </body>
 </html>

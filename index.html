@@ -4,17 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Just•Abacha😎</title>
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#000000" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <script>
-    // 1. GHOST CHECK (Starts immediately for that "How did that happen?" speed)
+    // 1. GHOST CHECK (Starts instantly)
     const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
     const SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
     window.isDatabaseReady = false;
     window.finalTarget = null;
 
@@ -22,17 +19,9 @@
         try {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
-                const { data: profile } = await supabaseClient
-                    .from('profiles')
-                    .select('is_approved')
-                    .eq('id', session.user.id)
-                    .single();
-
-                if (profile && profile.is_approved) {
-                    window.finalTarget = 'hub.html';
-                } else {
-                    await supabaseClient.auth.signOut();
-                }
+                const { data: profile } = await supabaseClient.from('profiles').select('is_approved').eq('id', session.user.id).single();
+                if (profile && profile.is_approved) window.finalTarget = 'hub.html';
+                else await supabaseClient.auth.signOut();
             }
         } catch (e) { console.error(e); }
         window.isDatabaseReady = true;
@@ -40,15 +29,35 @@
   </script>
 
   <style>
-    /* YOUR ORIGINAL STYLES (Keep exactly as they were) */
-    .ghost-row { display: flex; gap: 10px; font-size: 2rem; margin-top: 20px; height: 40px; }
-    .ghost-emoji { opacity: 0; transform: translateY(10px); animation: ghostTap 0.3s forwards ease-out; }
-    @keyframes ghostTap { to { opacity: 1; transform: translateY(0); } }
-
-    .loader-container { width: 200px; height: 4px; background: rgba(255, 255, 255, 0.1); border-radius: 10px; margin-top: 20px; overflow: hidden; }
-    #loader-fill { width: 0%; height: 100%; background: #32D74B; box-shadow: 0 0 10px #32D74B; transition: width 0.1s linear; }
+    /* GHOST CHASE ANIMATION (DStv Style) */
+    .ghost-row { display: flex; gap: 15px; font-size: 2.5rem; margin-top: 20px; height: 50px; justify-content: center; }
     
-    /* Ensure container is hidden for the fade-in effect */
+    .ghost-emoji { opacity: 0.3; transform: scale(0.8); }
+    
+    /* The first ghost stays visible but pulses */
+    .ghost-emoji:first-child { opacity: 1; transform: scale(1); animation: leadPulse 1s infinite alternate; }
+
+    /* The 'dots' rhythm: 2nd to 5th ghost */
+    .ghost-emoji.active {
+        animation: dstvPulse 1.2s infinite;
+    }
+
+    @keyframes leadPulse { from { transform: scale(1); } to { transform: scale(1.1); } }
+    
+    @keyframes dstvPulse {
+        0%, 100% { opacity: 0.3; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1.2); filter: drop-shadow(0 0 10px white); }
+    }
+
+    /* COLOR SHIFTING BAR */
+    .loader-container { width: 250px; height: 8px; background: rgba(255, 255, 255, 0.1); border-radius: 20px; margin-top: 30px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+    #loader-fill { 
+        width: 0%; height: 100%; 
+        background: red; /* Starts Red */
+        box-shadow: 0 0 15px red;
+        transition: width 0.1s linear, background 0.1s linear, box-shadow 0.1s linear; 
+    }
+
     #login-container { opacity: 0; transition: opacity 1s ease; display: none; }
   </style>
 </head>
@@ -58,7 +67,11 @@
     <h1 style="font-size: 3rem; font-weight: 900; margin-bottom: 0;">Just•Abacha😎</h1>
     
     <div class="ghost-row" id="ghost-row">
-        </div>
+        <span class="ghost-emoji">👻</span> <span class="ghost-emoji">👻</span>
+        <span class="ghost-emoji">👻</span>
+        <span class="ghost-emoji">👻</span>
+        <span class="ghost-emoji">👻</span>
+    </div>
 
     <div class="loader-container">
       <div id="loader-fill"></div>
@@ -67,7 +80,6 @@
 
   <div id="login-container">
     <div style="position:absolute; top:20px; left:20px; font-weight:900; color:white;">|Just•Abacha😎|</div>
-    
     <div style="text-align:center; padding-top:100px;">
       <input id="email" type="email" placeholder="Email" />
       <input id="password" type="password" placeholder="Password" />
@@ -81,64 +93,67 @@
   <script src="app.js" defer></script>
 
   <script>
-    const ghostRow = document.getElementById('ghost-row');
-    const loaderFill = document.getElementById('loader-fill');
-    
-    // 1. GHOST TAP-TAP (Every 900ms)
-    let ghostCount = 0;
-    const maxGhosts = 7; 
-    const ghostInterval = setInterval(() => {
-        if (ghostCount < maxGhosts) {
-            const span = document.createElement('span');
-            span.className = 'ghost-emoji';
-            span.innerText = '👻';
-            ghostRow.appendChild(span);
-            ghostCount++;
-        }
-    }, 900);
+    // 1. DSTV-STYLE GHOST RHYTHM
+    const ghosts = document.querySelectorAll('.ghost-emoji');
+    let ghostIndex = 1; // Skip the first one
 
-    // 2. LOADING BAR PROGRESS (7 Seconds)
+    setInterval(() => {
+        // Reset all except the first one
+        for(let i=1; i<ghosts.length; i++) ghosts[i].classList.remove('active');
+        
+        // Light up the current one
+        ghosts[ghostIndex].classList.add('active');
+        
+        // Move to next
+        ghostIndex++;
+        if(ghostIndex >= ghosts.length) ghostIndex = 1;
+    }, 300); // Speed of the chase
+
+    // 2. PROGRESS & COLOR BLENDING
+    const loaderFill = document.getElementById('loader-fill');
     let progress = 0;
     const totalTime = 7000; 
+    
     const progressInterval = setInterval(() => {
-        progress += (100 / (totalTime / 100)); 
+        progress += (100 / (totalTime / 100));
+        loaderFill.style.width = Math.min(progress, 100) + '%';
+
+        // Color Blending Logic: Red -> Blue -> Green
+        if (progress < 50) {
+            loaderFill.style.background = 'red';
+            loaderFill.style.boxShadow = '0 0 15px red';
+        } else if (progress < 85) {
+            loaderFill.style.background = 'blue';
+            loaderFill.style.boxShadow = '0 0 15px blue';
+        } else {
+            loaderFill.style.background = '#32D74B'; // Green
+            loaderFill.style.boxShadow = '0 0 15px #32D74B';
+        }
+
         if (progress >= 100) {
-            loaderFill.style.width = '100%';
             clearInterval(progressInterval);
-            
-            // 🚨 THE SYNC: Only proceed when BOTH are done
             const checkDone = setInterval(() => {
                 if (window.isDatabaseReady) {
                     clearInterval(checkDone);
                     proceed();
                 }
             }, 100);
-            
-        } else {
-            loaderFill.style.width = progress + '%';
         }
     }, 100);
 
     function proceed() {
-        if (window.finalTarget) {
-            window.location.replace(window.finalTarget);
-        } else {
-            showLoginUI();
-        }
+        if (window.finalTarget) window.location.replace(window.finalTarget);
+        else showLoginUI();
     }
 
     function showLoginUI() {
-        clearInterval(ghostInterval);
         const splash = document.getElementById('splash-screen');
         const container = document.getElementById('login-container');
         if (splash) splash.style.opacity = '0';
-        
         setTimeout(() => {
             if (splash) splash.remove();
-            if (container) {
-                container.style.display = 'block';
-                setTimeout(() => { container.style.opacity = '1'; }, 50);
-            }
+            container.style.display = 'block';
+            setTimeout(() => { container.style.opacity = '1'; }, 50);
         }, 1000);
     }
   </script>

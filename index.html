@@ -89,14 +89,14 @@
 
   <script src="app.js" defer></script>
 
- <script>
+<script>
     const ghostRow = document.getElementById('ghost-row');
     const loaderFill = document.getElementById('loader-fill');
     
     let ghostCount = 1; 
     const maxGhosts = 5; 
-    let isDatabaseReady = false; // 🚨 New flag: Did Supabase finish?
-    let isLoaderFinished = false; // 🚨 New flag: Did the bar hit 100%?
+    let isDatabaseReady = false; 
+    window.finalTarget = null;
 
     // 1. RHYTHMIC GHOSTS
     const ghostInterval = setInterval(() => {
@@ -104,36 +104,34 @@
             const span = document.createElement('span');
             span.className = 'new-ghost';
             span.innerText = '👻';
-            span.style.animationDelay = (ghostCount * 0.25) + 's';
+            span.style.animationDelay = (ghostCount * 0.2) + 's';
             ghostRow.appendChild(span);
             ghostCount++;
         }
     }, 1200);
 
-    // 2. LOADER PROGRESS (Force it to finish)
-    let progress = 0;
-    const totalTime = 7000; 
-    const progressInterval = setInterval(() => {
-        progress += (100 / (totalTime / 100)); 
-        if (progress >= 100) {
-            loaderFill.style.width = '100%';
-            clearInterval(progressInterval);
-            isLoaderFinished = true;
-            checkFinalTransition(); // 🏁 Try to transition
-        } else {
-            loaderFill.style.width = progress + '%';
+    // 2. THE PHYSICAL LOCK: Transition End Listener
+    // This ONLY fires when the bar is visually 100% full
+    loaderFill.addEventListener('transitionend', () => {
+        if (loaderFill.style.width === '100%') {
+            console.log("🏁 Bar visually full. Checking DB...");
+            checkFinalTransition();
         }
+    });
+
+    // Start filling the bar immediately to hit 100% over 7 seconds
+    setTimeout(() => {
+        loaderFill.style.transition = "width 7s linear"; // Smooth 7-second crawl
+        loaderFill.style.width = "100%";
     }, 100);
 
-    // 3. YOUR NESTED PROTOCOL
+    // 3. YOUR NESTED DATABASE PROTOCOL
     setTimeout(async () => {
         const supabaseClient = window.supabase.createClient('https://zvkretqhqmxuhgspddpu.supabase.co', 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY');
 
         setTimeout(async () => {
             const { data: { session } } = await supabaseClient.auth.getSession();
             
-            let targetPage = null;
-
             if (session) {
                 const { data: profile } = await supabaseClient
                     .from('profiles')
@@ -142,22 +140,22 @@
                     .single();
 
                 if (profile && profile.is_approved) {
-                    targetPage = 'hub.html';
+                    window.finalTarget = 'hub.html';
                 } else {
                     await supabaseClient.auth.signOut();
                 }
             }
 
-            // Database work is done!
             isDatabaseReady = true;
-            window.finalTarget = targetPage; // Store where we are going
-            checkFinalTransition(); // 🏁 Try to transition
+            console.log("📡 DB Ready. Waiting for bar...");
+            checkFinalTransition(); 
         }, 5000); 
     }, 2000);
 
-    // 4. THE GATEKEEPER (Ensures both are done)
+    // 4. THE GATEKEEPER
     function checkFinalTransition() {
-        if (isDatabaseReady && isLoaderFinished) {
+        // Only proceed if BOTH are true: DB is done AND Bar is physically at 100%
+        if (isDatabaseReady && loaderFill.style.width === '100%') {
             if (window.finalTarget) {
                 window.location.replace(window.finalTarget);
             } else {
@@ -169,12 +167,14 @@
     function showLoginUI() {
         clearInterval(ghostInterval);
         const splash = document.getElementById('splash-screen');
-        if (splash) splash.style.opacity = '0';
-        setTimeout(() => {
-            if (splash) splash.remove();
-            const container = document.getElementById('login-container');
-            if (container) container.style.opacity = '1';
-        }, 1000);
+        if (splash) {
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.remove();
+                const container = document.getElementById('login-container');
+                if (container) container.style.opacity = '1';
+            }, 1000);
+        }
     }
 </script>
 </body>

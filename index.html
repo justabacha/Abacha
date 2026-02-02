@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* 1. SMOOTH GHOST FADE-IN */
+    /* 1. THE GHOST ROW & RHYTHM */
     .ghost-row {
       display: flex;
       gap: 12px;
@@ -17,58 +17,66 @@
       margin-top: 25px;
       height: 50px;
     }
+    
     .ghost-emoji {
-      opacity: 0;
-      filter: blur(5px);
-      transform: scale(0.8);
-      animation: ghostFadeIn 0.6s forwards ease-out;
-    }
-    @keyframes ghostFadeIn {
-      to { 
-        opacity: 1; 
-        filter: blur(0);
-        transform: scale(1);
-      }
+      /* Pulse animation gives it that "loading dots" rhythm */
+      animation: ghostPulse 1.5s infinite ease-in-out;
     }
 
-    /* 2. PRECISION LOADING BAR */
+    /* Staggered entry for the rhythmic "tap-tap" */
+    .new-ghost {
+      opacity: 0;
+      transform: scale(0.5);
+      animation: ghostEnter 0.4s forwards ease-out, ghostPulse 1.5s infinite ease-in-out;
+    }
+
+    @keyframes ghostEnter {
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes ghostPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.7; }
+    }
+
+    /* 2. THE SLOW-FILL BAR */
     .loader-container {
       width: 220px;
-      height: 3px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 20px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
       margin-top: 30px;
       overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.05);
     }
     #loader-fill {
       width: 0%;
       height: 100%;
-      background: #32D74B; 
-      box-shadow: 0 0 15px rgba(50, 215, 75, 0.6);
-      transition: width 0.1s linear; /* Keeps the movement fluid */
+      background: #32D74B;
+      box-shadow: 0 0 12px #32D74B;
+      transition: width 0.15s linear;
     }
   </style>
 </head>
 
 <body class="login-page">
-  <div id="splash-screen" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif; transition: opacity 1s ease;">
-    <h1 style="font-size: 2.5rem; font-weight: 900; letter-spacing: -1px; margin-bottom: 0;">Just•Abacha😎</h1>
+  <div id="splash-screen" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif;">
+    <h1 style="font-size: 3rem; font-weight: 900; margin-bottom: 0;">Just•Abacha😎</h1>
     
-    <div class="ghost-row" id="ghost-row"></div>
+    <div class="ghost-row" id="ghost-row">
+      <span class="ghost-emoji">👻</span>
+    </div>
 
     <div class="loader-container">
       <div id="loader-fill"></div>
     </div>
   </div>
 
-  <div id="login-container" style="opacity:0; transition: opacity 1.2s ease;">
-    <div style="position:absolute; top:20px; left:20px; font-weight:900; color:white; opacity:0.5;">|Just•Abacha😎|</div>
-    
+  <div id="login-container" style="opacity:0; transition: opacity 1s ease;">
+    <div style="position:absolute; top:20px; left:20px; font-weight:900; color:white;">|Just•Abacha😎|</div>
     <div style="text-align:center; padding-top:100px;">
-      <input id="email" type="email" placeholder="Email" style="display:block; margin: 10px auto; padding:15px; width:250px; border-radius:12px; border:none; background:rgba(255,255,255,0.1); color:white;" />
-      <input id="password" type="password" placeholder="Password" style="display:block; margin: 10px auto; padding:15px; width:250px; border-radius:12px; border:none; background:rgba(255,255,255,0.1); color:white;" />
-      <div style="margin-top:25px;">
+      <input id="email" type="email" placeholder="Email" />
+      <input id="password" type="password" placeholder="Password" />
+      <div style="margin-top:20px;">
         <button id="login-btn">Login</button>
         <button id="signup-btn">Sign up</button>
       </div>
@@ -81,77 +89,69 @@
     const ghostRow = document.getElementById('ghost-row');
     const loaderFill = document.getElementById('loader-fill');
     
-    // 1. ANIMATION STATE
-    let ghostCount = 0;
-    const maxGhosts = 5; 
-    const totalTime = 7000; // Your 2s + 5s flow
-    
-    // 2. GHOST TAP-TAP (Fades in over time)
+    // 1. RHYTHMIC GHOST GENERATOR
+    let ghostCount = 1; // Starting at 1 because Lead Ghost is already there
+    const maxGhosts = 6; 
+
     const ghostInterval = setInterval(() => {
         if (ghostCount < maxGhosts) {
             const span = document.createElement('span');
-            span.className = 'ghost-emoji';
+            span.className = 'new-ghost';
             span.innerText = '👻';
+            // Stagger the pulse animation so they don't all move at the same time
+            span.style.animationDelay = (ghostCount * 0.2) + 's';
             ghostRow.appendChild(span);
             ghostCount++;
         }
-    }, 1200);
+    }, 1000); // Rhythmic 1-second "tap"
 
-    // 3. SMOOTH LOADER (Fills precisely to 100% at 7 seconds)
-    let startTime = Date.now();
-    const updateLoader = () => {
-        let elapsed = Date.now() - startTime;
-        let percentage = Math.min((elapsed / totalTime) * 100, 100);
-        loaderFill.style.width = percentage + '%';
-
-        if (percentage < 100) {
-            requestAnimationFrame(updateLoader);
+    // 2. LOADING BAR (7 Seconds Total)
+    let progress = 0;
+    const totalTime = 7000; 
+    const progressInterval = setInterval(() => {
+        progress += (100 / (totalTime / 100)); 
+        if (progress <= 100) {
+            loaderFill.style.width = progress + '%';
         }
-    };
-    requestAnimationFrame(updateLoader);
+    }, 100);
 
-    // 4. THE NESTED PROTOCOL (RESTORED)
+    // 3. YOUR NESTED PROTOCOL
     setTimeout(async () => {
         const supabaseClient = window.supabase.createClient('https://zvkretqhqmxuhgspddpu.supabase.co', 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY');
 
         setTimeout(async () => {
             const { data: { session } } = await supabaseClient.auth.getSession();
             
-            // Wait for loader to finish visually (adds a tiny 200ms buffer for vibe)
-            setTimeout(async () => {
-                if (session) {
-                    const { data: profile } = await supabaseClient
-                        .from('profiles')
-                        .select('is_approved')
-                        .eq('id', session.user.id)
-                        .single();
+            if (session) {
+                const { data: profile } = await supabaseClient
+                    .from('profiles')
+                    .select('is_approved')
+                    .eq('id', session.user.id)
+                    .single();
 
-                    if (profile && profile.is_approved) {
-                        window.location.replace('hub.html');
-                    } else {
-                        await supabaseClient.auth.signOut();
-                        showLoginUI();
-                    }
+                if (profile && profile.is_approved) {
+                    window.location.replace('hub.html');
                 } else {
+                    await supabaseClient.auth.signOut();
                     showLoginUI();
                 }
-            }, 300); 
+            } else {
+                showLoginUI();
+            }
         }, 5000); 
 
         function showLoginUI() {
             clearInterval(ghostInterval);
+            clearInterval(progressInterval);
             const splash = document.getElementById('splash-screen');
             if (splash) splash.style.opacity = '0';
-            
             setTimeout(() => {
                 if (splash) splash.remove();
                 const container = document.getElementById('login-container');
-                if (container) {
-                    container.style.opacity = '1';
-                }
+                if (container) container.style.opacity = '1';
             }, 1000);
         }
-    }, 2000); 
+    }, 10000); 
   </script>
 </body>
 </html>

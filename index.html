@@ -9,58 +9,62 @@
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* 1. THE GHOST ROW & RHYTHM */
+    /* 1. BIG GHOST ROW & WAVE RHYTHM */
     .ghost-row {
       display: flex;
-      gap: 12px;
-      font-size: 2.2rem;
-      margin-top: 25px;
-      height: 50px;
+      gap: 15px;
+      font-size: 3rem; /* BIGGER GHOSTS */
+      margin-top: 30px;
+      height: 70px;
+      align-items: center;
+      justify-content: center;
     }
     
     .ghost-emoji {
-      /* Pulse animation gives it that "loading dots" rhythm */
-      animation: ghostPulse 1.5s infinite ease-in-out;
+      display: inline-block;
+      animation: ghostPulse 1.8s infinite ease-in-out;
     }
 
-    /* Staggered entry for the rhythmic "tap-tap" */
+    /* Entry animation for the rhythmic follow-ups */
     .new-ghost {
       opacity: 0;
-      transform: scale(0.5);
-      animation: ghostEnter 0.4s forwards ease-out, ghostPulse 1.5s infinite ease-in-out;
+      transform: scale(0.3) translateY(20px);
+      animation: ghostEnter 0.5s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                 ghostPulse 1.8s infinite ease-in-out;
     }
 
     @keyframes ghostEnter {
-      to { opacity: 1; transform: scale(1); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
     }
 
     @keyframes ghostPulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.1); opacity: 0.7; }
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0px #32D74B); }
+      50% { transform: scale(1.2); filter: drop-shadow(0 0 15px #32D74B); opacity: 0.8; }
     }
 
-    /* 2. THE SLOW-FILL BAR */
+    /* 2. PREMIUM LOADING BAR (BIGGER) */
     .loader-container {
-      width: 220px;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      margin-top: 30px;
+      width: 280px; /* Wider */
+      height: 6px;  /* Thicker */
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      margin-top: 40px;
       overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
     #loader-fill {
       width: 0%;
       height: 100%;
-      background: #32D74B;
-      box-shadow: 0 0 12px #32D74B;
-      transition: width 0.15s linear;
+      background: linear-gradient(90deg, #32D74B, #63E6BE); /* Gradient Vibe */
+      box-shadow: 0 0 20px rgba(50, 215, 75, 0.8);
+      transition: width 0.2s linear;
     }
   </style>
 </head>
 
 <body class="login-page">
   <div id="splash-screen" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif;">
-    <h1 style="font-size: 3rem; font-weight: 900; margin-bottom: 0;">Just•Abacha😎</h1>
+    <h1 style="font-size: 3.5rem; font-weight: 900; letter-spacing: -2px; margin-bottom: 0;">Just•Abacha😎</h1>
     
     <div class="ghost-row" id="ghost-row">
       <span class="ghost-emoji">👻</span>
@@ -71,12 +75,12 @@
     </div>
   </div>
 
-  <div id="login-container" style="opacity:0; transition: opacity 1s ease;">
-    <div style="position:absolute; top:20px; left:20px; font-weight:900; color:white;">|Just•Abacha😎|</div>
+  <div id="login-container" style="opacity:0; transition: opacity 1.2s ease;">
+    <div style="position:absolute; top:20px; left:20px; font-weight:900; color:white; opacity:0.6;">|Just•Abacha😎|</div>
     <div style="text-align:center; padding-top:100px;">
-      <input id="email" type="email" placeholder="Email" />
-      <input id="password" type="password" placeholder="Password" />
-      <div style="margin-top:20px;">
+      <input id="email" type="email" placeholder="Email" style="display:block; margin: 10px auto; padding:15px; width:260px; border-radius:12px; border:none; background:rgba(255,255,255,0.1); color:white;" />
+      <input id="password" type="password" placeholder="Password" style="display:block; margin: 10px auto; padding:15px; width:260px; border-radius:12px; border:none; background:rgba(255,255,255,0.1); color:white;" />
+      <div style="margin-top:25px;">
         <button id="login-btn">Login</button>
         <button id="signup-btn">Sign up</button>
       </div>
@@ -89,23 +93,23 @@
     const ghostRow = document.getElementById('ghost-row');
     const loaderFill = document.getElementById('loader-fill');
     
-    // 1. RHYTHMIC GHOST GENERATOR
-    let ghostCount = 1; // Starting at 1 because Lead Ghost is already there
-    const maxGhosts = 6; 
+    // 1. RHYTHMIC STAGGER (BIG GHOSTS)
+    let ghostCount = 1; 
+    const maxGhosts = 5; // Fewer ghosts because they are bigger
 
     const ghostInterval = setInterval(() => {
         if (ghostCount < maxGhosts) {
             const span = document.createElement('span');
             span.className = 'new-ghost';
             span.innerText = '👻';
-            // Stagger the pulse animation so they don't all move at the same time
-            span.style.animationDelay = (ghostCount * 0.2) + 's';
+            // Offset the pulse wave
+            span.style.animationDelay = (ghostCount * 0.25) + 's';
             ghostRow.appendChild(span);
             ghostCount++;
         }
-    }, 1000); // Rhythmic 1-second "tap"
+    }, 1200); // Rhythmic tap every 1.2s
 
-    // 2. LOADING BAR (7 Seconds Total)
+    // 2. LOADER PROGRESS (7 Seconds)
     let progress = 0;
     const totalTime = 7000; 
     const progressInterval = setInterval(() => {
@@ -115,7 +119,7 @@
         }
     }, 100);
 
-    // 3. YOUR NESTED PROTOCOL
+    // 3. YOUR NESTED PROTOCOL (RESTORED LINE-BY-LINE)
     setTimeout(async () => {
         const supabaseClient = window.supabase.createClient('https://zvkretqhqmxuhgspddpu.supabase.co', 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY');
 
@@ -151,7 +155,7 @@
                 if (container) container.style.opacity = '1';
             }, 1000);
         }
-    }, 10000); 
+    }, 2000); 
   </script>
 </body>
 </html>

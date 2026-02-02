@@ -11,6 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <script>
+    // SPEED CHECK: Redirect logged-in users before the page even loads
     const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
     const SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -25,7 +26,6 @@
                 .single();
 
             if (profile && profile.is_approved) {
-                // If they have no username, they must finish profile setup
                 if (!profile.username) {
                     window.location.replace('profile.html');
                 } else {
@@ -45,7 +45,7 @@
     </div>
   </div>
 
-  <div id="login-container" style="opacity:0; transition: opacity 1s ease;">
+  <div id="login-container" style="opacity:0; transition: opacity 1s ease; display:none;">
     <div style="position:absolute; top:20px; left:20px; font-weight:900; color:white;">|Just•Abacha😎|</div>
     
     <div style="text-align:center; padding-top:100px;">
@@ -61,7 +61,6 @@
   <script src="app.js" defer></script>
   
   <script>
-    // 1. Ghost Counter Animation
     let count = 0;
     const counterEl = document.getElementById('ghost-counter');
     const ghostInterval = setInterval(() => {
@@ -69,7 +68,7 @@
         if(counterEl) counterEl.innerText = count;
     }, 800);
 
-    // 2. The Reveal (Reduced to 1.5s total wait for smooth vibe)
+    // REVEAL LOGIC
     setTimeout(() => {
         showLoginUI();
     }, 1500); 
@@ -77,16 +76,18 @@
     function showLoginUI() {
         clearInterval(ghostInterval);
         const splash = document.getElementById('splash-screen');
-        if (splash) {
-            splash.style.opacity = '0';
-            setTimeout(() => {
-                splash.remove();
-                const loginBox = document.getElementById('login-container');
-                if (loginBox) {
-                    loginBox.style.opacity = '1';
-                }
-            }, 800);
-        }
+        const loginBox = document.getElementById('login-container');
+        
+        if (splash) splash.style.opacity = '0';
+        
+        setTimeout(() => {
+            if (splash) splash.remove();
+            if (loginBox) {
+                loginBox.style.display = 'block'; // 🚨 RE-ACTIVATED
+                // Small delay to trigger the opacity transition smoothly
+                setTimeout(() => { loginBox.style.opacity = '1'; }, 50);
+            }
+        }, 800);
     }
   </script>
 </body>

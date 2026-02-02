@@ -10,13 +10,15 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <style>
-    /* 1. NEW VISUALS: GHOST DSTV RHYTHM */
+    /* 1. GHOST DSTV RHYTHM (Chasing Dots) */
     .ghost-row { display: flex; gap: 10px; font-size: 2rem; margin-top: 20px; height: 40px; }
     .ghost-emoji { opacity: 0.2; transition: all 0.3s ease; }
+    /* The Anchor Ghost */
     .ghost-emoji:first-child { opacity: 1; filter: drop-shadow(0 0 5px #32D74B); }
+    /* The Chase Pulse */
     .ghost-emoji.active { opacity: 1; transform: scale(1.3); filter: drop-shadow(0 0 10px white); }
 
-    /* 2. NEW VISUALS: COLOR SHIFTING BAR */
+    /* 2. COLOR SHIFTING BAR (Red -> Blue -> Green) */
     .loader-container { width: 200px; height: 4px; background: rgba(255, 255, 255, 0.1); border-radius: 10px; margin-top: 20px; overflow: hidden; }
     #loader-fill { 
       width: 0%; height: 100%; 
@@ -25,16 +27,16 @@
       transition: width 0.1s linear, background 0.5s ease; 
     }
 
-    /* 3. ORIGINAL BUTTON LOGIC: Keeping the container active for app.js */
+    /* 3. YOUR ORIGINAL LOGIN OPACITY LOGIC */
     #login-container { 
       opacity: 0; 
       transition: opacity 1s ease;
-      /* We use your original opacity logic so app.js binds perfectly */
+      /* No 'display: none' or 'height: 0' so app.js can see the buttons immediately */
     }
   </style>
 
   <script>
-    // 4. INSTANT GHOST CHECK (Hidden background logic)
+    // GHOST SESSION CHECK
     const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
     const SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -59,8 +61,7 @@
   <div id="splash-screen" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif;">
     <h1 style="font-size: 3rem; font-weight: 900; margin-bottom: 0;">Just•Abacha😎</h1>
     <div class="ghost-row" id="ghost-row">
-        <span class="ghost-emoji">👻</span>
-        <span class="ghost-emoji">👻</span>
+        <span class="ghost-emoji">👻</span> <span class="ghost-emoji">👻</span>
         <span class="ghost-emoji">👻</span>
         <span class="ghost-emoji">👻</span>
         <span class="ghost-emoji">👻</span>
@@ -70,7 +71,6 @@
 
   <div id="login-container">
     <div style="position:absolute; top:20px; left:20px; font-weight:900; color:white;">|Just•Abacha😎|</div>
-    
     <div style="text-align:center; padding-top:100px;">
       <input id="email" type="email" placeholder="Email" />
       <input id="password" type="password" placeholder="Password" />
@@ -88,14 +88,14 @@
     const loaderFill = document.getElementById('loader-fill');
     let ghostIndex = 1;
 
-    // 1. DStv Loop (Ghosts 2-5)
+    // DSTV LOOP
     setInterval(() => {
         for(let i=1; i<ghosts.length; i++) ghosts[i].classList.remove('active');
         ghosts[ghostIndex].classList.add('active');
         ghostIndex = (ghostIndex % (ghosts.length - 1)) + 1;
     }, 400);
 
-    // 2. Bar Progress & Color Blend (7 Seconds)
+    // BAR PROGRESS & COLOR BLEND
     let progress = 0;
     const progressInterval = setInterval(() => {
         progress += (100 / (7000 / 100)); 
@@ -114,27 +114,22 @@
 
         if (progress >= 100) {
             clearInterval(progressInterval);
-            // Wait for DB before proceeding
             const checkSync = setInterval(() => {
                 if (window.isDatabaseReady) {
                     clearInterval(checkSync);
                     if (window.finalTarget) window.location.replace(window.finalTarget);
-                    else showLoginUI();
+                    else {
+                        // FADE OUT SPLASH, FADE IN LOGIN
+                        document.getElementById('splash-screen').style.opacity = '0';
+                        setTimeout(() => {
+                            document.getElementById('splash-screen').remove();
+                            document.getElementById('login-container').style.opacity = '1';
+                        }, 1000);
+                    }
                 }
             }, 100);
         }
     }, 100);
-
-    function showLoginUI() {
-        const splash = document.getElementById('splash-screen');
-        const container = document.getElementById('login-container');
-        if (splash) splash.style.opacity = '0';
-        setTimeout(() => {
-            if (splash) splash.remove();
-            // Original logic: just trigger opacity
-            if (container) container.style.opacity = '1';
-        }, 1000);
-    }
   </script>
 </body>
 </html>

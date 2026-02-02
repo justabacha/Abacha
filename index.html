@@ -89,43 +89,51 @@
 
   <script src="app.js" defer></script>
 
-  <script>
+ <script>
     const ghostRow = document.getElementById('ghost-row');
     const loaderFill = document.getElementById('loader-fill');
     
-    // 1. RHYTHMIC STAGGER (BIG GHOSTS)
     let ghostCount = 1; 
-    const maxGhosts = 5; // Fewer ghosts because they are bigger
+    const maxGhosts = 5; 
+    let isDatabaseReady = false; // 🚨 New flag: Did Supabase finish?
+    let isLoaderFinished = false; // 🚨 New flag: Did the bar hit 100%?
 
+    // 1. RHYTHMIC GHOSTS
     const ghostInterval = setInterval(() => {
         if (ghostCount < maxGhosts) {
             const span = document.createElement('span');
             span.className = 'new-ghost';
             span.innerText = '👻';
-            // Offset the pulse wave
             span.style.animationDelay = (ghostCount * 0.25) + 's';
             ghostRow.appendChild(span);
             ghostCount++;
         }
-    }, 1200); // Rhythmic tap every 1.2s
+    }, 1200);
 
-    // 2. LOADER PROGRESS (7 Seconds)
+    // 2. LOADER PROGRESS (Force it to finish)
     let progress = 0;
     const totalTime = 7000; 
     const progressInterval = setInterval(() => {
         progress += (100 / (totalTime / 100)); 
-        if (progress <= 100) {
+        if (progress >= 100) {
+            loaderFill.style.width = '100%';
+            clearInterval(progressInterval);
+            isLoaderFinished = true;
+            checkFinalTransition(); // 🏁 Try to transition
+        } else {
             loaderFill.style.width = progress + '%';
         }
     }, 100);
 
-    // 3. YOUR NESTED PROTOCOL (RESTORED LINE-BY-LINE)
+    // 3. YOUR NESTED PROTOCOL
     setTimeout(async () => {
         const supabaseClient = window.supabase.createClient('https://zvkretqhqmxuhgspddpu.supabase.co', 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY');
 
         setTimeout(async () => {
             const { data: { session } } = await supabaseClient.auth.getSession();
             
+            let targetPage = null;
+
             if (session) {
                 const { data: profile } = await supabaseClient
                     .from('profiles')
@@ -134,28 +142,40 @@
                     .single();
 
                 if (profile && profile.is_approved) {
-                    window.location.replace('hub.html');
+                    targetPage = 'hub.html';
                 } else {
                     await supabaseClient.auth.signOut();
-                    showLoginUI();
                 }
+            }
+
+            // Database work is done!
+            isDatabaseReady = true;
+            window.finalTarget = targetPage; // Store where we are going
+            checkFinalTransition(); // 🏁 Try to transition
+        }, 5000); 
+    }, 2000);
+
+    // 4. THE GATEKEEPER (Ensures both are done)
+    function checkFinalTransition() {
+        if (isDatabaseReady && isLoaderFinished) {
+            if (window.finalTarget) {
+                window.location.replace(window.finalTarget);
             } else {
                 showLoginUI();
             }
-        }, 5000); 
-
-        function showLoginUI() {
-            clearInterval(ghostInterval);
-            clearInterval(progressInterval);
-            const splash = document.getElementById('splash-screen');
-            if (splash) splash.style.opacity = '0';
-            setTimeout(() => {
-                if (splash) splash.remove();
-                const container = document.getElementById('login-container');
-                if (container) container.style.opacity = '1';
-            }, 1000);
         }
-    }, 2000); 
-  </script>
+    }
+
+    function showLoginUI() {
+        clearInterval(ghostInterval);
+        const splash = document.getElementById('splash-screen');
+        if (splash) splash.style.opacity = '0';
+        setTimeout(() => {
+            if (splash) splash.remove();
+            const container = document.getElementById('login-container');
+            if (container) container.style.opacity = '1';
+        }, 1000);
+    }
+</script>
 </body>
 </html>

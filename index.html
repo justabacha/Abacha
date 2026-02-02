@@ -4,178 +4,116 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Just•Abacha😎</title>
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#000000" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <script>
+    // 1. INSTANT GHOST CHECK (Starts immediately in the head)
+    const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    window.isDatabaseReady = false;
+    window.finalTarget = null;
+
+    (async function() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('is_approved')
+                .eq('id', session.user.id)
+                .single();
+
+            if (profile && profile.is_approved) {
+                window.finalTarget = 'hub.html';
+            } else {
+                await supabaseClient.auth.signOut();
+            }
+        }
+        window.isDatabaseReady = true;
+        // If the loader is already at 100%, trigger now
+        if (window.isLoaderFinished) proceed();
+    })();
+  </script>
+
   <style>
-    /* 1. BIG GHOST ROW & WAVE RHYTHM */
-    .ghost-row {
-      display: flex;
-      gap: 15px;
-      font-size: 3rem; /* BIGGER GHOSTS */
-      margin-top: 30px;
-      height: 70px;
-      align-items: center;
-      justify-content: center;
-    }
+    .ghost-row { display: flex; gap: 15px; font-size: 3rem; margin-top: 30px; justify-content: center; }
+    .ghost-emoji { animation: ghostPulse 1.8s infinite ease-in-out; }
+    .new-ghost { opacity: 0; animation: ghostEnter 0.5s forwards ease-out, ghostPulse 1.8s infinite ease-in-out; }
+    @keyframes ghostEnter { to { opacity: 1; transform: scale(1); } }
+    @keyframes ghostPulse { 50% { transform: scale(1.2); filter: drop-shadow(0 0 15px #32D74B); } }
     
-    .ghost-emoji {
-      display: inline-block;
-      animation: ghostPulse 1.8s infinite ease-in-out;
-    }
-
-    /* Entry animation for the rhythmic follow-ups */
-    .new-ghost {
-      opacity: 0;
-      transform: scale(0.3) translateY(20px);
-      animation: ghostEnter 0.5s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275), 
-                 ghostPulse 1.8s infinite ease-in-out;
-    }
-
-    @keyframes ghostEnter {
-      to { opacity: 1; transform: scale(1) translateY(0); }
-    }
-
-    @keyframes ghostPulse {
-      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0px #32D74B); }
-      50% { transform: scale(1.2); filter: drop-shadow(0 0 15px #32D74B); opacity: 0.8; }
-    }
-
-    /* 2. PREMIUM LOADING BAR (BIGGER) */
-    .loader-container {
-      width: 280px; /* Wider */
-      height: 6px;  /* Thicker */
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 20px;
-      margin-top: 40px;
-      overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    #loader-fill {
-      width: 0%;
-      height: 100%;
-      background: linear-gradient(90deg, #32D74B, #63E6BE); /* Gradient Vibe */
-      box-shadow: 0 0 20px rgba(50, 215, 75, 0.8);
-      transition: width 0.2s linear;
-    }
+    .loader-container { width: 280px; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 20px; margin-top: 40px; overflow: hidden; }
+    #loader-fill { width: 0%; height: 100%; background: #32D74B; box-shadow: 0 0 20px #32D74B; transition: width 7s linear; }
   </style>
 </head>
 
 <body class="login-page">
-  <div id="splash-screen" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif;">
-    <h1 style="font-size: 3.5rem; font-weight: 900; letter-spacing: -2px; margin-bottom: 0;">Just•Abacha😎</h1>
-    
-    <div class="ghost-row" id="ghost-row">
-      <span class="ghost-emoji">👻</span>
-    </div>
-
-    <div class="loader-container">
-      <div id="loader-fill"></div>
-    </div>
+  <div id="splash-screen" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; transition: opacity 0.8s ease;">
+    <h1 style="font-size: 3.5rem; font-weight: 900;">Just•Abacha😎</h1>
+    <div class="ghost-row" id="ghost-row"><span class="ghost-emoji">👻</span></div>
+    <div class="loader-container"><div id="loader-fill"></div></div>
   </div>
 
-  <div id="login-container" style="opacity:0; transition: opacity 1.2s ease;">
-    <div style="position:absolute; top:20px; left:20px; font-weight:900; color:white; opacity:0.6;">|Just•Abacha😎|</div>
+  <div id="login-container" style="opacity:0; transition: opacity 1s ease; display:none;">
     <div style="text-align:center; padding-top:100px;">
-      <input id="email" type="email" placeholder="Email" style="display:block; margin: 10px auto; padding:15px; width:260px; border-radius:12px; border:none; background:rgba(255,255,255,0.1); color:white;" />
-      <input id="password" type="password" placeholder="Password" style="display:block; margin: 10px auto; padding:15px; width:260px; border-radius:12px; border:none; background:rgba(255,255,255,0.1); color:white;" />
-      <div style="margin-top:25px;">
-        <button id="login-btn">Login</button>
-        <button id="signup-btn">Sign up</button>
-      </div>
+      <input id="email" type="email" placeholder="Email" style="..." />
+      <input id="password" type="password" placeholder="Password" style="..." />
+      <button id="login-btn">Login</button>
+      <button id="signup-btn">Sign up</button>
     </div>
   </div>
 
   <script src="app.js" defer></script>
 
-<script>
-    const ghostRow = document.getElementById('ghost-row');
+  <script>
     const loaderFill = document.getElementById('loader-fill');
-    
-    let ghostCount = 1; 
-    const maxGhosts = 5; 
-    let isDatabaseReady = false; 
-    window.finalTarget = null;
+    window.isLoaderFinished = false;
 
-    // 1. RHYTHMIC GHOSTS
-    const ghostInterval = setInterval(() => {
-        if (ghostCount < maxGhosts) {
-            const span = document.createElement('span');
-            span.className = 'new-ghost';
-            span.innerText = '👻';
-            span.style.animationDelay = (ghostCount * 0.2) + 's';
-            ghostRow.appendChild(span);
-            ghostCount++;
-        }
-    }, 1200);
-
-    // 2. THE PHYSICAL LOCK: Transition End Listener
-    // This ONLY fires when the bar is visually 100% full
-    loaderFill.addEventListener('transitionend', () => {
-        if (loaderFill.style.width === '100%') {
-            console.log("🏁 Bar visually full. Checking DB...");
-            checkFinalTransition();
-        }
-    });
-
-    // Start filling the bar immediately to hit 100% over 7 seconds
+    // Start the 7-second crawl immediately
     setTimeout(() => {
-        loaderFill.style.transition = "width 7s linear"; // Smooth 7-second crawl
         loaderFill.style.width = "100%";
     }, 100);
 
-    // 3. YOUR NESTED DATABASE PROTOCOL
-    setTimeout(async () => {
-        const supabaseClient = window.supabase.createClient('https://zvkretqhqmxuhgspddpu.supabase.co', 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY');
+    // Listen for the PHYSICAL end of the bar
+    loaderFill.addEventListener('transitionend', () => {
+        window.isLoaderFinished = true;
+        if (window.isDatabaseReady) proceed();
+    });
 
-        setTimeout(async () => {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            
-            if (session) {
-                const { data: profile } = await supabaseClient
-                    .from('profiles')
-                    .select('is_approved')
-                    .eq('id', session.user.id)
-                    .single();
-
-                if (profile && profile.is_approved) {
-                    window.finalTarget = 'hub.html';
-                } else {
-                    await supabaseClient.auth.signOut();
-                }
-            }
-
-            isDatabaseReady = true;
-            console.log("📡 DB Ready. Waiting for bar...");
-            checkFinalTransition(); 
-        }, 5000); 
-    }, 2000);
-
-    // 4. THE GATEKEEPER
-    function checkFinalTransition() {
-        // Only proceed if BOTH are true: DB is done AND Bar is physically at 100%
-        if (isDatabaseReady && loaderFill.style.width === '100%') {
-            if (window.finalTarget) {
-                window.location.replace(window.finalTarget);
-            } else {
-                showLoginUI();
-            }
+    function proceed() {
+        if (window.finalTarget) {
+            // MAGIC: Verified user goes straight to Hub
+            window.location.replace(window.finalTarget);
+        } else {
+            // Show login UI only for unverified/new users
+            showLoginUI();
         }
     }
 
     function showLoginUI() {
-        clearInterval(ghostInterval);
         const splash = document.getElementById('splash-screen');
-        if (splash) {
-            splash.style.opacity = '0';
-            setTimeout(() => {
-                splash.remove();
-                const container = document.getElementById('login-container');
-                if (container) container.style.opacity = '1';
-            }, 1000);
-        }
+        const login = document.getElementById('login-container');
+        if (splash) splash.style.opacity = '0';
+        setTimeout(() => {
+            splash.remove();
+            login.style.display = 'block';
+            setTimeout(() => { login.style.opacity = '1'; }, 50);
+        }, 800);
     }
-</script>
+
+    // Ghost Rhythm logic
+    let ghostCount = 1;
+    const ghostInterval = setInterval(() => {
+        if (ghostCount < 5) {
+            const span = document.createElement('span');
+            span.className = 'new-ghost';
+            span.innerText = '👻';
+            document.getElementById('ghost-row').appendChild(span);
+            ghostCount++;
+        } else { clearInterval(ghostInterval); }
+    }, 1200);
+  </script>
 </body>
 </html>

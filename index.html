@@ -7,11 +7,38 @@
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#000000" />
   <link rel="stylesheet" href="style.css" />
+  
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <script>
+    const SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    (async function() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('is_approved, username')
+                .eq('id', session.user.id)
+                .single();
+
+            if (profile && profile.is_approved) {
+                // If they have no username, they must finish profile setup
+                if (!profile.username) {
+                    window.location.replace('profile.html');
+                } else {
+                    window.location.replace('hub.html');
+                }
+            }
+        }
+    })();
+  </script>
 </head>
 
 <body class="login-page">
-  <div id="splash-screen" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif;">
+  <div id="splash-screen" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-family:sans-serif; transition: opacity 0.8s ease;">
     <h1 style="font-size: 3rem; font-weight: 900;">Just•Abacha😎</h1>
     <div style="font-size: 1.5rem; margin-top: 20px;">
       <span>👻</span> <span id="ghost-counter">0</span>
@@ -32,7 +59,9 @@
   </div>
 
   <script src="app.js" defer></script>
+  
   <script>
+    // 1. Ghost Counter Animation
     let count = 0;
     const counterEl = document.getElementById('ghost-counter');
     const ghostInterval = setInterval(() => {
@@ -40,41 +69,25 @@
         if(counterEl) counterEl.innerText = count;
     }, 800);
 
-    setTimeout(async () => {
-        setTimeout(async () => {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        
-        if (session) {
-            // 🚨 Check if the Ghost is approved before jumping to Hub
-            const { data: profile } = await supabaseClient
-                .from('profiles')
-                .select('is_approved')
-                .eq('id', session.user.id)
-                .single();
-
-            if (profile && profile.is_approved) {
-                window.location.replace('hub.html');
-            } else {
-                // Not approved? Kill the session and show the login container
-                await supabaseClient.auth.signOut();
-                showLoginUI();
-            }
-        } else {
-            showLoginUI();
-        }
-    }, 5000); // 5 SECONDS
+    // 2. The Reveal (Reduced to 1.5s total wait for smooth vibe)
+    setTimeout(() => {
+        showLoginUI();
+    }, 1500); 
 
     function showLoginUI() {
         clearInterval(ghostInterval);
-        document.getElementById('splash-screen').style.opacity = '0';
-        setTimeout(() => {
-            document.getElementById('splash-screen').remove();
-            document.getElementById('login-container').style.opacity = '1';
-        }, 1000);
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.remove();
+                const loginBox = document.getElementById('login-container');
+                if (loginBox) {
+                    loginBox.style.opacity = '1';
+                }
+            }, 800);
+        }
     }
-    }, 2000); // 2 SECONDS
   </script>
 </body>
-  
-          </html>
-          
+</html>

@@ -75,19 +75,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (passwordInput && loginButton && signupButton) {
         passwordInput.addEventListener('input', () => {
             if (passwordInput.value.length >= 6) {
+                loginButton.style.pointerEvents = "auto";
                 loginButton.style.background = "#32D74B";
                 loginButton.style.color = "white";
                 loginButton.style.opacity = "1";
                 loginButton.style.cursor = "pointer";
+                signupButton.style.pointerEvents = "auto";
                 signupButton.style.background = "#007AFF";
                 signupButton.style.color = "white";
                 signupButton.style.opacity = "1";
                 signupButton.style.cursor = "pointer";
             } else {
+                loginButton.style.pointerEvents = "none";
                 loginButton.style.background = "white";
                 loginButton.style.color = "black";
                 loginButton.style.opacity = "0.6";
                 loginButton.style.cursor = "not-allowed";
+                signupButton.style.pointerEvents = "none";
                 signupButton.style.background = "transparent";
                 signupButton.style.opacity = "0.6";
                 signupButton.style.cursor = "not-allowed";

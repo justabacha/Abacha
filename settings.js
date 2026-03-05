@@ -1,4 +1,33 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    const syncGhostIdentity = async () => {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!user) return;
+
+        const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('username, avatar_url')
+            .eq('id', user.id)
+            .single();
+
+        if (profile) {
+            // Update Name
+            const nameEl = document.getElementById('display-username');
+            if (nameEl && profile.username) {
+                nameEl.innerText = profile.username;
+            }
+
+            // Update Avatar
+            const avatarEl = document.getElementById('user-avatar');
+            if (avatarEl && profile.avatar_url) {
+                avatarEl.style.backgroundImage = `url(${profile.avatar_url})`;
+                avatarEl.style.backgroundSize = 'cover';
+                avatarEl.style.backgroundPosition = 'center';
+            }
+        }
+    };
+
+    // Run the sync immediately on load
+    syncGhostIdentity();
     // 1. DEDICATED REQUESTS LINK (MOVED OUTSIDE FOR INSTANT ACTION)
     window.openRequests = () => {
         window.location.href = 'requests.html';

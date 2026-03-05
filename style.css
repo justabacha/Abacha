@@ -185,3 +185,19 @@ body, html {
 .bg-green { background: #32D74B; color: white; }
 .bg-blue { background: #007AFF; color: white; }
     
+.hub-page {
+    overflow-y: auto !important;
+    height: 100%;
+    -webkit-overflow-scrolling: touch;
+}
+.hub-page div[style*="text-align:center"] p {
+    color: #ffffff !important;
+}
+
+.hub-page div[style*="text-align:center"] p:last-of-type {
+    color: rgba(255, 255, 255, 0.977) !important;
+}
+
+.hub-page div[style*="text-align:center"] span {
+    color: rgba(255, 255, 255, 0.963) !important;
+}

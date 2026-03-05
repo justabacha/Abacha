@@ -65,7 +65,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const passwordInput = document.getElementById('password');
     const loginButton = document.getElementById('login-btn');
     const signupButton = document.getElementById('signup-btn');
+    const loginContainer = document.getElementById('login-container'); // Add this
 
+    // --- NEW: UNLOCK THE LAYER ---
+    if (loginContainer) {
+        loginContainer.style.pointerEvents = "auto"; 
+    }
     // --- BUTTON UNLOCK LOGIC ---
     if (passwordInput && loginButton && signupButton) {
         passwordInput.addEventListener('input', () => {

@@ -1,5 +1,4 @@
-// --- 1. CONFIGURATION (Shared with index.html) ---
-// Note: We check if they exist first to avoid the "already declared" error
+// --- 1. CONFIGURATION ---
 if (typeof SUPABASE_URL === 'undefined') {
     var SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';
     var SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
@@ -62,43 +61,29 @@ function ghostPrompt(message, type = "success") {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('👻 Ghost Engine: Online');
 
-    const loginBox = document.getElementById('login-container');
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const loginButton = document.getElementById('login-btn');
     const signupButton = document.getElementById('signup-btn');
 
-    // Reveal login box if it exists
-    if (loginBox) {
-        loginBox.style.opacity = '1';
-        loginBox.style.pointerEvents = 'auto';
-    }
-
     // --- BUTTON UNLOCK LOGIC ---
     if (passwordInput && loginButton && signupButton) {
         passwordInput.addEventListener('input', () => {
             if (passwordInput.value.length >= 6) {
-                // Active State
                 loginButton.style.background = "#32D74B";
                 loginButton.style.color = "white";
                 loginButton.style.opacity = "1";
                 loginButton.style.cursor = "pointer";
-                
                 signupButton.style.background = "#007AFF";
                 signupButton.style.color = "white";
-                signupButton.style.border = "none";
                 signupButton.style.opacity = "1";
                 signupButton.style.cursor = "pointer";
             } else {
-                // Locked State
                 loginButton.style.background = "white";
                 loginButton.style.color = "black";
                 loginButton.style.opacity = "0.6";
                 loginButton.style.cursor = "not-allowed";
-
                 signupButton.style.background = "transparent";
-                signupButton.style.color = "white";
-                signupButton.style.border = "1px solid rgba(255,255,255,0.4)";
                 signupButton.style.opacity = "0.6";
                 signupButton.style.cursor = "not-allowed";
             }
@@ -109,7 +94,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (loginButton) {
         loginButton.onclick = async () => {
             if (passwordInput.value.length < 6) return;
-            
             const email = emailInput.value;
             const password = passwordInput.value;
             loginButton.innerText = "Checking...";
@@ -129,11 +113,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 await supabaseClient.auth.signOut();
                 loginButton.innerText = "Login";
-                fetch('/api/send-code', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email })
-                });
+                try {
+                    await fetch('/api/send-code', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: email })
+                    });
+                } catch (e) { console.log("API Bypass active"); }
                 showGhostVerify(email);
             }
         };
@@ -143,7 +129,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (signupButton) {
         signupButton.onclick = async () => {
             if (passwordInput.value.length < 6) return;
-
             const email = emailInput.value;
             const password = passwordInput.value;
             signupButton.innerText = "Ghosting...";
@@ -155,11 +140,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 signupButton.innerText = "Sign up";
             } else {
                 await supabaseClient.auth.signOut();
-                await fetch('/api/send-code', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email })
-                });
+                signupButton.innerText = "Sign up";
+                try {
+                    await fetch('/api/send-code', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: email })
+                    });
+                } catch (e) { console.log("API Bypass active"); }
                 showGhostVerify(email);
             }
         };

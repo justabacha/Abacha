@@ -29,9 +29,7 @@ window.cancelReply = () => {
 window.closeGhostModal = () => {
   document.getElementById("delete-modal").style.display = "none";
   document.getElementById("pin-modal").style.display = "none";
-};
-
-window.deleteMessage = (id) => {
+};window.deleteMessage = (id) => {
   messageToDelete = id;
   document.getElementById("delete-modal").style.display = "flex";
   document.getElementById("chat-overlay").style.display = "none";
@@ -39,11 +37,33 @@ window.deleteMessage = (id) => {
 
 window.confirmGhostDelete = async () => {
   if (!messageToDelete) return;
-  // Optimistic UI: Hide it immediately
-  const el = document.getElementById(`msg-wrapper-${messageToDelete}`);
-  if (el) el.style.display = 'none';
   
-  await supabaseClient.from("messages").delete().eq("id", messageToDelete);
+  // 1. Hide it from the UI immediately (Optimistic)
+  const el = document.getElementById(`msg-wrapper-${messageToDelete}`);
+  if (el) el.remove();
+
+  // 2. SOFT DELETE: Add current user's ID to the hidden_from array
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  
+  // First, get the current array to avoid overwriting others' deletions
+  const { data: msg } = await supabaseClient
+    .from("messages")
+    .select("hidden_from")
+    .eq("id", messageToDelete)
+    .single();
+
+  const updatedHiddenFrom = [...(msg?.hidden_from || []), user.id];
+
+  const { error } = await supabaseClient
+    .from("messages")
+    .update({ hidden_from: updatedHiddenFrom })
+    .eq("id", messageToDelete);
+
+  if (error) {
+      console.error("Ghost Hide Failed:", error.message);
+      window.showGhostPrompt("Could't hide that vibe... 💀");
+  }
+
   messageToDelete = null;
   window.closeGhostModal();
 };
@@ -61,13 +81,19 @@ window.openPinModal = (id, content) => {
 window.executePin = async (hours) => {
   const expiry = new Date();
   expiry.setHours(expiry.getHours() + hours);
-  await supabaseClient
+  
+  const { error } = await supabaseClient
     .from("messages")
     .update({ pinned_until: expiry.toISOString() })
     .eq("id", pendingPinMsg.id);
-  
-  window.closeGhostModal();
-  setTimeout(() => window.loadPins(), 500); // Give Supabase a moment to breathe
+
+  if (error) {
+      window.showGhostPrompt("Pinning failed. Policy issue! 📌");
+  } else {
+      window.closeGhostModal();
+      // Silently refresh pins without reloading page
+      setTimeout(() => window.loadPins(), 300);
+  }
 };
 
 window.unpinMessage = async (id) => {
@@ -80,45 +106,55 @@ window.unpinMessage = async (id) => {
 
 // --- 4. MAIN CHAT ENGINE ---
 document.addEventListener("DOMContentLoaded", async () => {
-  const {
-    data: { user },
-  } = await supabaseClient.auth.getUser();
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user || !friendID) return;
 
   const chatBox = document.getElementById("chat-box");
   const sendBtn = document.getElementById("send-btn");
   const msgInput = document.getElementById("msg-input");
 
-  if (!user || !friendID) return;
+  // A. RECEIVER HEADER (Synced with Chatlist Logic)
+  const syncReceiverHeader = async () => {
+    try {
+        console.log("Ghost Protocol: Fetching friend data for", friendID);
+        const { data: friend, error } = await supabaseClient
+          .from('profiles')
+          .select('*') // Pull all columns to match chatlist.js robustness
+          .eq('id', friendID)
+          .maybeSingle();
 
-  // A. RECEIVER HEADER (STAYS FIXED)
- const syncReceiverHeader = async () => {
-    const { data: friend } = await supabaseClient
-      .from('profiles')
-      .select('avatar_url, username, last_seen') // Added last_seen
-      .eq('id', friendID)
-      .single();
+        if (error || !friend) {
+          console.error("Ghost Header Error:", error);
+          return;
+        }
 
-    if (!friend) return;
+        // Target the specific elements by ID
+        const nameEl = document.getElementById('header-name');
+        const avatarEl = document.getElementById('header-avatar');
+        const statusEl = document.getElementById('online-status');
 
-    const nameEl = document.querySelector('.chat-user-name');
-    const avatarEl = document.querySelector('.chat-avatar');
-    const statusEl = document.querySelector('.chat-header span:last-child'); // The ONLINE text
+        if (nameEl) nameEl.textContent = `~${friend.username || 'Ghost'}`;
+        
+        if (avatarEl && (friend.avatar_url || friend.avatar)) {
+          const img = friend.avatar_url || friend.avatar;
+          avatarEl.style.backgroundImage = `url('${img}')`;
+          avatarEl.style.backgroundSize = "cover";
+          avatarEl.style.backgroundColor = "transparent";
+        }
 
-    if (nameEl) nameEl.textContent = `~${friend.username}`;
-    if (avatarEl && friend.avatar_url) {
-      avatarEl.style.backgroundImage = `url(${friend.avatar_url})`;
-      avatarEl.style.backgroundSize = "cover";
-    }
-
-    // ONLINE LOGIC: If seen within last 2 minutes
-    const isOnline = friend.last_seen && (new Date() - new Date(friend.last_seen) < 120000);
-    if (statusEl) {
-        statusEl.textContent = isOnline ? "● ONLINE" : "● OFFLINE";
-        statusEl.style.color = isOnline ? "#32D74B" : "#f21515";
+        // Online Logic (2-minute window)
+        const isOnline = friend.last_seen && (new Date() - new Date(friend.last_seen) < 120000);
+        if (statusEl) {
+            statusEl.textContent = isOnline ? "● ONLINE" : "● OFFLINE";
+            statusEl.style.color = isOnline ? "#32D74B" : "#f21515";
+        }
+    } catch (err) {
+        console.error("Header Sync Failed:", err);
     }
   };
 
-await syncReceiverHeader();
+  // Run header sync first
+  await syncReceiverHeader();
   // B. LOAD PINS
   window.loadPins = async () => {
     const now = new Date().toISOString();
@@ -153,9 +189,10 @@ await syncReceiverHeader();
     });
 
     const wrapper = document.createElement("div");
-    wrapper.id = `msg-wrapper-${msg.id}`; // ADD THIS LINE
+    // Ensure every wrapper has a unique ID for the realtime engine to target
+    wrapper.id = `msg-wrapper-${msg.id}`; 
     wrapper.className = `msg-wrapper ${isMe ? "user-wrapper" : "ai-wrapper"}`;
-    const { data: sender } = await supabaseClient
+  const { data: sender } = await supabaseClient
       .from("profiles")
       .select("avatar_url")
       .eq("id", msg.sender_id)
@@ -187,14 +224,13 @@ await syncReceiverHeader();
 
     chatBox.appendChild(wrapper);
   };
-
-  // D. LOAD HISTORY (SAFE FILTER)
+// D. LOAD HISTORY (Now with Ghost-Hidden Filter)
   const { data: history } = await supabaseClient
     .from("messages")
     .select("*")
-    .or(
-      `and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`
-    )
+    .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`)
+    // NEW: Filter out messages hidden by the current user
+    .not('hidden_from', 'cs', `{${user.id}}`) 
     .order("created_at", { ascending: true });
 
   chatBox.innerHTML = "";
@@ -280,7 +316,7 @@ requestAnimationFrame(() => {
   container.style.display = 'block';
   container.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:center; color:white;">
-      <div style="border-left:3px solid #007AFF; padding-left:10px;">
+      <div style="border-left:4px solid #007AFF; padding-left:10px;">
         <div style="color:#007AFF; font-size:10px; font-weight:bold;">
           Replying to ${name}
         </div>
@@ -324,40 +360,99 @@ requestAnimationFrame(() => {
       this.style.height = (this.scrollHeight) + 'px';
   });
 
-  msgInput.addEventListener('keydown', (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault(); // Don't make new line
-          handleSend();      // Send instead
+ msgInput.addEventListener('keydown', (e) => {
+      // Check if it's the Enter key
+      if (e.key === "Enter") {
+          // On mobile, scrollHeight usually doesn't change unless there's a real line break.
+          // We allow the default behavior (new line) if Shift is held OR if it's a touch-based device
+          // but we want to SEND if it's a standard Enter press on Desktop.
+          
+          const isMobile = window.matchMedia("(pointer: coarse)").matches;
+
+          if (!e.shiftKey && !isMobile) {
+              e.preventDefault(); // Stop the new line
+              handleSend();      // Send the vibe
+          }
+          // On mobile, we let the default "Enter" happen so it jumps to the next line
+          // The Send button (🚀) will be the primary way to send on phone.
       }
-      // If Shift+Enter is pressed, it naturally goes to next line
   });
 
   sendBtn.onclick = handleSend;
+  // --- TYPING LOGIC ---
+  const typingIndicator = document.getElementById("typing-indicator");
+  let typingTimeout;
 
- // I. REALTIME (Silent Sync)
-  supabaseClient
-    .channel("messages")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "messages" }, // Changed to "*" to catch deletes too
-      (payload) => {
-        if (payload.eventType === "INSERT") {
-          const m = payload.new;
-          if (
-            (m.sender_id === user.id && m.receiver_id === friendID) ||
-            (m.sender_id === friendID && m.receiver_id === user.id)
-          ) {
-            displayMessage(m);
-            chatBox.scrollTop = chatBox.scrollHeight;
-          }
-        }
+  // 1. Create a dedicated channel for typing
+  const typingChannel = supabaseClient.channel(`typing:${friendID}`);
+
+  // 2. Listen for typing events from the friend
+  typingChannel
+    .on("broadcast", { event: "typing" }, (payload) => {
+      if (payload.payload.userId === friendID) {
+        typingIndicator.style.display = "block";
         
-        if (payload.eventType === "DELETE") {
-           // Silently remove deleted message from the UI using the new ID
-           const deletedEl = document.getElementById(`msg-wrapper-${payload.old.id}`);
-           if (deletedEl) deletedEl.remove();
+        // Auto-hide after 3 seconds of no "typing" pings
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+          typingIndicator.style.display = "none";
+        }, 3000);
+      }
+    })
+    .subscribe();
+
+  // 3. Send typing signal when user types
+  msgInput.addEventListener("input", () => {
+    typingChannel.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { userId: user.id },
+    });
+  });
+
+// I. REALTIME (Silent Sync)
+supabaseClient
+  .channel("db-changes")
+  // Listen to Messages (Existing)
+  .on(
+    "postgres_changes",
+    { event: "*", schema: "public", table: "messages" },
+    (payload) => {
+      if (payload.eventType === "INSERT") {
+        const m = payload.new;
+        const isRelevant = (m.sender_id === user.id && m.receiver_id === friendID) || 
+                           (m.sender_id === friendID && m.receiver_id === user.id);
+        
+        if (isRelevant && (!m.hidden_from || !m.hidden_from.includes(user.id))) {
+          displayMessage(m);
+          chatBox.scrollTop = chatBox.scrollHeight;
         }
       }
-    )
-    .subscribe();
+      
+      if (payload.eventType === "UPDATE") {
+        const m = payload.new;
+        if (m.hidden_from && m.hidden_from.includes(user.id)) {
+          const el = document.getElementById(`msg-wrapper-${m.id}`);
+          if (el) el.remove();
+        }
+      }
+
+      if (payload.eventType === "DELETE") {
+        const deletedMsg = document.getElementById(`msg-wrapper-${payload.old.id}`);
+        if (deletedMsg) deletedMsg.remove();
+      }
+    }
+  )
+  // ADD THIS: Listen to Friendships (For the Burn Logic)
+  .on(
+    "postgres_changes",
+    { event: "DELETE", schema: "public", table: "friendships" },
+    (payload) => {
+      // If ANY friendship is deleted, we check if it's the one we are currently in
+      // Since we don't have the friendship ID easily, we just verify if the chat is still valid
+      window.showGhostPrompt("This connection has been burned. 💨");
+      setTimeout(() => window.location.href = 'chat-list.html', 1500);
+    }
+  )
+  .subscribe();
 });

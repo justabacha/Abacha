@@ -224,15 +224,29 @@ window.showGhostVerify = (email) => {
 // --- 4. GHOST INSTALL ENGINE ---
 let deferredPrompt;
 
+// Check if we should show the button on page load (if event already fired)
+window.addEventListener('load', () => {
+    if (sessionStorage.getItem('ghost_can_install') === 'true') {
+        const fixedBtn = document.getElementById('ghost-install-fixed');
+        if (fixedBtn) fixedBtn.style.display = 'block';
+    }
+});
+
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
+    
+    // Remember for other pages
+    sessionStorage.setItem('ghost_can_install', 'true');
 
     // Show top-right button
     const fixedBtn = document.getElementById('ghost-install-fixed');
-    if (fixedBtn) fixedBtn.style.display = 'block';
+    if (fixedBtn) {
+        fixedBtn.style.display = 'block';
+        fixedBtn.classList.add('pulse-neon'); // Adding the glow
+    }
 
-    // Auto-popup logic (once per session)
+    // Auto-popup logic
     if (!sessionStorage.getItem('ghost_install_shown')) {
         showGhostInstallPopup();
     }
@@ -260,17 +274,25 @@ window.executeGhostInstall = async () => {
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
         if (outcome === 'accepted') {
-            const btn = document.getElementById('ghost-install-fixed');
-            if (btn) btn.remove();
-            const overlay = document.getElementById('install-overlay');
-            if (overlay) overlay.remove();
+            sessionStorage.removeItem('ghost_can_install');
+            cleanupInstallUI();
         }
         deferredPrompt = null;
+    } else {
+        // If we lost the prompt variable due to navigation, tell user how to do it manually
+        ghostPrompt("Tap the browser menu and select 'Install' or 'Add to Home Screen'", "info");
     }
 };
 
-window.addEventListener('appinstalled', () => {
+function cleanupInstallUI() {
     const btn = document.getElementById('ghost-install-fixed');
     if (btn) btn.remove();
+    const overlay = document.getElementById('install-overlay');
+    if (overlay) overlay.remove();
+}
+
+window.addEventListener('appinstalled', () => {
+    sessionStorage.removeItem('ghost_can_install');
+    cleanupInstallUI();
     console.log('Ghost Engine: Layer Integrated');
 });

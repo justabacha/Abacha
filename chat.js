@@ -39,6 +39,10 @@ window.deleteMessage = (id) => {
 
 window.confirmGhostDelete = async () => {
   if (!messageToDelete) return;
+  // Optimistic UI: Hide it immediately
+  const el = document.getElementById(`msg-wrapper-${messageToDelete}`);
+  if (el) el.style.display = 'none';
+  
   await supabaseClient.from("messages").delete().eq("id", messageToDelete);
   messageToDelete = null;
   window.closeGhostModal();
@@ -61,8 +65,9 @@ window.executePin = async (hours) => {
     .from("messages")
     .update({ pinned_until: expiry.toISOString() })
     .eq("id", pendingPinMsg.id);
+  
   window.closeGhostModal();
-  window.loadPins();
+  setTimeout(() => window.loadPins(), 500); // Give Supabase a moment to breathe
 };
 
 window.unpinMessage = async (id) => {
@@ -86,23 +91,32 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!user || !friendID) return;
 
   // A. RECEIVER HEADER (STAYS FIXED)
-  const syncReceiverHeader = async () => {
-  const { data: friend } = await supabaseClient
-    .from('profiles')
-    .select('avatar_url, username')
-    .eq('id', friendID)
-    .single();
+ const syncReceiverHeader = async () => {
+    const { data: friend } = await supabaseClient
+      .from('profiles')
+      .select('avatar_url, username, last_seen') // Added last_seen
+      .eq('id', friendID)
+      .single();
 
-  if (!friend) return;
+    if (!friend) return;
 
-  const nameEl = document.querySelector('.chat-user-name');
-  const avatarEl = document.querySelector('.chat-avatar');
+    const nameEl = document.querySelector('.chat-user-name');
+    const avatarEl = document.querySelector('.chat-avatar');
+    const statusEl = document.querySelector('.chat-header span:last-child'); // The ONLINE text
 
-  if (nameEl) nameEl.textContent = `~${friend.username}`;
-  if (avatarEl && friend.avatar_url) {
-    avatarEl.style.backgroundImage = `url(${friend.avatar_url})`;
-  }
-};
+    if (nameEl) nameEl.textContent = `~${friend.username}`;
+    if (avatarEl && friend.avatar_url) {
+      avatarEl.style.backgroundImage = `url(${friend.avatar_url})`;
+      avatarEl.style.backgroundSize = "cover";
+    }
+
+    // ONLINE LOGIC: If seen within last 2 minutes
+    const isOnline = friend.last_seen && (new Date() - new Date(friend.last_seen) < 120000);
+    if (statusEl) {
+        statusEl.textContent = isOnline ? "● ONLINE" : "● OFFLINE";
+        statusEl.style.color = isOnline ? "#32D74B" : "#f21515";
+    }
+  };
 
 await syncReceiverHeader();
   // B. LOAD PINS
@@ -139,8 +153,8 @@ await syncReceiverHeader();
     });
 
     const wrapper = document.createElement("div");
+    wrapper.id = `msg-wrapper-${msg.id}`; // ADD THIS LINE
     wrapper.className = `msg-wrapper ${isMe ? "user-wrapper" : "ai-wrapper"}`;
-
     const { data: sender } = await supabaseClient
       .from("profiles")
       .select("avatar_url")
@@ -227,24 +241,16 @@ requestAnimationFrame(() => {
     clonedBubble.classList.add("popped-message");
 
     menuContainer.appendChild(clonedBubble);
-    menuContainer.insertAdjacentHTML(
+   menuContainer.insertAdjacentHTML(
       "beforeend",
       `
       <div class="action-tile">
-        <div class="action-item" onclick="window.triggerReply('${msg.sender_id}', '${msg.content.replace(
-        /'/g,
-        "\\'"
-      )}')">Reply ✍️</div>
-        <div class="action-item" onclick="navigator.clipboard.writeText('${msg.content}')">Copy 📑</div>
+        <div class="action-item" onclick="window.triggerReply('${msg.sender_id}', '${msg.content.replace(/'/g, "\\'")}')">Reply ✍️</div>
+        <div class="action-item" onclick="const txt='${msg.content.replace(/'/g, "\\'")}'; navigator.clipboard.writeText(txt).then(() => { alert('Ghost Copied!'); window.closeGhostModal(); document.getElementById('chat-overlay').style.display='none'; })">Copy 📑</div>
         <div class="action-item" onclick="window.showGhostPrompt('This feature is coming soon.!🍻')">Forward 📤</div>
-        <div class="action-item" onclick="${
-          isPinned
-            ? `window.unpinMessage('${msg.id}')`
-            : `window.openPinModal('${msg.id}', '${msg.content.replace(
-                /'/g,
-                "\\'"
-              )}')`
-        }">${isPinned ? "Unpin" : "Pin"} 📌</div>
+        <div class="action-item" onclick="${isPinned ? `window.unpinMessage('${msg.id}')` : `window.openPinModal('${msg.id}', '${msg.content.replace(/'/g, "\\'")}')`}">
+            ${isPinned ? "Unpin" : "Pin"} 📌
+        </div>
         <div class="action-item delete" onclick="window.deleteMessage('${msg.id}')">Delete 🗑️</div>
       </div>`
     );
@@ -288,49 +294,68 @@ requestAnimationFrame(() => {
 
   document.getElementById('chat-overlay').style.display = 'none';
 };
-  // H. SEND
+  // H. SEND & INPUT ENGINE
   const handleSend = async () => {
-  const message = msgInput.value.trim();
-  if (!message) return;
+    const message = msgInput.value.trim();
+    if (!message) return;
 
-  let content = message;
-
-  if (replyingTo) {
-    content = `↳ [Replying to ${replyingTo.name}: ${replyingTo.content}]\n${message}`;
-    window.cancelReply();
-  }
-
-  await supabaseClient.from('messages').insert([
-    {
-      content,
-      sender_id: user.id,
-      receiver_id: friendID,
-      sender_email: user.email
+    let content = message;
+    if (replyingTo) {
+      content = `↳ [Replying to ${replyingTo.name}: ${replyingTo.content}]\n${message}`;
+      window.cancelReply();
     }
-  ]);
 
-  msgInput.value = "";
-};
+    await supabaseClient.from('messages').insert([
+      {
+        content,
+        sender_id: user.id,
+        receiver_id: friendID,
+        sender_email: user.email
+      }
+    ]);
+
+    msgInput.value = "";
+    msgInput.style.height = 'auto'; // Reset height after sending
+  };
+
+  // Auto-stretch and Key handling
+  msgInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+  });
+
+  msgInput.addEventListener('keydown', (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault(); // Don't make new line
+          handleSend();      // Send instead
+      }
+      // If Shift+Enter is pressed, it naturally goes to next line
+  });
 
   sendBtn.onclick = handleSend;
-  msgInput.onkeypress = (e) => e.key === "Enter" && handleSend();
 
-  // I. REALTIME
+ // I. REALTIME (Silent Sync)
   supabaseClient
     .channel("messages")
     .on(
       "postgres_changes",
-      { event: "INSERT", schema: "public", table: "messages" },
+      { event: "*", schema: "public", table: "messages" }, // Changed to "*" to catch deletes too
       (payload) => {
-        if (
-          (payload.new.sender_id === user.id &&
-            payload.new.receiver_id === friendID) ||
-          (payload.new.sender_id === friendID &&
-            payload.new.receiver_id === user.id)
-        ) {
-          displayMessage(payload.new).then(() => {
+        if (payload.eventType === "INSERT") {
+          const m = payload.new;
+          if (
+            (m.sender_id === user.id && m.receiver_id === friendID) ||
+            (m.sender_id === friendID && m.receiver_id === user.id)
+          ) {
+            displayMessage(m);
             chatBox.scrollTop = chatBox.scrollHeight;
-          });
+          }
+        }
+        
+        if (payload.eventType === "DELETE") {
+           // Silently remove deleted message from the UI using the new ID
+           const deletedEl = document.getElementById(`msg-wrapper-${payload.old.id}`);
+           if (deletedEl) deletedEl.remove();
         }
       }
     )

@@ -43,7 +43,7 @@
     </div>
 
   <div class="chat-header">
-    <a href="chat-list.html" style="text-decoration:none; color:white; font-size:24px; margin-right:15px;">‹</a>
+    <a href="chat-list.html" style="text-decoration:none; color:white; font-size:24px; margin-right:15px;">‹‹</a>
     <div class="chat-avatar" style="width:40px; height:40px; border-radius:50%; background: #333; margin-right:10px;"></div>
     <div style="display: flex; flex-direction: column;">
         <h4 class="chat-user-name" style="margin:0; color:white;">Inner Circle</h4>
@@ -56,9 +56,10 @@
     <div id="chat-box"></div>
 
         <div class="floating-input-container">
-        <div id="reply-preview-container"></div> <div class="input-tile">
-            <input type="text" id="msg-input" placeholder="Rada?..." autocomplete="off">
-            <button id="send-btn">🚀</button>
+        <div id="reply-preview-container"></div> 
+        <div class="input-tile">
+        <textarea id="msg-input" placeholder="Rada?..." rows="1" autocomplete="off"></textarea>
+        <button id="send-btn">🚀</button>
         </div>
         </div>
     <div id="ghost-prompt-overlay"></div>

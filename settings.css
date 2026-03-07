@@ -15,9 +15,9 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: url('https://i.postimg.cc/zBgrHQBj/1000511845.jpg') no-repeat center center;
+    background: url('settings.jpg') no-repeat center center;
     background-size: cover; /* This forces it to fill every corner of the screen */
-    opacity: 0.4;
+    opacity: 0.7;
     z-index: -1;
     /* Optional: If the object in the photo is slightly off-center, 
        you can change 'center center' to 'center 40%' to nudge it up */

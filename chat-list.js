@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const syncMyHeader = async () => {
         const { data: profile } = await supabaseClient.from('profiles').select('username, avatar_url').eq('id', user.id).maybeSingle();
         if (profile) {
-            document.getElementById('my-own-alias').innerText = `@${profile.username}`;
+            document.getElementById('my-own-alias').innerText = `${profile.username}`;
             if (profile.avatar_url) document.getElementById('my-own-avatar').style.backgroundImage = `url(${profile.avatar_url})`;
         }
     };
@@ -129,51 +129,83 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
-    // --- 3. LOAD ACTIVE (Basin Geometry) ---
+   // --- 3. LOAD ACTIVE (Ghost-Silent Sync) ---
     const loadActive = async () => {
         const { data: friends } = await supabaseClient.from('friendships')
             .select(`*, sender:profiles!friendships_sender_id_fkey(id, username, avatar_url), receiver:profiles!friendships_receiver_id_fkey(id, username, avatar_url)`)
             .eq('status', 'accepted').or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`);
 
-        const container = document.getElementById('active-chats');
-        if (!container) return;
-        container.innerHTML = '';
+        if (!friends) return;
 
+        const container = document.getElementById('active-chats');
         const pinnedList = JSON.parse(localStorage.getItem('pinned_ghosts') || '[]');
-        const sorted = (friends || []).sort((a, b) => {
-            const idA = a.sender_id === user.id ? a.receiver_id : a.sender_id;
-            const idB = b.sender_id === user.id ? b.receiver_id : b.sender_id;
-            return pinnedList.includes(idB) - pinnedList.includes(idA);
+        
+        // Use a Map to ensure each Friend ID only appears ONCE
+        const uniqueFriends = new Map();
+
+        for (const f of friends) {
+            const friendData = f.sender_id === user.id ? f.receiver : f.sender;
+            if (friendData && !uniqueFriends.has(friendData.id)) {
+                uniqueFriends.set(friendData.id, { ...friendData, friendshipId: f.id });
+            }
+        }
+
+        // Convert Map to Array and sort by Pinned status
+        const sortedFriends = Array.from(uniqueFriends.values()).sort((a, b) => {
+            return pinnedList.includes(b.id) - pinnedList.includes(a.id);
         });
 
-        const displayedIDs = new Set();
-        for (const f of sorted) {
-            let friend = f.sender_id === user.id ? f.receiver : f.sender;
-            if (friend && !displayedIDs.has(friend.id)) {
-                displayedIDs.add(friend.id);
-                const { count: unreadCount } = await supabaseClient.from('messages').select('*', { count: 'exact', head: true }).eq('sender_id', friend.id).eq('receiver_id', user.id).eq('is_read', false);
-                const { data: msg } = await supabaseClient.from('messages').select('*').or(`and(sender_id.eq.${user.id},receiver_id.eq.${friend.id}),and(sender_id.eq.${friend.id},receiver_id.eq.${user.id})`).order('created_at', { ascending: false }).limit(1).maybeSingle();
-                
-                const time = msg ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
-                const isPinned = pinnedList.includes(friend.id);
-                const badgeHtml = unreadCount > 0 ? `<span class="unread-badge">${unreadCount}</span>` : '';
+        let finalHTML = '';
+        let totalUnread = 0;
 
-                const wrapper = document.createElement('div');
-                wrapper.className = 'user-card-wrapper';
-                wrapper.innerHTML = `
+        // Optimized Loop
+        for (const friend of sortedFriends) {
+            // Fetch unread count & last message in parallel
+            const [unreadRes, msgRes] = await Promise.all([
+                supabaseClient.from('messages').select('*', { count: 'exact', head: true }).eq('sender_id', friend.id).eq('receiver_id', user.id).eq('is_read', false),
+                supabaseClient.from('messages').select('*').or(`and(sender_id.eq.${user.id},receiver_id.eq.${friend.id}),and(sender_id.eq.${friend.id},receiver_id.eq.${user.id})`).order('created_at', { ascending: false }).limit(1).maybeSingle()
+            ]);
+
+            const unreadCount = unreadRes.count || 0;
+            totalUnread += unreadCount;
+            const msg = msgRes.data;
+            const isPinned = pinnedList.includes(friend.id);
+            const time = msg ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+            
+            // The "Badge" only shows if unreadCount > 0
+            const badgeHtml = unreadCount > 0 ? `<span class="unread-badge" style="background:#FF3B30; color:white; padding:2px 8px; border-radius:10px; font-size:10px; margin-left:10px;">${unreadCount}</span>` : '';
+
+            finalHTML += `
+                <div class="user-card-wrapper" data-id="${friend.id}">
                     <div class="user-avatar" style="background-image: url(${friend.avatar_url || 'default.png'})"></div>
                     <div class="user-card ${unreadCount > 0 ? 'unread-vibe' : 'read-vibe'}" id="card-${friend.id}" onclick="handleEntry('${friend.id}', '${friend.avatar_url}')">
                         <div class="user-info">
-                            <h4>${friend.username} ${isPinned ? '📌' : ''} ${badgeHtml}</h4>
-                            <p>${msg ? msg.content.substring(0, 22) + '...' : 'Open Tunnel'}</p>
+                            <h4 style="display:flex; align-items:center;">
+                                ${friend.username} ${isPinned ? '<span style="margin-left:5px;">📌</span>' : ''} ${badgeHtml}
+                            </h4>
+                            <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;">
+                                ${msg ? msg.content : 'No vibes yet...'}
+                            </p>
                             <span class="msg-time">${time}</span>
                         </div>
-                    </div>`;
-                container.appendChild(wrapper);
-                addLongPress(document.getElementById(`card-${friend.id}`), friend.id, f.id, friend);
-            }
+                    </div>
+                </div>`;
+        }
+
+        // THE "NO-BLINK" UPDATE: Only swap if the data is actually different
+        if (container.innerHTML !== finalHTML) {
+            container.innerHTML = finalHTML;
+            // Re-bind long press to the new elements
+            sortedFriends.forEach(f => {
+                const el = document.getElementById(`card-${f.id}`);
+                if (el) addLongPress(el, f.id, f.friendshipId, f);
+            });
         }
     };
+
+    // Fast initial load, then silent background sync every 5 seconds
+    loadActive(); 
+    setInterval(loadActive, 5000);
 
     // --- 4. FLOATING GHOST LAYERS ---
 window.showGhostMenu = (friendId, friendshipId, friendObj) => {

@@ -1,12 +1,59 @@
 /* GHOST VIBES GLOBAL */
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body { margin: 0; font-family: -apple-system, system-ui, sans-serif; color: white; overflow-x: hidden; }
+body { 
+    margin: 0; 
+    font-family: -apple-system, system-ui, sans-serif; 
+    color: white; 
+    background: #000; /* Solid fallback */
+    height: 100vh;
+    overflow: hidden; /* Prevent body scroll, use container scroll */
+}
+
+.vibe-list-container { 
+    padding: 20px; 
+    height: calc(100vh - 100px); /* Subtract top nav height */
+    overflow-y: auto; 
+    -webkit-overflow-scrolling: touch; /* Smooth iOS scroll */
+    padding-bottom: 100px; /* Space for the last card */
+}
+
+/* THE TOAST NOTIFICATION */
+#ghost-toast {
+    visibility: hidden;
+    min-width: 200px;
+    background-color: #32D74B;
+    color: #000;
+    text-align: center;
+    border-radius: 50px;
+    padding: 12px 24px;
+    position: fixed;
+    z-index: 100000;
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%);
+    font-weight: 800;
+    font-size: 14px;
+    box-shadow: 0 10px 30px rgba(50, 215, 75, 0.4);
+}
+
+#ghost-toast.show {
+    visibility: visible;
+    animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+@keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+@keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+
+/* Pinned Vibe Style */
+.pinned-vibe .user-card {
+    border-right: 2px solid #FFD700 !important; /* Gold border for pinned */
+    border-bottom: 2px solid #FFD700 !important;
+}
 .ghost-wallpaper {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: url('https://images.unsplash.com/photo-1514565131-fce0801e5785?w=1200&q=80') no-repeat center center;
+    background: url('setting.jpg') no-repeat center center;
     background-size: cover; z-index: -1; filter: brightness(0.5) contrast(1.1);
 }
-.vibe-list-container { padding: 20px; }
 .section-label { color: #32D74B; font-size: 10px; letter-spacing: 2px; margin: 20px 0 10px; text-transform: uppercase; }
 
 .search-input { 
@@ -155,4 +202,36 @@ body { margin: 0; font-family: -apple-system, system-ui, sans-serif; color: whit
 
 #profile-card-overlay .floating-menu-container {
     animation: cardPop 0.3s ease-out forwards;
+}
+/* Ensure the info area allows the badge to be seen */
+.user-info h4 {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    width: 100%;
+}
+
+.unread-badge {
+    background: #FF3B30;
+    color: white;
+    font-size: 10px;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-left: 10px;
+    box-shadow: 0 0 10px rgba(255, 59, 48, 0.5);
+    flex-shrink: 0; /* Prevents badge from being crushed */
+}
+
+/* Smooth Scrolling Container */
+.vibe-list-container {
+    padding: 20px;
+    height: 85vh; /* Gives it room to scroll */
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Hides scrollbar on Firefox */
+}
+
+.vibe-list-container::-webkit-scrollbar {
+    display: none; /* Hides scrollbar on Chrome/Safari */
 }

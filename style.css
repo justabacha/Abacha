@@ -14,9 +14,9 @@ input, textarea {
 :root {
     /* WALLPAPERS */
     --hub-bg: url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2000');
-    --nature-tile: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1000');
-    --chat-bg: url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2000'); 
-    --login-bg: url('https://i.postimg.cc/G2k8p91C/IMG-6642-2.jpg');
+    --nature-tile: url('hub.jpg');
+    --chat-bg: url('chat.jpg'); 
+    --login-bg: url('login.jpg');
     
     /* BRAND COLORS */
     --whatsapp-green: rgba(50, 215, 75, 0.7);
@@ -107,7 +107,7 @@ body, html {
 }
 
 #weather-widget { 
-    background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), var(--nature-tile); 
+    background: linear-gradient(rgba(0,0,0,0.3), rgba(141, 138, 138, 0)), var(--nature-tile); 
     background-size: cover; 
     background-position: center; 
     border-radius: 30px; 

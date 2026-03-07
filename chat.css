@@ -373,5 +373,42 @@ button, .action-item, .input-tile {
     width: 100%;
     }
     
+/* 1. AUTO-STRETCHING TEXTAREA */
+.input-tile textarea { 
+    flex: 1; 
+    background: transparent !important; 
+    border: none !important; 
+    color: white !important; 
+    outline: none !important; 
+    font-size: 16px; 
+    padding: 10px 0;
+    resize: none; 
+    max-height: 100px; 
+    font-family: inherit;
+    line-height: 1.4;
+    overflow-y: scroll; /* Allow scrolling */
+    scrollbar-width: none; /* Hide for Firefox */
+    -ms-overflow-style: none; /* Hide for IE/Edge */
+}
+.input-tile textarea::-webkit-scrollbar {
+    display: none; /* Hide for Chrome/Safari */
+}
 
+/* 2. ONLINE/OFFLINE STATUS */
+.status-dot {
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    transition: color 0.3s ease;
+}
+.status-online { color: #32D74B; }
+.status-offline { color: rgba(252, 10, 10, 0.354); }
+
+/* 3. REVERSED CHAT BOX FOR LATEST MESSAGES AT BOTTOM */
+#chat-box {
+    display: flex;
+    flex-direction: column; /* Keep it normal, we will scroll to bottom */
+    overflow-y: auto;
+    padding: 20px 20px 150px;
+}
     

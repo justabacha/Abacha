@@ -243,3 +243,42 @@ body, html {
     text-align: center;
     box-shadow: 0 20px 40px rgba(0,0,0,0.4);
 }
+.gallery-page {
+    background: var(--nature-tile) no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+.gallery-page h1 {
+    width: 100%;
+    text-align: center;
+    color: rgb(255, 255, 255);
+    text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+    margin-bottom: 30px;
+}
+.gallery-page p {
+    width: 100%;
+    text-align: center;
+    color: rgb(255, 255, 255);
+    opacity: 0.9;
+    font-size: 16px;
+    margin-bottom: 40px;
+}
+.bucketlist-page{
+    background: var(--nature-tile) no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+.bucketlist-page p {
+    width: 100%;
+    text-align: center;
+    color: rgb(255, 255, 255);
+    font-size: 30px;
+    margin-bottom: 40px;
+}

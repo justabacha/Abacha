@@ -60,7 +60,7 @@ window.viewCard = async function(friendId, friendObj = {}) {
                     margin-bottom: 20px; box-shadow: 0 0 40px rgba(50, 215, 75, 0.5);
                 "></div>
                 
-                <div style="font-size: 30px; font-weight: 900; color: #FFFFFF; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(0,0,0,1);">~${displayName}</div>
+                <div style="font-size: 30px; font-weight: 900; color: #FFFFFF; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(0,0,0,1);">${displayName}</div>
                 
                 <div style="background: rgba(50, 215, 75, 0.2); padding: 8px 15px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #32D74B;">
                     <span style="font-size: 14px; color: #32D74B; font-weight: 900; letter-spacing: 1.5px;">${secureContact}</span>
@@ -202,7 +202,7 @@ window.showGhostMenu = (friendId, friendshipId, friendObj) => {
                 <div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-bottom: 30px;">
                     <div style="width: 100px; height: 100px; border-radius: 30px; border: 3px solid #32D74B; background-image: url(${friendObj.avatar_url || 'default.png'}); background-size: cover; background-position: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);"></div>
                     <div style="margin-top: 15px; text-align: center;">
-                        <div style="font-size: 14px; color: #32D74B; font-weight: 900; letter-spacing: 1px;">~${friendObj.username}</div>
+                        <div style="font-size: 14px; color: #32D74B; font-weight: 900; letter-spacing: 1px;">${friendObj.username}</div>
                     </div>
                 </div>
 

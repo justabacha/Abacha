@@ -1,12 +1,28 @@
-self.addEventListener('fetch', (e) => {
-  const url = new URL(e.request.url);
+const CACHE_NAME = 'ghost-v1.0.0';
+const ASSETS_TO_CACHE = [
+  '/',
+  '/index.html',
+  '/hub.html',
+  '/style.css',
+  '/app.js',
+  '/hub.js',
+  '/theme-engine.js'
+];
 
-  if (url.pathname.endsWith('.html')) {
-    e.respondWith(fetch(e.request));
-    return;
-  }
+// Install Event: Save the "Ghost Core" to memory
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE);
+    })
+  );
+});
 
-  e.respondWith(
-    caches.match(e.request).then(res => res || fetch(e.request))
+// Fetch Event: Serve from cache first for speed, then network
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    })
   );
 });

@@ -49,7 +49,11 @@ function ghostPrompt(message, type = "success") {
     if (!document.getElementById('ghost-anim')) {
         const style = document.createElement('style');
         style.id = 'ghost-anim';
-        style.innerHTML = `@keyframes ghostSlide { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`;
+        style.innerHTML = `
+            @keyframes ghostSlide { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+            .ghost-install-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 100000; display: flex; align-items: center; justify-content: center; animation: ghostSlide 0.5s ease; }
+            .ghost-install-card { background: rgba(28, 28, 30, 0.9); border: 1px solid rgba(255, 255, 255, 0.1); padding: 30px; border-radius: 28px; width: 85%; max-width: 320px; text-align: center; color: white; }
+        `;
         document.head.appendChild(style);
     }
 
@@ -199,3 +203,56 @@ window.showGhostVerify = (email) => {
         }
     };
 };
+// --- 4. GHOST INSTALL ENGINE ---
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+
+    // Show top-right button
+    const fixedBtn = document.getElementById('ghost-install-fixed');
+    if (fixedBtn) fixedBtn.style.display = 'block';
+
+    // Auto-popup logic (once per session)
+    if (!sessionStorage.getItem('ghost_install_shown')) {
+        showGhostInstallPopup();
+    }
+});
+
+function showGhostInstallPopup() {
+    const overlay = document.createElement('div');
+    overlay.className = 'ghost-install-overlay';
+    overlay.id = 'install-overlay';
+    overlay.innerHTML = `
+        <div class="ghost-install-card">
+            <div style="font-size: 40px; margin-bottom: 15px;">👻</div>
+            <h3 style="margin:0 0 10px;">Install Just•Abacha</h3>
+            <p style="color:gray; font-size:14px; margin-bottom:25px;">Experience the Ghost Engine as a full app for a smoother vibe.</p>
+            <button onclick="executeGhostInstall()" style="width:100%; padding:15px; border-radius:15px; background:#32D74B; color:white; border:none; font-weight:bold; cursor:pointer; margin-bottom:12px;">Install Now</button>
+            <button onclick="document.getElementById('install-overlay').remove()" style="width:100%; background:transparent; color:gray; border:none; cursor:pointer; font-size:12px;">Maybe Later</button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    sessionStorage.setItem('ghost_install_shown', 'true');
+}
+
+window.executeGhostInstall = async () => {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            const btn = document.getElementById('ghost-install-fixed');
+            if (btn) btn.remove();
+            const overlay = document.getElementById('install-overlay');
+            if (overlay) overlay.remove();
+        }
+        deferredPrompt = null;
+    }
+};
+
+window.addEventListener('appinstalled', () => {
+    const btn = document.getElementById('ghost-install-fixed');
+    if (btn) btn.remove();
+    console.log('Ghost Engine: Layer Integrated');
+});

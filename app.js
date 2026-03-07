@@ -1,3 +1,10 @@
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('Ghost SW: Registered', reg))
+      .catch(err => console.log('Ghost SW: Failed', err));
+  });
+}
 // --- 1. CONFIGURATION ---
 if (typeof SUPABASE_URL === 'undefined') {
     var SUPABASE_URL = 'https://zvkretqhqmxuhgspddpu.supabase.co';

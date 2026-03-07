@@ -1,9 +1,20 @@
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(reg => console.log('Ghost SW: Registered', reg))
-      .catch(err => console.log('Ghost SW: Failed', err));
-  });
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(reg => {
+                console.log('Ghost SW: Registered', reg);
+                // Check if there is an update waiting
+                reg.onupdatefound = () => {
+                    const installingWorker = reg.installing;
+                    installingWorker.onstatechange = () => {
+                        if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            console.log('New Ghost Engine update available. Please refresh.');
+                        }
+                    };
+                };
+            })
+            .catch(err => console.log('Ghost SW: Failed', err));
+    });
 }
 // --- 1. CONFIGURATION ---
 if (typeof SUPABASE_URL === 'undefined') {

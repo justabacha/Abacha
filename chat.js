@@ -134,7 +134,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const avatarEl = document.getElementById('header-avatar');
         const statusEl = document.getElementById('online-status');
 
-        if (nameEl) nameEl.textContent = `~${friend.username || 'Ghost'}`;
+        if (nameEl) nameEl.textContent = `${friend.username || 'Ghost'}`;
         
         if (avatarEl && (friend.avatar_url || friend.avatar)) {
           const img = friend.avatar_url || friend.avatar;

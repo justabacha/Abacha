@@ -1,10 +1,16 @@
-/* GHOST UI RESET */
+/* --- 1. CORE & RESET --- */
 * {
     -webkit-user-select: none;
     -webkit-touch-callout: none;
     user-select: none; 
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
 }
-input, textarea { -webkit-user-select: text; user-select: text; }
+
+input, textarea { 
+    -webkit-user-select: text; 
+    user-select: text; 
+}
 
 .chat-page {
     background: var(--chat-bg) no-repeat center center fixed;
@@ -14,17 +20,42 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     height: 100vh;
 }
 
-/* --- 1. TRANSPARENT HEADER --- */
+/* --- 2. HEADER & STATUS --- */
 .chat-header {
     display: flex; 
     align-items: center; 
     padding: 15px;
-    background: transparent; /* Wallpaper shows through */
+    background: transparent;
     border-bottom: 1px solid rgba(255,255,255,0.1);
     z-index: 100;
 }
 
-/* --- 2. PINNED BAR (Sleek/Minimal) --- */
+#typing-indicator {
+    display: none; 
+    color: #32D74B; 
+    font-size: 9px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin-top: 10px;
+    animation: ghostPulse 1.5s infinite ease-in-out;
+}
+
+.status-dot {
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    transition: color 0.3s ease;
+}
+.status-online { color: #32D74B; }
+.status-offline { color: rgba(252, 10, 10, 0.354); }
+
+@keyframes ghostPulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.98); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+/* --- 3. PINNED BAR --- */
 #pinned-bar {
     display: none;
     background: rgba(255, 255, 255, 0.05);
@@ -44,9 +75,17 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 }
 .pin-item:last-child { margin-bottom: 0; }
 
-/* --- SURGICAL BLOCK: MESSAGE ALIGNMENT --- */
+/* --- 4. MESSAGE ARCHITECTURE --- */
+#chat-box { 
+    flex: 1; 
+    overflow-y: auto; 
+    padding: 20px 20px 150px; /* Merged padding from both instances */
+    display: flex; 
+    flex-direction: column; 
+    gap: 12px; 
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 100%);
+}
 
-/* 1. The Container for Avatar + Bubble */
 .msg-wrapper { 
     display: flex; 
     align-items: flex-end; 
@@ -55,33 +94,45 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     margin-bottom: 12px;
 }
 
-/* 2. Sender (You): Moves everything to the right and flips the order */
 .user-wrapper { 
     align-self: flex-end; 
-    flex-direction: row-reverse; /* This puts your avatar on the right */
+    flex-direction: row-reverse; 
 }
 
-/* 3. Receiver (Friend): Stays on the left */
 .ai-wrapper { 
     align-self: flex-start; 
     flex-direction: row; 
 }
 
-/* 4. The Avatar Image Style */
 .avatar { 
     width: 35px; 
     height: 35px; 
     border-radius: 50%; 
     object-fit: cover; 
-    flex-shrink: 0; /* Prevents avatar from squishing */
+    flex-shrink: 0;
 }
 
-/* --- 3. MESSAGE BUBBLES --- */
-.message { max-width: 75%; padding: 12px 16px; font-size: 15px; border-radius: 18px; color: white; }
+.message { 
+    max-width: 75%; 
+    padding: 12px 16px; 
+    font-size: 15px; 
+    border-radius: 18px; 
+    color: white; 
+}
+
 .message.sent { align-self: flex-end; background: var(--whatsapp-green); border-bottom-right-radius: 2px; }
 .message.received { align-self: flex-start; background: rgba(30, 30, 30, 0.8); border-bottom-left-radius: 2px; }
 
-/* --- 4. BLUE REPLY QUOTE --- */
+.msg-time {
+    font-size: 9px;
+    opacity: 0.5;
+    margin-top: 4px;
+    text-align: right;
+    width: 100%;
+    color: aliceblue;
+    display: block;
+}
+
 .reply-quote {
     background: rgba(0, 122, 255, 0.2);
     border-left: 3px solid #007AFF; 
@@ -93,26 +144,47 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     display: block;
 }
 
-/* 1. THE FLOATING CAPSULE */
-.input-tile { 
+/* --- 5. INPUT ENGINE --- */
+.floating-input-container {
     position: fixed;
-    bottom: 40px;
+    bottom: 30px;
     left: 20px;
     right: 20px;
-    background: rgba(255, 255, 255, 0.1); /* Thin glass */
+    z-index: 1000;
+    background: transparent;
+    padding: 0;
+}
+
+#reply-preview-container {
+    background: rgba(20, 20, 20, 0.9);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 20px; 
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    margin-bottom: 8px;
+    padding: 12px 18px;
+    width: 95%;
+    box-sizing: border-box;
+    display: none;
+    z-index: 999;
+}
+
+.input-tile { 
+    position: relative !important; 
+    background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(25px); 
     -webkit-backdrop-filter: blur(25px);
     border-radius: 30px; 
-    padding: 8px 18px; /* Slightly tighter padding */
+    padding: 8px 18px;
     display: flex; 
     align-items: center; 
     border: 1px solid rgba(255, 255, 255, 0.15);
     z-index: 1000;
 }
 
-/* 2. THE TEXT INPUT (The "rada?..." part) */
-.input-tile input { 
-    flex: 1; /* This pushes the emoji to the furthest end */
+.input-tile input, 
+.input-tile textarea { 
+    flex: 1; 
     background: transparent !important; 
     border: none !important; 
     color: white !important; 
@@ -121,47 +193,35 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     padding: 10px 0;
 }
 
-/* 3. THE SEND EMOJI (The "floating" icon) */
+.input-tile textarea {
+    resize: none; 
+    max-height: 100px; 
+    font-family: inherit;
+    line-height: 1.4;
+    overflow-y: scroll;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.input-tile textarea::-webkit-scrollbar { display: none; }
+
 .input-tile button { 
-    background: transparent !important; /* Removes the white/grey layer */
+    background: transparent !important; 
     border: none !important; 
     outline: none !important;
-    font-size: 22px; /* Makes the emoji pop */
+    font-size: 22px; 
     cursor: pointer;
-    padding: 0 0 0 10px; /* Space between text and emoji */
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+    padding: 0 5px 0 15px;
+    min-width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.2s ease;
 }
+.input-tile button:active { transform: scale(1.2); }
 
-.input-tile button:active {
-    transform: scale(1.2); /* Slight grow when you tap it */
-}
-
-/* 2. ADJUST THE CHAT BOX TO SCROLL TO THE ABSOLUTE BOTTOM */
-#chat-box { 
-    flex: 1; 
-    overflow-y: auto; 
-    padding: 20px 20px 120px; /* Extra bottom padding so last message clears the tile */
-    display: flex; 
-    flex-direction: column; 
-    gap: 12px; 
-    
-    /* Update the Vanish Mask to only fade at the TOP */
-    -webkit-mask-image: linear-gradient(to bottom, 
-        transparent 0%, 
-        black 10%, 
-        black 100%); /* No fade at the bottom so they reach the edge */
-}
-
-/* 3. STRIP THE OLD CONTAINER */
-.floating-input-container { 
-    background: transparent; 
-    padding: 0; 
-}
-
-/* --- 5. LONG PRESS OVERLAY (LIGHT BLUR) --- */
+/* --- 6. OVERLAYS & MODALS --- */
 .message-overlay {
     position: fixed;
     top: 0; left: 0; width: 100vw; height: 100vh;
@@ -173,16 +233,18 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     justify-content: center; 
     align-items: center;
     flex-direction: column;
+    padding: 0 25px;
 }
 
-/* --- 6. GHOST MODALS (METAMORPHISM) --- */
 .ghost-modal-overlay {
     position: fixed;
     top: 0; left: 0; width: 100vw; height: 100vh;
     background: rgba(0,0,0,0.4);
     backdrop-filter: blur(10px);
-    display: none; z-index: 10000;
-    justify-content: center; align-items: center;
+    display: none; 
+    z-index: 10000;
+    justify-content: center; 
+    align-items: center;
 }
 
 .ghost-modal-tile {
@@ -193,140 +255,9 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     width: 300px;
     padding: 25px;
     color: white;
-    text-align: left; /* Branding and questions on the left */
+    text-align: left;
 }
 
-.modal-header { font-weight: bold; font-size: 14px; margin-bottom: 15px; opacity: 0.8; letter-spacing: 1px; }
-
-/* PIN DURATION OPTIONS (RIGHT ALIGNED) */
-.pin-options-list {
-    display: flex;
-    flex-direction: column;
-    margin-top: 10px;
-    padding-right: 5px;
-}
-
-.pin-opt {
-    padding: 15px;
-    color: white;
-    font-size: 16px;
-    width: 100%;
-    text-align: right; /* Duration text on the right */
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-.pin-opt:last-child { border-bottom: none; }
-.pin-opt:active { background: rgba(255,255,255,0.1); border-radius: 10px; }
-
-.modal-btns { display: flex; justify-content: space-between; gap: 15px; margin-top: 20px; }
-.modal-btn { flex: 1; padding: 12px; border-radius: 15px; border: none; font-weight: bold; font-size: 14px; }
-.btn-yes { background: #FF3B30; color: white; }
-.btn-no { background: #32D74B; color: white; }
-
-/* POPPED MESSAGE UI */
-.popped-message { transform: scale(1.1); margin-bottom: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); }
-.action-tile { background: rgba(45, 45, 45, 0.9); border-radius: 22px; width: 260px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; }
-.action-item { padding: 16px; color: white; display: flex; justify-content: space-between; font-size: 17px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-.action-item:last-child { border: none; }
-.action-item.delete { color: #FF3B30; }
-            
-/* KILL THE BLUE BOX ON BUTTONS */
-button, .action-item, .input-tile {
-    -webkit-tap-highlight-color: transparent;
-    outline: none;
-}
-
-/* FIX THE POPPED MESSAGE MARGINS */
-.popped-message { 
-    transform: scale(1.05); /* Slightly smaller scale so it doesn't hit walls */
-    margin-bottom: 30px; 
-    box-shadow: 0 15px 40px rgba(0,0,0,0.6); 
-    max-width: 80% !important; /* Forces it away from the side walls */
-    z-index: 100001;
-}
-
-/* ADD PADDING TO THE OVERLAY SO IT CAN'T TOUCH EDGES */
-#chat-overlay {
-    padding: 0 25px; /* Keeps everything away from the phone's physical edges */
-                 }
-/* Ensure the menu content container fills the screen but respects the flex alignment */
-#menu-content {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Ensure the action tile only takes up as much space as it needs */
-.action-tile {
-    background: rgba(45, 45, 45, 0.95);
-    border-radius: 22px;
-    width: 250px; /* Fixed width for a consistent look */
-    border: 1px solid rgba(255,255,255,0.1);
-    overflow: hidden;
-    backdrop-filter: blur(20px);
-}
-
-/* Fix the popped bubble scale so it doesn't move away from the edge too much */
-.popped-message {
-    transform: scale(1.02); /* Very subtle scale */
-    transform-origin: inherit; /* Keeps it pinned to its flex side */
-}
-
-/* Make time more visible */
-.msg-time {
-    font-size: 10px;
-    opacity: 0.8; /* Higher opacity */
-    color: #aaa;
-    margin-top: 4px;
-    text-align: right;
-    display: block;
-}
-
-.floating-input-container {
-    position: fixed;
-    bottom: 30px;
-    left: 20px;
-    right: 20px;
-    z-index: 1000;
-}
-
-.input-tile {
-    position: relative !important; /* No longer fixed, container handles it */
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-}
-
-#reply-preview-container {
-    background: rgba(20, 20, 20, 0.9);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    
-    /* ROUND ALL CORNERS: 20px on top and bottom makes it a smooth pill */
-    border-radius: 20px; 
-    
-    /* Full border to define the shape */
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    
-    /* Spacing adjustments */
-    margin-bottom: 8px; /* Adds a small gap so you see the bottom curve */
-    padding: 12px 18px;
-    width: 95%; /* Slightly narrower than the input bar for a better look */
-    box-sizing: border-box;
-    
-    display: none; /* Logic still handles showing/hiding */
-    z-index: 999;
-}
-
-.msg-time {
-    font-size: 9px;
-    opacity: 0.5;
-    margin-top: 4px;
-    text-align: right;
-    width: 100%;
-    color:aliceblue;
-    }
-    
-/* Custom Ghost Prompt */
 #ghost-prompt-overlay {
     display: none;
     position: fixed;
@@ -364,7 +295,7 @@ button, .action-item, .input-tile {
 }
 
 .vibe-btn {
-    background: #34C759; /* Green layer */
+    background: #34C759;
     color: white;
     border: none;
     padding: 10px 30px;
@@ -372,66 +303,66 @@ button, .action-item, .input-tile {
     font-weight: bold;
     cursor: pointer;
     width: 100%;
-    }
-    
-/* 1. AUTO-STRETCHING TEXTAREA */
-.input-tile textarea { 
-    flex: 1; 
-    background: transparent !important; 
-    border: none !important; 
-    color: white !important; 
-    outline: none !important; 
-    font-size: 16px; 
-    padding: 10px 0;
-    resize: none; 
-    max-height: 100px; 
-    font-family: inherit;
-    line-height: 1.4;
-    overflow-y: scroll; /* Allow scrolling */
-    scrollbar-width: none; /* Hide for Firefox */
-    -ms-overflow-style: none; /* Hide for IE/Edge */
-}
-.input-tile textarea::-webkit-scrollbar {
-    display: none; /* Hide for Chrome/Safari */
 }
 
-/* 2. ONLINE/OFFLINE STATUS */
-.status-dot {
-    font-size: 10px;
-    font-weight: bold;
-    letter-spacing: 1px;
-    transition: color 0.3s ease;
-}
-.status-online { color: #32D74B; }
-.status-offline { color: rgba(252, 10, 10, 0.354); }
-
-/* 3. REVERSED CHAT BOX FOR LATEST MESSAGES AT BOTTOM */
-#chat-box {
+/* --- 7. ACTION MENU --- */
+#menu-content {
+    width: 100%;
     display: flex;
-    flex-direction: column; /* Keep it normal, we will scroll to bottom */
-    overflow-y: auto;
-    padding: 20px 20px 150px;
-}
-    
-.input-tile button {
-    flex-shrink: 0; /* Keeps the rocket from squishing */
-    padding: 0 5px 0 15px;
-    min-width: 44px; /* Big enough for a thumb tap */
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-#typing-indicator {
-    display: none; 
-    color: #32D74B; 
-    font-size: 10px; 
-    margin-bottom: 5px;
-    animation: ghostPulse 1.5s infinite ease-in-out;
+    flex-direction: column;
 }
 
-@keyframes ghostPulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.3; }
-    100% { opacity: 1; }
+.action-tile { 
+    background: rgba(45, 45, 45, 0.95); 
+    border-radius: 22px; 
+    width: 250px; 
+    border: 1px solid rgba(255,255,255,0.1); 
+    overflow: hidden; 
+    backdrop-filter: blur(20px);
 }
+
+.action-item { 
+    padding: 16px; 
+    color: white; 
+    display: flex; 
+    justify-content: space-between; 
+    font-size: 17px; 
+    border-bottom: 1px solid rgba(255,255,255,0.1); 
+}
+.action-item:last-child { border: none; }
+.action-item.delete { color: #FF3B30; }
+
+.popped-message { 
+    transform: scale(1.02); 
+    margin-bottom: 30px; 
+    box-shadow: 0 15px 40px rgba(0,0,0,0.6); 
+    max-width: 80% !important; 
+    z-index: 100001;
+    transform-origin: inherit;
+}
+
+/* --- 8. MODAL COMPONENTS --- */
+.modal-header { font-weight: bold; font-size: 14px; margin-bottom: 15px; opacity: 0.8; letter-spacing: 1px; }
+
+.pin-options-list {
+    display: flex;
+    flex-direction: column;
+    margin-top: 10px;
+    padding-right: 5px;
+}
+
+.pin-opt {
+    padding: 15px;
+    color: white;
+    font-size: 16px;
+    width: 100%;
+    text-align: right;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.pin-opt:last-child { border-bottom: none; }
+.pin-opt:active { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+.modal-btns { display: flex; justify-content: space-between; gap: 15px; margin-top: 20px; }
+.modal-btn { flex: 1; padding: 12px; border-radius: 15px; border: none; font-weight: bold; font-size: 14px; }
+.btn-yes { background: #FF3B30; color: white; }
+.btn-no { background: #32D74B; color: white; }

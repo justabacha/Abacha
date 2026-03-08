@@ -310,3 +310,40 @@ window.addEventListener('appinstalled', () => {
     cleanupInstallUI();
     console.log('Ghost Engine: Layer Integrated');
 });
+// --- 5. GHOST NAVIGATION & EXIT ENGINE ---
+(function() {
+    const ghostNavMap = {
+        'settings.html': 'hub.html',
+        'profile.html': 'settings.html',
+        'chat-list.html': 'hub.html',
+        'chat.html': 'chat-list.html'
+    };
+
+    const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+    let lastBackPress = 0;
+
+    // Priming the history state
+    window.history.pushState(null, null, window.location.href);
+
+    window.onpopstate = function() {
+        const destination = ghostNavMap[currentPath];
+
+        if (currentPath === 'hub.html') {
+            const now = Date.now();
+            // If the user taps back twice within 2 seconds
+            if (now - lastBackPress < 2000) {
+                // Let the browser/PWA naturally exit
+                window.history.back();
+            } else {
+                lastBackPress = now;
+                // Use your existing ghostPrompt for the toast
+                ghostPrompt("Tap back again to exit Ghost.", "info");
+                // Re-prime the state so the next tap can be caught
+                window.history.pushState(null, null, window.location.href);
+            }
+        } else if (destination) {
+            window.location.href = destination;
+            window.history.pushState(null, null, window.location.href);
+        }
+    };
+})();

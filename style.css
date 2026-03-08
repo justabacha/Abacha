@@ -1,14 +1,26 @@
-/* Disable text selection across the whole app */
+/* Disable long-press "Callout" menu on iOS/Android */
 * {
-    -webkit-user-select: none; /* Safari/iOS */
-    -webkit-touch-callout: none; /* Disable system context menu */
-    user-select: none; 
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    /* This stops the "blue blink" when tapping buttons on mobile */
+    -webkit-tap-highlight-color: transparent; 
+    outline: none;
 }
 
-/* Re-enable it ONLY for the input box so you can still type */
-input, textarea {
+/* Re-enable selection ONLY for messages and inputs so users can still copy text if they want */
+.message div, 
+input, 
+textarea {
     -webkit-user-select: text;
     user-select: text;
+}
+/* Ensure the Ghost Prompt doesn't block interactions behind it */
+#ghost-prompt-container {
+    pointer-events: none;
+}
+#ghost-prompt-container > div {
+    pointer-events: auto; /* Only the toast itself is clickable */
 }
 
 :root {

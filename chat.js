@@ -182,6 +182,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // C. DISPLAY MESSAGE
   const displayMessage = async (msg) => {
+    // 1. Prevent Duplicates (Check if ID already exists in UI)
+    if (document.getElementById(`msg-wrapper-${msg.id}`)) return;
+
     const isMe = msg.sender_id === user.id;
     const timeStr = new Date(msg.created_at).toLocaleTimeString([], {
       hour: "2-digit",
@@ -189,71 +192,70 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     const wrapper = document.createElement("div");
-    // Ensure every wrapper has a unique ID for the realtime engine to target
     wrapper.id = `msg-wrapper-${msg.id}`; 
     wrapper.className = `msg-wrapper ${isMe ? "user-wrapper" : "ai-wrapper"}`;
-  const { data: sender } = await supabaseClient
+    wrapper.setAttribute('data-timestamp', new Date(msg.created_at).getTime());
+
+    // Logic for Avatar and Content (Keep your existing innerHTML logic here)
+    const { data: sender } = await supabaseClient
       .from("profiles")
       .select("avatar_url")
       .eq("id", msg.sender_id)
       .maybeSingle();
 
-    const avatarImg =
-      sender?.avatar_url ||
-      "https://i.postimg.cc/rpD4fgxR/IMG-5898-2.jpg";
+    const avatarImg = sender?.avatar_url || "https://i.postimg.cc/rpD4fgxR/IMG-5898-2.jpg";
 
     wrapper.innerHTML = `
       <img src="${avatarImg}" class="avatar">
       <div class="message ${isMe ? "sent" : "received"}">
-        ${
-          msg.content.includes("↳ [")
-            ? `<div class="reply-quote">${
-                msg.content.split("]\n")[0].replace("↳ [", "")
-              }</div><div>${msg.content.split("]\n")[1] || ""}</div>`
-            : `<div>${msg.content}</div>`
+        ${msg.content.includes("↳ [") 
+          ? `<div class="reply-quote">${msg.content.split("]\n")[0].replace("↳ [", "")}</div><div>${msg.content.split("]\n")[1] || ""}</div>`
+          : `<div>${msg.content}</div>`
         }
         <div class="msg-time" style="font-size:10px;opacity:0.8;margin-top:4px;text-align:right;">${timeStr}</div>
       </div>
     `;
+
+    // --- SORTING ENGINE ---
+    // Find where to insert this message based on time
+    const existingMessages = [...chatBox.querySelectorAll('.msg-wrapper')];
+    const nextMsg = existingMessages.find(el => 
+      parseInt(el.getAttribute('data-timestamp')) > parseInt(wrapper.getAttribute('data-timestamp'))
+    );
+
+    if (nextMsg) {
+      chatBox.insertBefore(wrapper, nextMsg);
+    } else {
+      chatBox.appendChild(wrapper);
+    }
 
     const bubble = wrapper.querySelector(".message");
     bubble.oncontextmenu = (e) => {
       e.preventDefault();
       window.showActionMenu(msg, bubble.cloneNode(true));
     };
-
-    chatBox.appendChild(wrapper);
   };
-// D. LOAD HISTORY (Now with Ghost-Hidden Filter)
-  const { data: history } = await supabaseClient
-    .from("messages")
-    .select("*")
-    .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`)
-    // NEW: Filter out messages hidden by the current user
-    .not('hidden_from', 'cs', `{${user.id}}`) 
-    .order("created_at", { ascending: true });
+// --- D. LOAD HISTORY (Updated for Stability) ---
+const { data: history } = await supabaseClient
+  .from("messages")
+  .select("*")
+  .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`)
+  .not('hidden_from', 'cs', `{${user.id}}`) 
+  .order("created_at", { ascending: true });
 
+if (history) {
   chatBox.innerHTML = "";
-  if (history) {
-  chatBox.innerHTML = "";
-chatBox.style.scrollBehavior = "auto";
-
-// Render ALL messages in parallel
-await Promise.all(
-  history.map(msg => displayMessage(msg))
-);
-
-// Scroll ONLY after layout fully settles
-requestAnimationFrame(() => {
-  requestAnimationFrame(() => {
-    chatBox.scrollTop = chatBox.scrollHeight;
-    chatBox.classList.add('ready');
-  });
-});
-
-    chatBox.classList.add("ready");
-    window.loadPins();
+  // Use for...of instead of .map to ensure sequential rendering
+  for (const msg of history) {
+      await displayMessage(msg);
   }
+
+  requestAnimationFrame(() => {
+      chatBox.scrollTop = chatBox.scrollHeight;
+      chatBox.classList.add('ready');
+  });
+  window.loadPins();
+}
 
   // E. GHOST PROMPT (FORWARD)
   window.showGhostPrompt = (message) => {
@@ -403,28 +405,27 @@ requestAnimationFrame(() => {
   // --- TYPING LOGIC ---
   const typingIndicator = document.getElementById("typing-indicator");
   let typingTimeout;
-
- // Fix: Use a more specific channel name
-  const typingChannel = supabaseClient.channel(`chat_status_${friendID}`, {
+// Fix: The channel name must be the SAME for both people in the chat
+  // We sort the IDs so that UserA->UserB and UserB->UserA both join "chat_room_ID1_ID2"
+  const roomID = [user.id, friendID].sort().join("_");
+  const statusChannel = supabaseClient.channel(`room:${roomID}`, {
     config: { broadcast: { self: false } }
   });
 
-  typingChannel
+  statusChannel
     .on("broadcast", { event: "typing" }, (payload) => {
-        // Only show if the sender is actually the friend
-        if (payload.payload.userId === friendID) {
-            typingIndicator.style.display = "block";
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => {
-                typingIndicator.style.display = "none";
-            }, 3000);
-        }
+        // Friend is typing!
+        typingIndicator.style.display = "block";
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+            typingIndicator.style.display = "none";
+        }, 3000);
     })
     .subscribe();
 
-  // Fix: Send typing signal with more frequency
+  // Send typing signal
   msgInput.addEventListener("input", () => {
-    typingChannel.send({
+    statusChannel.send({
       type: "broadcast",
       event: "typing",
       payload: { userId: user.id },
@@ -442,19 +443,20 @@ supabaseClient
     "postgres_changes",
     { event: "*", schema: "public", table: "messages" },
     (payload) => {
-      if (payload.eventType === "INSERT") {
+     if (payload.eventType === "INSERT") {
         const m = payload.new;
-        const isRelevant = (m.sender_id === user.id && m.receiver_id === friendID) || 
-                           (m.sender_id === friendID && m.receiver_id === user.id);
+        // Simplified relevance check
+        const involvesMe = m.sender_id === user.id || m.receiver_id === user.id;
+        const involvesFriend = m.sender_id === friendID || m.receiver_id === friendID;
         
-       if (isRelevant && (!m.hidden_from || !m.hidden_from.includes(user.id))) {
-      // Only display if it's from the friend (to avoid doubling your own sent msg)
-      if (m.sender_id === friendID) {
+        if (involvesMe && involvesFriend) {
+          // If it's from the friend, show it. 
+          // If it's from me, the "Optimistic UI" already showed it, 
+          // but displayMessage will ignore the duplicate anyway.
           displayMessage(m);
-          chatBox.scrollTop = chatBox.scrollHeight;
+          chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+        }
       }
-    }
-  }
       
       if (payload.eventType === "UPDATE") {
         const m = payload.new;

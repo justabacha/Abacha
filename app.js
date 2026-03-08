@@ -22,7 +22,20 @@ if (typeof SUPABASE_URL === 'undefined') {
     var SUPABASE_KEY = 'sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY';
 }
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// --- GLOBAL ONLINE HEARTBEAT ---
+const updatePresence = async () => {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (user) {
+    await supabaseClient
+      .from('profiles')
+      .update({ last_seen: new Date().toISOString() })
+      .eq('id', user.id);
+  }
+};
 
+// Update immediately on load, then every 60s
+updatePresence();
+setInterval(updatePresence, 60000);
 // --- 2. GHOST PROMPT ENGINE ---
 function ghostPrompt(message, type = "success") {
     let container = document.getElementById('ghost-prompt-container');
@@ -290,6 +303,7 @@ function cleanupInstallUI() {
     const overlay = document.getElementById('install-overlay');
     if (overlay) overlay.remove();
 }
+window.showGhostPrompt = ghostPrompt;
 
 window.addEventListener('appinstalled', () => {
     sessionStorage.removeItem('ghost_can_install');

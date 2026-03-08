@@ -107,6 +107,7 @@ window.unpinMessage = async (id) => {
 // --- 4. MAIN CHAT ENGINE ---
 document.addEventListener("DOMContentLoaded", async () => {
   const { data: { user } } = await supabaseClient.auth.getUser();
+  const roomID = [user.id, friendID].sort().join("_");
   if (!user || !friendID) return;
 
   const chatBox = document.getElementById("chat-box");
@@ -143,7 +144,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         // Online Logic (2-minute window)
-        const isOnline = friend.last_seen && (new Date() - new Date(friend.last_seen) < 120000);
+        const isOnline = friend.last_seen && (new Date() - new Date(friend.last_seen) < 12000);
         if (statusEl) {
             statusEl.textContent = isOnline ? "● ONLINE" : "● OFFLINE";
             statusEl.style.color = isOnline ? "#32D74B" : "#f21515";
@@ -413,89 +414,97 @@ if (history) {
   });
 
   sendBtn.onclick = handleSend;
-  // --- TYPING LOGIC ---
+// --- TYPING LOGIC ---
   const typingIndicator = document.getElementById("typing-indicator");
   let typingTimeout;
-// Fix: The channel name must be the SAME for both people in the chat
- const statusChannel = supabaseClient.channel(`chat_vibe_${roomID}`);
+  
+  const statusChannel = supabaseClient.channel(`status_${roomID}`, {
+    config: { broadcast: { self: false } }
+  });
 
   statusChannel
     .on("broadcast", { event: "typing" }, (payload) => {
-        // Only show if the OTHER person is typing
+        // Friend is typing!
         if (payload.payload.userId === friendID) {
             typingIndicator.style.display = "block";
             clearTimeout(typingTimeout);
             typingTimeout = setTimeout(() => {
                 typingIndicator.style.display = "none";
-            }, 3000);
+            }, 2000);
         }
     })
-    .subscribe((status) => {
-        if (status === 'SUBSCRIBED') console.log("Ghost Room: Synced");
-    });
+    .subscribe();
 
   // Send typing signal
+  let lastTypingSignal = 0;
   msgInput.addEventListener("input", () => {
-    statusChannel.send({
-      type: "broadcast",
-      event: "typing",
-      payload: { userId: user.id },
-    });
+    const now = Date.now();
+    // Only send the signal once every 2 seconds to keep the connection clear
+    if (now - lastTypingSignal > 2000) {
+      statusChannel.send({
+        type: "broadcast",
+        event: "typing",
+        payload: { userId: user.id },
+      });
+      lastTypingSignal = now;
+    }
   });
 
   // Fix: Auto-refresh Online status every 30 seconds
   setInterval(syncReceiverHeader, 30000);
 
 // I. REALTIME (Silent Sync)
-supabaseClient
-  .channel("db-changes")
-  // Listen to Messages (Existing)
+const dbChannel = supabaseClient
+  .channel(`chat_messages_${roomID}`)
   .on(
     "postgres_changes",
-    { event: "*", schema: "public", table: "messages" },
+    { event: "INSERT", schema: "public", table: "messages" },
     (payload) => {
-     if (payload.eventType === "INSERT") {
-        const m = payload.new;
-        // Simplified relevance check
-        const involvesMe = m.sender_id === user.id || m.receiver_id === user.id;
-        const involvesFriend = m.sender_id === friendID || m.receiver_id === friendID;
-        
-        if (involvesMe && involvesFriend) {
-          // If it's from the friend, we ALWAYS display. 
-          // If it's from me, displayMessage will now catch the "temp" version and swap it.
-          displayMessage(m);
-          // Only auto-scroll if the user is already at the bottom
-          const isAtBottom = chatBox.scrollHeight - chatBox.scrollTop <= chatBox.clientHeight + 100;
-          if (isAtBottom) {
-              chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
-          }
-        }
-      }
-      
-      if (payload.eventType === "UPDATE") {
-        const m = payload.new;
-        if (m.hidden_from && m.hidden_from.includes(user.id)) {
-          const el = document.getElementById(`msg-wrapper-${m.id}`);
-          if (el) el.remove();
-        }
-      }
+      const m = payload.new;
+      // Check if the vibe belongs to THIS specific chat room
+      const involvesMe = m.sender_id === user.id || m.receiver_id === user.id;
+      const involvesFriend = m.sender_id === friendID || m.receiver_id === friendID;
 
-      if (payload.eventType === "DELETE") {
-        const deletedMsg = document.getElementById(`msg-wrapper-${payload.old.id}`);
-        if (deletedMsg) deletedMsg.remove();
+      if (involvesMe && involvesFriend) {
+        displayMessage(m);
+        // Only scroll if we are near the bottom
+        const isAtBottom = chatBox.scrollHeight - chatBox.scrollTop <= chatBox.clientHeight + 100;
+        if (isAtBottom) chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
       }
     }
   )
-  // ADD THIS: Listen to Friendships (For the Burn Logic)
   .on(
     "postgres_changes",
-    { event: "DELETE", schema: "public", table: "friendships" },
+    { event: "UPDATE", schema: "public", table: "messages" },
     (payload) => {
-      // If ANY friendship is deleted, we check if it's the one we are currently in
-      // Since we don't have the friendship ID easily, we just verify if the chat is still valid
-      window.showGhostPrompt("This connection has been burned. 💨");
-      setTimeout(() => window.location.href = 'chat-list.html', 1500);
+       const m = payload.new;
+       if (m.hidden_from?.includes(user.id)) {
+          document.getElementById(`msg-wrapper-${m.id}`)?.remove();
+       }
+    }
+  )
+  .on(
+    "postgres_changes",
+    { event: "DELETE", schema: "public", table: "messages" },
+    (payload) => {
+       document.getElementById(`msg-wrapper-${payload.old.id}`)?.remove();
     }
   )
   .subscribe();
+// Update my own 'last_seen' every 30 seconds to stay green for the friend
+  const updateMyStatus = async () => {
+    await supabaseClient
+      .from('profiles')
+      .update({ last_seen: new Date().toISOString() })
+      .eq('id', user.id);
+  };
+  
+  updateMyStatus(); // Run once on load
+  setInterval(updateMyStatus, 30000); // Run every 30s
+  // Update my own 'last_seen' so the friend sees me as ONLINE
+  const updateMyPresence = async () => {
+    await supabaseClient.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', user.id);
+  };
+  updateMyPresence(); 
+  setInterval(updateMyPresence, 20000); // Heartbeat every 20s
 });

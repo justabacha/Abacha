@@ -310,7 +310,7 @@ window.addEventListener('appinstalled', () => {
     cleanupInstallUI();
     console.log('Ghost Engine: Layer Integrated');
 });
-// --- 5. GHOST GESTURE & NAV ENGINE ---
+// --- 5. GHOST GESTURE & NAV ENGINE (PWA FIXED) ---
 (function() {
     const ghostNavMap = {
         'settings.html': 'hub.html',
@@ -322,9 +322,12 @@ window.addEventListener('appinstalled', () => {
     const currentPath = window.location.pathname.split('/').pop() || 'index.html';
     let lastBackPress = 0;
 
-    // THE TRAP: Push two states immediately
-    window.history.pushState(null, null, window.location.href);
-    window.history.pushState(null, null, window.location.href);
+    // 1. Prime the Trap using a Hash
+    // This creates a physical "point" for the gesture to hit
+    if (window.location.hash !== '#ghost') {
+        window.history.pushState(null, null, window.location.href);
+        window.location.hash = 'ghost';
+    }
 
     window.addEventListener('popstate', function(event) {
         const destination = ghostNavMap[currentPath];
@@ -332,21 +335,22 @@ window.addEventListener('appinstalled', () => {
         if (currentPath === 'hub.html') {
             const now = Date.now();
             if (now - lastBackPress < 2000) {
-                // If they double swipe/tap fast, we let them out
-                window.history.back(); 
+                // Double tap/swipe: We allow the exit by not pushing state back
+                // The app will now minimize/close on the next system back
             } else {
                 lastBackPress = now;
                 ghostPrompt("Swipe again to exit Ghost.", "info");
-                // RE-LOCK THE TRAP: Immediately push the state back so the next swipe is caught
-                window.history.pushState(null, null, window.location.href);
-                if (navigator.vibrate) navigator.vibrate(50); // A 50ms "thump"
+                if (navigator.vibrate) navigator.vibrate(50);
+                
+                // RE-LOCK: Put the hash back so the next swipe is caught
+                window.location.hash = 'ghost';
             }
         } else if (destination) {
-            // Force the jump
+            // Force jump to the Ghost Map destination
             window.location.href = destination;
         } else {
-            // Keep the trap active for unmapped pages
-            window.history.pushState(null, null, window.location.href);
+            // If page isn't mapped, just keep the trap alive
+            window.location.hash = 'ghost';
         }
     });
 })();

@@ -182,9 +182,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // C. DISPLAY MESSAGE
   const displayMessage = async (msg) => {
-    // 1. Prevent Duplicates (Check if ID already exists in UI)
+    // 1. Prevent Duplicates (ID check)
     if (document.getElementById(`msg-wrapper-${msg.id}`)) return;
 
+    // 2. Ghost Sync: If this is a REAL message from the DB, check if we have a matching temp message
+    if (typeof msg.id === 'number' || !msg.id.startsWith('temp-')) {
+        const temps = chatBox.querySelectorAll('[id^="msg-wrapper-temp-"]');
+        temps.forEach(t => {
+            // If the content is identical, remove the temp version so the real one can take its place
+            if (t.querySelector('.message div:last-child').innerText === msg.content) {
+                t.remove();
+            }
+        });
+    }
     const isMe = msg.sender_id === user.id;
     const timeStr = new Date(msg.created_at).toLocaleTimeString([], {
       hour: "2-digit",
@@ -353,6 +363,7 @@ if (history) {
         created_at: new Date().toISOString()
     };
     displayMessage(tempMsg); 
+    chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
     chatBox.scrollTop = chatBox.scrollHeight;
     
     msgInput.value = "";
@@ -406,22 +417,22 @@ if (history) {
   const typingIndicator = document.getElementById("typing-indicator");
   let typingTimeout;
 // Fix: The channel name must be the SAME for both people in the chat
-  // We sort the IDs so that UserA->UserB and UserB->UserA both join "chat_room_ID1_ID2"
-  const roomID = [user.id, friendID].sort().join("_");
-  const statusChannel = supabaseClient.channel(`room:${roomID}`, {
-    config: { broadcast: { self: false } }
-  });
+ const statusChannel = supabaseClient.channel(`chat_vibe_${roomID}`);
 
   statusChannel
     .on("broadcast", { event: "typing" }, (payload) => {
-        // Friend is typing!
-        typingIndicator.style.display = "block";
-        clearTimeout(typingTimeout);
-        typingTimeout = setTimeout(() => {
-            typingIndicator.style.display = "none";
-        }, 3000);
+        // Only show if the OTHER person is typing
+        if (payload.payload.userId === friendID) {
+            typingIndicator.style.display = "block";
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                typingIndicator.style.display = "none";
+            }, 3000);
+        }
     })
-    .subscribe();
+    .subscribe((status) => {
+        if (status === 'SUBSCRIBED') console.log("Ghost Room: Synced");
+    });
 
   // Send typing signal
   msgInput.addEventListener("input", () => {
@@ -450,11 +461,14 @@ supabaseClient
         const involvesFriend = m.sender_id === friendID || m.receiver_id === friendID;
         
         if (involvesMe && involvesFriend) {
-          // If it's from the friend, show it. 
-          // If it's from me, the "Optimistic UI" already showed it, 
-          // but displayMessage will ignore the duplicate anyway.
+          // If it's from the friend, we ALWAYS display. 
+          // If it's from me, displayMessage will now catch the "temp" version and swap it.
           displayMessage(m);
-          chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+          // Only auto-scroll if the user is already at the bottom
+          const isAtBottom = chatBox.scrollHeight - chatBox.scrollTop <= chatBox.clientHeight + 100;
+          if (isAtBottom) {
+              chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+          }
         }
       }
       

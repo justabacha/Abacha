@@ -310,7 +310,7 @@ window.addEventListener('appinstalled', () => {
     cleanupInstallUI();
     console.log('Ghost Engine: Layer Integrated');
 });
-// --- 5. GHOST NAVIGATION & EXIT ENGINE ---
+// --- 5. GHOST GESTURE & NAV ENGINE ---
 (function() {
     const ghostNavMap = {
         'settings.html': 'hub.html',
@@ -322,28 +322,31 @@ window.addEventListener('appinstalled', () => {
     const currentPath = window.location.pathname.split('/').pop() || 'index.html';
     let lastBackPress = 0;
 
-    // Priming the history state
+    // THE TRAP: Push two states immediately
+    window.history.pushState(null, null, window.location.href);
     window.history.pushState(null, null, window.location.href);
 
-    window.onpopstate = function() {
+    window.addEventListener('popstate', function(event) {
         const destination = ghostNavMap[currentPath];
 
         if (currentPath === 'hub.html') {
             const now = Date.now();
-            // If the user taps back twice within 2 seconds
             if (now - lastBackPress < 2000) {
-                // Let the browser/PWA naturally exit
-                window.history.back();
+                // If they double swipe/tap fast, we let them out
+                window.history.back(); 
             } else {
                 lastBackPress = now;
-                // Use your existing ghostPrompt for the toast
-                ghostPrompt("Tap back again to exit Ghost.", "info");
-                // Re-prime the state so the next tap can be caught
+                ghostPrompt("Swipe again to exit Ghost.", "info");
+                // RE-LOCK THE TRAP: Immediately push the state back so the next swipe is caught
                 window.history.pushState(null, null, window.location.href);
+                if (navigator.vibrate) navigator.vibrate(50); // A 50ms "thump"
             }
         } else if (destination) {
+            // Force the jump
             window.location.href = destination;
+        } else {
+            // Keep the trap active for unmapped pages
             window.history.pushState(null, null, window.location.href);
         }
-    };
+    });
 })();

@@ -466,8 +466,20 @@ const dbChannel = supabaseClient
       const involvesFriend = m.sender_id === friendID || m.receiver_id === friendID;
 
       if (involvesMe && involvesFriend) {
-        displayMessage(m);
-        // Only scroll if we are near the bottom
+        // SURGERY: If I am the sender, the message is already on my screen (optimistic UI)
+        // We only need displayMessage to run for the OTHER person's messages.
+        if (m.sender_id !== user.id) {
+          displayMessage(m);
+        } else {
+          // If it IS from me, just swap the Temp ID for the Real ID so delete/pin works
+          const temps = chatBox.querySelectorAll('[id^="msg-wrapper-temp-"]');
+          temps.forEach(t => {
+            if (t.querySelector('.message div:last-child').innerText === m.content) {
+              t.id = `msg-wrapper-${m.id}`; // Swap temp ID for real DB ID
+            }
+          });
+        }
+        
         const isAtBottom = chatBox.scrollHeight - chatBox.scrollTop <= chatBox.clientHeight + 100;
         if (isAtBottom) chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
       }
@@ -491,20 +503,13 @@ const dbChannel = supabaseClient
     }
   )
   .subscribe();
-// Update my own 'last_seen' every 30 seconds to stay green for the friend
-  const updateMyStatus = async () => {
+// Single optimized heartbeat
+  const ghostHeartbeat = async () => {
     await supabaseClient
       .from('profiles')
       .update({ last_seen: new Date().toISOString() })
       .eq('id', user.id);
   };
-  
-  updateMyStatus(); // Run once on load
-  setInterval(updateMyStatus, 30000); // Run every 30s
-  // Update my own 'last_seen' so the friend sees me as ONLINE
-  const updateMyPresence = async () => {
-    await supabaseClient.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', user.id);
-  };
-  updateMyPresence(); 
-  setInterval(updateMyPresence, 20000); // Heartbeat every 20s
+  ghostHeartbeat(); 
+  setInterval(ghostHeartbeat, 25000);
 });

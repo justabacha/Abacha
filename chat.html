@@ -42,16 +42,18 @@
         </div>
     </div>
 
-  <div class="chat-header">
+ <div class="chat-header">
   <a href="chat-list.html" style="text-decoration:none; color:white; font-size:24px; margin-right:15px;">‹‹</a>
   <div class="chat-avatar" id="header-avatar" style="width:40px; height:40px; border-radius:50%; background-size: cover; margin-right:10px;"></div>
+  
   <div style="display: flex; flex-direction: column;">
       <h4 class="chat-user-name" id="header-name" style="margin:0; color:white;">Ghost...</h4>
+      <div id="typing-indicator" style="font-size: 8px; color: #32D74B; font-weight: bold; display: none; letter-spacing: 1px; animation: pulse 1.5s infinite;">
+          TYPING...
+      </div>
   </div>
+  
   <span id="online-status" style="margin-left: auto; color: #6c6b6b; font-size: 10px; font-weight: bold; letter-spacing: 1px;">● OFFLINE</span>
-</div>
-<div id="typing-indicator" style="font-size: 10px; color: #32D74B; font-weight: bold; display: none; margin-top: 2px; letter-spacing: 1px;">
-    GHOST TYPING...
 </div>
 
     <div id="pinned-bar"></div>

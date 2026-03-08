@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ghost-v1.0.5';
+const CACHE_NAME = 'ghost-v1.0.6'; // Bumped version
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -9,19 +9,18 @@ const ASSETS_TO_CACHE = [
   '/theme-engine.js'
 ];
 
-// 1. FAST INSTALL: Don't wait for files to cache to activate
+// 1. FAST INSTALL
 self.addEventListener('install', (event) => {
-  self.skipWaiting(); // Force the new service worker to become active immediately
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Use addAll, but we don't return it to event.waitUntil 
-      // This lets the worker install even if the cache takes a second
-      cache.addAll(ASSETS_TO_CACHE);
+      // Return the promise so the browser knows when install is truly done
+      return cache.addAll(ASSETS_TO_CACHE);
     })
   );
 });
 
-// 2. CLEANUP: Delete old ghost caches immediately
+// 2. CLEANUP
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -32,24 +31,45 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// 3. SMART FETCH: Serve from cache but update in background
+// 3. STABLE FETCH ENGINE
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // GHOST BYPASS: Do NOT cache Supabase or API calls
+  if (url.hostname.includes('supabase.co') || url.pathname.includes('/api/')) {
+    return; // Let the browser handle these normally
+  }
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request).then((networkResponse) => {
-        // Update the cache with the new version from the network
-        if (networkResponse && networkResponse.status === 200) {
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, networkResponse.clone());
-          });
-        }
-        return networkResponse;
-      }).catch(() => {
-        // Silent fail for network errors (already serving cache)
-      });
+      // If we have it in cache, return it immediately
+      if (cachedResponse) {
+        // Optional: Update cache in background (Stale-while-revalidate)
+        fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse.clone()));
+          }
+        }).catch(() => {}); // Silent fail for background update
+        
+        return cachedResponse;
+      }
 
-      // Return cached version immediately, or wait for network if not in cache
-      return cachedResponse || fetchPromise;
+      // If NOT in cache, go to network
+      return fetch(event.request).then((networkResponse) => {
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+          return networkResponse;
+        }
+
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
+        });
+
+        return networkResponse;
+      }).catch((err) => {
+        console.error("Ghost SW Fetch Failed:", err);
+        // Fallback for navigation errors could go here
+      });
     })
   );
 });

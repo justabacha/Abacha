@@ -310,7 +310,7 @@ window.addEventListener('appinstalled', () => {
     cleanupInstallUI();
     console.log('Ghost Engine: Layer Integrated');
 });
-// --- 5. GHOST GESTURE & NAV ENGINE (PWA FIXED) ---
+// --- 5. GHOST GESTURE & NAV ENGINE (v3 - INTERACTION ARMED) ---
 (function() {
     const ghostNavMap = {
         'settings.html': 'hub.html',
@@ -322,12 +322,19 @@ window.addEventListener('appinstalled', () => {
     const currentPath = window.location.pathname.split('/').pop() || 'index.html';
     let lastBackPress = 0;
 
-    // 1. Prime the Trap using a Hash
-    // This creates a physical "point" for the gesture to hit
-    if (window.location.hash !== '#ghost') {
-        window.history.pushState(null, null, window.location.href);
-        window.location.hash = 'ghost';
-    }
+    // Function to arm the trap
+    const armGhostTrap = () => {
+        if (window.location.hash !== '#ghost') {
+            // Push state twice to create a "buffer"
+            window.history.pushState(null, null, window.location.pathname + '#ghost');
+            window.history.pushState(null, null, window.location.pathname + '#ghost');
+            console.log("👻 Ghost Engine: Trap Armed via Interaction");
+        }
+    };
+
+    // Listen for the first touch/click to arm the trap (Bypasses browser restrictions)
+    document.addEventListener('touchstart', armGhostTrap, { once: true });
+    document.addEventListener('click', armGhostTrap, { once: true });
 
     window.addEventListener('popstate', function(event) {
         const destination = ghostNavMap[currentPath];
@@ -335,22 +342,29 @@ window.addEventListener('appinstalled', () => {
         if (currentPath === 'hub.html') {
             const now = Date.now();
             if (now - lastBackPress < 2000) {
-                // Double tap/swipe: We allow the exit by not pushing state back
-                // The app will now minimize/close on the next system back
+                // Double swipe: Exit
+                console.log("👻 Ghost Engine: Exiting...");
             } else {
                 lastBackPress = now;
-                ghostPrompt("Swipe again to exit Ghost.", "info");
-                if (navigator.vibrate) navigator.vibrate(50);
                 
-                // RE-LOCK: Put the hash back so the next swipe is caught
-                window.location.hash = 'ghost';
+                // Trigger Feedback
+                if (typeof ghostPrompt === 'function') {
+                    ghostPrompt("Swipe again to exit Ghost.", "info");
+                }
+                
+                if (navigator.vibrate) {
+                    navigator.vibrate([100, 50, 100]); // Double-thump vibration
+                }
+
+                // Re-arm the trap immediately
+                window.history.pushState(null, null, window.location.pathname + '#ghost');
             }
         } else if (destination) {
-            // Force jump to the Ghost Map destination
+            // Navigate to ghost map parent
             window.location.href = destination;
         } else {
-            // If page isn't mapped, just keep the trap alive
-            window.location.hash = 'ghost';
+            // Prevent going back to login/index if on a functional page
+            window.history.pushState(null, null, window.location.pathname + '#ghost');
         }
-    });
+    }, false);
 })();

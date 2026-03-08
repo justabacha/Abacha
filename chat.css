@@ -423,11 +423,15 @@ button, .action-item, .input-tile {
     justify-content: center;
 }
 #typing-indicator {
+    display: none; 
+    color: #32D74B; 
+    font-size: 10px; 
+    margin-bottom: 5px;
     animation: ghostPulse 1.5s infinite ease-in-out;
 }
 
 @keyframes ghostPulse {
-    0% { opacity: 0.3; }
-    50% { opacity: 1; }
-    100% { opacity: 0.3; }
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
 }

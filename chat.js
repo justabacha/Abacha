@@ -331,7 +331,7 @@ requestAnimationFrame(() => {
   document.getElementById('chat-overlay').style.display = 'none';
 };
   // H. SEND & INPUT ENGINE
-  const handleSend = async () => {
+ const handleSend = async () => {
     const message = msgInput.value.trim();
     if (!message) return;
 
@@ -341,7 +341,23 @@ requestAnimationFrame(() => {
       window.cancelReply();
     }
 
-    await supabaseClient.from('messages').insert([
+    // --- INSTANT DISPLAY (Optimistic) ---
+    const tempId = 'temp-' + Date.now();
+    const tempMsg = {
+        id: tempId,
+        content: content,
+        sender_id: user.id,
+        receiver_id: friendID,
+        created_at: new Date().toISOString()
+    };
+    displayMessage(tempMsg); 
+    chatBox.scrollTop = chatBox.scrollHeight;
+    
+    msgInput.value = "";
+    msgInput.style.height = 'auto';
+
+    // --- BACKGROUND SEND ---
+    const { error } = await supabaseClient.from('messages').insert([
       {
         content,
         sender_id: user.id,
@@ -349,6 +365,11 @@ requestAnimationFrame(() => {
         sender_email: user.email
       }
     ]);
+
+    if (error) {
+        document.getElementById(`msg-wrapper-${tempId}`)?.remove();
+        window.showGhostPrompt("Vibe failed to send... 💀");
+    }
 
     msgInput.value = "";
     msgInput.style.height = 'auto'; // Reset height after sending
@@ -383,25 +404,25 @@ requestAnimationFrame(() => {
   const typingIndicator = document.getElementById("typing-indicator");
   let typingTimeout;
 
-  // 1. Create a dedicated channel for typing
-  const typingChannel = supabaseClient.channel(`typing:${friendID}`);
+ // Fix: Use a more specific channel name
+  const typingChannel = supabaseClient.channel(`chat_status_${friendID}`, {
+    config: { broadcast: { self: false } }
+  });
 
-  // 2. Listen for typing events from the friend
   typingChannel
     .on("broadcast", { event: "typing" }, (payload) => {
-      if (payload.payload.userId === friendID) {
-        typingIndicator.style.display = "block";
-        
-        // Auto-hide after 3 seconds of no "typing" pings
-        clearTimeout(typingTimeout);
-        typingTimeout = setTimeout(() => {
-          typingIndicator.style.display = "none";
-        }, 3000);
-      }
+        // Only show if the sender is actually the friend
+        if (payload.payload.userId === friendID) {
+            typingIndicator.style.display = "block";
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                typingIndicator.style.display = "none";
+            }, 3000);
+        }
     })
     .subscribe();
 
-  // 3. Send typing signal when user types
+  // Fix: Send typing signal with more frequency
   msgInput.addEventListener("input", () => {
     typingChannel.send({
       type: "broadcast",
@@ -409,6 +430,9 @@ requestAnimationFrame(() => {
       payload: { userId: user.id },
     });
   });
+
+  // Fix: Auto-refresh Online status every 30 seconds
+  setInterval(syncReceiverHeader, 30000);
 
 // I. REALTIME (Silent Sync)
 supabaseClient
@@ -423,11 +447,14 @@ supabaseClient
         const isRelevant = (m.sender_id === user.id && m.receiver_id === friendID) || 
                            (m.sender_id === friendID && m.receiver_id === user.id);
         
-        if (isRelevant && (!m.hidden_from || !m.hidden_from.includes(user.id))) {
+       if (isRelevant && (!m.hidden_from || !m.hidden_from.includes(user.id))) {
+      // Only display if it's from the friend (to avoid doubling your own sent msg)
+      if (m.sender_id === friendID) {
           displayMessage(m);
           chatBox.scrollTop = chatBox.scrollHeight;
-        }
       }
+    }
+  }
       
       if (payload.eventType === "UPDATE") {
         const m = payload.new;

@@ -68,26 +68,22 @@
     </p>
   </div>
 
-  <!-- 🔑 SUPABASE -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <!-- 🔐 AUTH GUARD + SPLASH CONTROL -->
   <script>
-    const supabaseClient = supabase.createClient(
-      "https://zvkretqhqmxuhgspddpu.supabase.co",
-      "sb_publishable__7_K38aDluNYgS0bxLuLfA_aV5-ZnIY"
-    );
+    // We use a small interval to wait until app.js defines the client
+    const checkAuth = async () => {
+      if (typeof supabaseClient === 'undefined') {
+        setTimeout(checkAuth, 50); // Wait 50ms and try again
+        return;
+      }
 
-    document.addEventListener('DOMContentLoaded', async () => {
       const { data: { session } } = await supabaseClient.auth.getSession();
 
-      // 🚫 Not logged in → bounce
       if (!session) {
         window.location.replace('index.html');
         return;
       }
 
-      // ✅ Logged in → show splash briefly
       const splash = document.getElementById('splash-screen');
       if (splash) {
         setTimeout(() => {
@@ -95,12 +91,15 @@
           setTimeout(() => splash.remove(), 600);
         }, 1200);
       }
-    });
-  </script>
+    };
 
+    document.addEventListener('DOMContentLoaded', checkAuth);
+  </script>
   <!-- 🧠 MAIN APP LOGIC -->
+    <!-- 🔑 SUPABASE -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
   <script src="hub.js"></script>
-  <script src="app.js" defer></script>
 
 </body>
 </html>

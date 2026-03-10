@@ -450,8 +450,8 @@ if (history) {
     }
   });
 
-  // Fix: Auto-refresh Online status every 30 seconds
-  setInterval(syncReceiverHeader, 30000);
+  // Fix: Auto-refresh Online status every 10 seconds
+  setInterval(syncReceiverHeader, 10000);
 
 // I. REALTIME (Silent Sync)
 const dbChannel = supabaseClient

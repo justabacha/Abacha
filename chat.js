@@ -197,17 +197,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
     const isMe = msg.sender_id === user.id;
-    const timeStr = new Date(msg.created_at).toLocaleTimeString([], {
+   const timeStr = new Date(msg.created_at).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
     });
+    const ticks = msg.is_read 
+      ? '<span style="color: #06ffea; margin-left: 4px;">✓✓</span>' 
+      : '<span style="color: #c0bebe; margin-left: 4px;">✓✓</span>';
 
     const wrapper = document.createElement("div");
     wrapper.id = `msg-wrapper-${msg.id}`; 
     wrapper.className = `msg-wrapper ${isMe ? "user-wrapper" : "ai-wrapper"}`;
     wrapper.setAttribute('data-timestamp', new Date(msg.created_at).getTime());
 
-    // Logic for Avatar and Content (Keep your existing innerHTML logic here)
     const { data: sender } = await supabaseClient
       .from("profiles")
       .select("avatar_url")
@@ -223,12 +225,13 @@ document.addEventListener("DOMContentLoaded", async () => {
           ? `<div class="reply-quote">${msg.content.split("]\n")[0].replace("↳ [", "")}</div><div>${msg.content.split("]\n")[1] || ""}</div>`
           : `<div>${msg.content}</div>`
         }
-        <div class="msg-time" style="font-size:10px;opacity:0.8;margin-top:4px;text-align:right;">${timeStr}</div>
+        <div class="msg-time" style="font-size:10px; opacity:1.0; margin-top:4px; text-align:right; display: flex; align-items: center; justify-content: flex-end;">
+          ${timeStr} ${isMe ? ticks : ''}
+        </div>
       </div>
     `;
 
     // --- SORTING ENGINE ---
-    // Find where to insert this message based on time
     const existingMessages = [...chatBox.querySelectorAll('.msg-wrapper')];
     const nextMsg = existingMessages.find(el => 
       parseInt(el.getAttribute('data-timestamp')) > parseInt(wrapper.getAttribute('data-timestamp'))
@@ -246,7 +249,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       window.showActionMenu(msg, bubble.cloneNode(true));
     };
   };
-// --- D. LOAD HISTORY (Updated for Stability) ---
+// --- D. LOAD HISTORY (Updated for Read Receipts) ---
 const { data: history } = await supabaseClient
   .from("messages")
   .select("*")
@@ -256,10 +259,17 @@ const { data: history } = await supabaseClient
 
 if (history) {
   chatBox.innerHTML = "";
-  // Use for...of instead of .map to ensure sequential rendering
   for (const msg of history) {
       await displayMessage(msg);
   }
+
+  // MARK MESSAGES AS READ: Update all messages sent by the friend to 'is_read: true'
+  await supabaseClient
+    .from("messages")
+    .update({ is_read: true })
+    .eq("sender_id", friendID)
+    .eq("receiver_id", user.id)
+    .eq("is_read", false);
 
   requestAnimationFrame(() => {
       chatBox.scrollTop = chatBox.scrollHeight;
@@ -398,18 +408,12 @@ if (history) {
  msgInput.addEventListener('keydown', (e) => {
       // Check if it's the Enter key
       if (e.key === "Enter") {
-          // On mobile, scrollHeight usually doesn't change unless there's a real line break.
-          // We allow the default behavior (new line) if Shift is held OR if it's a touch-based device
-          // but we want to SEND if it's a standard Enter press on Desktop.
-          
           const isMobile = window.matchMedia("(pointer: coarse)").matches;
 
           if (!e.shiftKey && !isMobile) {
               e.preventDefault(); // Stop the new line
               handleSend();      // Send the vibe
           }
-          // On mobile, we let the default "Enter" happen so it jumps to the next line
-          // The Send button (🚀) will be the primary way to send on phone.
       }
   });
 
@@ -466,9 +470,7 @@ const dbChannel = supabaseClient
       const involvesFriend = m.sender_id === friendID || m.receiver_id === friendID;
 
       if (involvesMe && involvesFriend) {
-        // SURGERY: If I am the sender, the message is already on my screen (optimistic UI)
-        // We only need displayMessage to run for the OTHER person's messages.
-        if (m.sender_id !== user.id) {
+       if (m.sender_id !== user.id) {
           displayMessage(m);
         } else {
           // If it IS from me, just swap the Temp ID for the Real ID so delete/pin works
@@ -497,9 +499,21 @@ const dbChannel = supabaseClient
   )
   .on(
     "postgres_changes",
-    { event: "DELETE", schema: "public", table: "messages" },
+    { event: "UPDATE", schema: "public", table: "messages" },
     (payload) => {
-       document.getElementById(`msg-wrapper-${payload.old.id}`)?.remove();
+       const m = payload.new;
+       // Handle Ghost Deletion
+       if (m.hidden_from?.includes(user.id)) {
+          document.getElementById(`msg-wrapper-${m.id}`)?.remove();
+       }
+       // Handle Read Receipt Sync
+       const msgEl = document.getElementById(`msg-wrapper-${m.id}`);
+       if (msgEl && m.is_read) {
+          const timeContainer = msgEl.querySelector('.msg-time');
+          if (timeContainer && m.sender_id === user.id) {
+             timeContainer.innerHTML = `${new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} <span style="color: #34B7F1; margin-left: 4px;">✓✓</span>`;
+          }
+       }
     }
   )
   .subscribe();

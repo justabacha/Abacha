@@ -73,3 +73,42 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+// 4. GHOST PUSH & ACTIONS
+self.addEventListener('push', (event) => {
+    const data = event.data ? event.data.json() : { title: 'New Vibe', body: 'Someone sent a ghost...' };
+    
+    const options = {
+        body: data.body,
+        icon: 'icon-192-v2.png',
+        badge: 'icon-192-v2.png',
+        vibrate: [100, 50, 100],
+        data: { senderId: data.senderId, url: `/hub.html?friend_id=${data.senderId}` },
+        actions: [
+            { action: 'reply', title: 'Reply ✍️', type: 'text', placeholder: 'Type vibe...' },
+            { action: 'read', title: 'Mark Read ✓', icon: 'check-icon.png' }
+        ]
+    };
+
+    event.waitUntil(self.registration.showNotification(data.title, options));
+});
+
+// 5. HANDLE NOTIFICATION CLICKS
+self.addEventListener('notificationclick', (event) => {
+    const action = event.action;
+    const notification = event.notification;
+    const senderId = notification.data.senderId;
+
+    if (action === 'read') {
+        // Logic to hit Supabase and mark as read silently
+        notification.close();
+    } else if (action === 'reply') {
+        // Grab the text from event.reply
+        const replyText = event.reply;
+        // Logic to insert into Supabase messages table
+        notification.close();
+    } else {
+        // Normal click: open the chat
+        event.waitUntil(clients.openWindow(notification.data.url));
+        notification.close();
+    }
+});

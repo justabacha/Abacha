@@ -294,3 +294,47 @@ body, html {
     font-size: 30px;
     margin-bottom: 40px;
 }
+/* --- GHOST TOAST (IN-APP NOTIFICATIONS) --- */
+.ghost-toast {
+    position: fixed;
+    top: -100px; /* Hidden initially */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 400px;
+    background: rgba(25, 25, 25, 0.85);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 15px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    z-index: 99999;
+    transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+}
+
+.ghost-toast.show {
+    top: 20px; /* Slide down to view */
+}
+
+.ghost-toast-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: bold;
+    color: #007AFF; /* Ghost Blue */
+    margin-bottom: 2px;
+}
+
+.ghost-toast-body {
+    font-size: 14px;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

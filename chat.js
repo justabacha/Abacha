@@ -19,6 +19,8 @@ let replyingTo = null;
 let currentPins = [];
 let pendingPinMsg = null;
 let messageToDelete = null;
+let cachedMyAvatar = null;
+let cachedFriendAvatar = null;
 
 // --- 3. GLOBAL UI HELPERS ---
 window.cancelReply = () => {
@@ -180,29 +182,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         .join("");
     } else pinBar.style.display = "none";
   };
-
-  // C. DISPLAY MESSAGE
-  const displayMessage = async (msg) => {
-    // 1. Prevent Duplicates (ID check)
+// C. DISPLAY MESSAGE (Ghost Speed Version)
+  const displayMessage = (msg, friendAvatar = null, myAvatar = null) => {
     if (document.getElementById(`msg-wrapper-${msg.id}`)) return;
 
-    // 2. Ghost Sync: If this is a REAL message from the DB, check if we have a matching temp message
-    if (typeof msg.id === 'number' || !msg.id.startsWith('temp-')) {
-        const temps = chatBox.querySelectorAll('[id^="msg-wrapper-temp-"]');
-        temps.forEach(t => {
-            // If the content is identical, remove the temp version so the real one can take its place
-            if (t.querySelector('.message div:last-child').innerText === msg.content) {
-                t.remove();
-            }
-        });
-    }
     const isMe = msg.sender_id === user.id;
-   const timeStr = new Date(msg.created_at).toLocaleTimeString([], {
+    const timeStr = new Date(msg.created_at).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
     });
+
     const ticks = msg.is_read 
-      ? '<span style="color: #06ffea; margin-left: 4px;">✓✓</span>' 
+      ? '<span style="color: #06acff; margin-left: 4px;">✓✓</span>' 
       : '<span style="color: #c0bebe; margin-left: 4px;">✓✓</span>';
 
     const wrapper = document.createElement("div");
@@ -210,13 +201,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     wrapper.className = `msg-wrapper ${isMe ? "user-wrapper" : "ai-wrapper"}`;
     wrapper.setAttribute('data-timestamp', new Date(msg.created_at).getTime());
 
-    const { data: sender } = await supabaseClient
-      .from("profiles")
-      .select("avatar_url")
-      .eq("id", msg.sender_id)
-      .maybeSingle();
-
-    const avatarImg = sender?.avatar_url || "https://i.postimg.cc/rpD4fgxR/IMG-5898-2.jpg";
+    // USES PRE-FETCHED AVATARS (No testing links!)
+    const avatarImg = isMe 
+      ? (myAvatar || "https://i.postimg.cc/rpD4fgxR/IMG-5898-2.jpg") 
+      : (friendAvatar || "https://i.postimg.cc/rpD4fgxR/IMG-5898-2.jpg");
 
     wrapper.innerHTML = `
       <img src="${avatarImg}" class="avatar">
@@ -231,17 +219,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       </div>
     `;
 
-    // --- SORTING ENGINE ---
     const existingMessages = [...chatBox.querySelectorAll('.msg-wrapper')];
     const nextMsg = existingMessages.find(el => 
       parseInt(el.getAttribute('data-timestamp')) > parseInt(wrapper.getAttribute('data-timestamp'))
     );
 
-    if (nextMsg) {
-      chatBox.insertBefore(wrapper, nextMsg);
-    } else {
-      chatBox.appendChild(wrapper);
-    }
+    if (nextMsg) chatBox.insertBefore(wrapper, nextMsg);
+    else chatBox.appendChild(wrapper);
 
     const bubble = wrapper.querySelector(".message");
     bubble.oncontextmenu = (e) => {
@@ -249,35 +233,69 @@ document.addEventListener("DOMContentLoaded", async () => {
       window.showActionMenu(msg, bubble.cloneNode(true));
     };
   };
-// --- D. LOAD HISTORY (Updated for Read Receipts) ---
-const { data: history } = await supabaseClient
-  .from("messages")
-  .select("*")
-  .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`)
-  .not('hidden_from', 'cs', `{${user.id}}`) 
-  .order("created_at", { ascending: true });
+// --- D. LOAD HISTORY (Ghost Speed Edition) ---
+const loadGhostHistory = async () => {
+  chatBox.style.opacity = "0";
 
-if (history) {
-  chatBox.innerHTML = "";
-  for (const msg of history) {
-      await displayMessage(msg);
+  // 1. Pre-fetch BOTH avatars ONCE and store them globally
+  const { data: profiles } = await supabaseClient
+    .from('profiles')
+    .select('id, avatar_url')
+    .in('id', [user.id, friendID]);
+
+  cachedMyAvatar = profiles?.find(p => p.id === user.id)?.avatar_url;
+  cachedFriendAvatar = profiles?.find(p => p.id === friendID)?.avatar_url;
+
+  const msgFilter = `and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`;
+
+  // 2. FAST SNAP (Last 12)
+  const { data: recentHistory } = await supabaseClient
+    .from("messages")
+    .select("*")
+    .or(msgFilter)
+    .not('hidden_from', 'cs', `{${user.id}}`)
+    .order("created_at", { ascending: false })
+    .limit(12);
+
+  if (recentHistory) {
+    chatBox.innerHTML = "";
+    [...recentHistory].reverse().forEach(msg => displayMessage(msg, cachedFriendAvatar, cachedMyAvatar));
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+    chatBox.classList.add('ready');
+    chatBox.style.opacity = "1";
+
+    supabaseClient.from("messages").update({ is_read: true })
+      .eq("sender_id", friendID).eq("receiver_id", user.id).eq("is_read", false).then();
   }
 
-  // MARK MESSAGES AS READ: Update all messages sent by the friend to 'is_read: true'
-  await supabaseClient
+  // 3. BACKGROUND SYNC
+  const { data: fullHistory } = await supabaseClient
     .from("messages")
-    .update({ is_read: true })
-    .eq("sender_id", friendID)
-    .eq("receiver_id", user.id)
-    .eq("is_read", false);
+    .select("*")
+    .or(msgFilter)
+    .not('hidden_from', 'cs', `{${user.id}}`)
+    .order("created_at", { ascending: true });
 
-  requestAnimationFrame(() => {
-      chatBox.scrollTop = chatBox.scrollHeight;
-      chatBox.classList.add('ready');
-  });
+  if (fullHistory) {
+    fullHistory.forEach(msg => {
+      if (!document.getElementById(`msg-wrapper-${msg.id}`)) {
+        const oldH = chatBox.scrollHeight;
+        const oldT = chatBox.scrollTop;
+        displayMessage(msg, cachedFriendAvatar, cachedMyAvatar);
+        
+        if (oldH - oldT > chatBox.clientHeight + 100) {
+            chatBox.scrollTop = oldT + (chatBox.scrollHeight - oldH);
+        } else {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+      }
+    });
+  }
   window.loadPins();
-}
+};
 
+loadGhostHistory();
   // E. GHOST PROMPT (FORWARD)
   window.showGhostPrompt = (message) => {
     const overlay = document.getElementById("ghost-prompt-overlay");
@@ -373,7 +391,8 @@ if (history) {
         receiver_id: friendID,
         created_at: new Date().toISOString()
     };
-    displayMessage(tempMsg); 
+   // Change this line:
+    displayMessage(tempMsg, cachedFriendAvatar, cachedMyAvatar);
     chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
     chatBox.scrollTop = chatBox.scrollHeight;
     
@@ -471,7 +490,7 @@ const dbChannel = supabaseClient
 
       if (involvesMe && involvesFriend) {
        if (m.sender_id !== user.id) {
-          displayMessage(m);
+          displayMessage(m, cachedFriendAvatar, cachedMyAvatar);
         } else {
           // If it IS from me, just swap the Temp ID for the Real ID so delete/pin works
           const temps = chatBox.querySelectorAll('[id^="msg-wrapper-temp-"]');

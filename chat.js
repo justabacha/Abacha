@@ -235,22 +235,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 // --- D. LOAD HISTORY (Ghost Speed Edition + Fail Safe) ---
 const loadGhostHistory = async () => {
-  try {
-    chatBox.style.opacity = "0"; // Hide until ready
+  // Move msgFilter out of the try block so the background sync can see it!
+  const msgFilter = `and(sender_id.eq."${user.id}",receiver_id.eq."${friendID}"),and(sender_id.eq."${friendID}",receiver_id.eq."${user.id}")`;
+  try {
+    chatBox.style.opacity = "0"; // Hide until ready
 
-    const { data: profiles, error: pError } = await supabaseClient
-      .from('profiles')
-      .select('id, avatar_url')
-      .in('id', [user.id, friendID]);
+    const { data: profiles, error: pError } = await supabaseClient
+      .from('profiles')
+      .select('id, avatar_url')
+      .in('id', [user.id, friendID]);
 
-    if (pError) throw pError;
+    if (pError) throw pError;
 
-    cachedMyAvatar = profiles?.find(p => p.id === user.id)?.avatar_url;
-    cachedFriendAvatar = profiles?.find(p => p.id === friendID)?.avatar_url;
-
-   // UUIDs must be wrapped in double quotes in PostgREST .or() filters!
-    const msgFilter = `and(sender_id.eq."${user.id}",receiver_id.eq."${friendID}"),and(sender_id.eq."${friendID}",receiver_id.eq."${user.id}")`;
-    // FAST SNAP (Last 12)
+    cachedMyAvatar = profiles?.find(p => p.id === user.id)?.avatar_url;
+    cachedFriendAvatar = profiles?.find(p => p.id === friendID)?.avatar_url;
+   // FAST SNAP (Last 12)
     const { data: recentHistory } = await supabaseClient
       .from("messages")
       .select("*")
@@ -516,30 +515,32 @@ const dbChannel = supabaseClient
       }
 
       // 2. Handle Blue Ticks (Wait for ID swap if needed)
-      if (m.is_read && m.sender_id === user.id) {
-        // Try finding by Real ID
-        let msgEl = document.getElementById(`msg-wrapper-${m.id}`);
-        
-        // FAIL-SAFE: If the ID swap hasn't happened yet, find by content
-        if (!msgEl) {
-           const temps = chatBox.querySelectorAll('[id^="msg-wrapper-temp-"]');
+      if (m.is_read) {
+        // Try finding by Real ID
+        let msgEl = document.getElementById(`msg-wrapper-${m.id}`);
+        
+        // FAIL-SAFE: If the ID swap hasn't happened yet, and we have content
+        if (!msgEl && m.content) {
+           const temps = chatBox.querySelectorAll('[id^="msg-wrapper-temp-"]');
            temps.forEach(t => {
              if (t.getAttribute('data-content').trim() === m.content.trim()) {
                msgEl = t;
                msgEl.id = `msg-wrapper-${m.id}`; // Force the swap now
              }
            });
-        }
+        }
 
-        if (msgEl) {
+        // Check if it's OUR message using the DOM class, avoiding missing payload data
+       if (msgEl && msgEl.classList.contains('user-wrapper')) {
           const timeContainer = msgEl.querySelector('.msg-time');
-          if (timeContainer) {
-            const timeStr = new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            timeContainer.innerHTML = `${timeStr} <span style="color: #06acff; margin-left: 4px;">✓✓</span>`;
+          // Only update if it's not already blue to save resources
+          if (timeContainer && !timeContainer.querySelector('span[style*="#06acff"]')) {
+            const timeText = timeContainer.innerText.replace('✓✓', '').trim();
+            timeContainer.innerHTML = `${timeText} <span style="color: #06acff; margin-left: 4px;">✓✓</span>`;
           }
         }
-      }
-    }
+      }
+}
   )
   .subscribe();
 // Single optimized heartbeat

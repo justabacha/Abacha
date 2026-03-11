@@ -479,45 +479,48 @@ loadGhostHistory();
 // I. REALTIME (Silent Sync)
 const dbChannel = supabaseClient
   .channel(`chat_messages_${roomID}`)
-  .on(
-    "postgres_changes",
-    { event: "INSERT", schema: "public", table: "messages" },
-    (payload) => {
-      const m = payload.new;
-      // Check if the vibe belongs to THIS specific chat room
-      const involvesMe = m.sender_id === user.id || m.receiver_id === user.id;
-      const involvesFriend = m.sender_id === friendID || m.receiver_id === friendID;
+ .on(
+  "postgres_changes",
+  { event: "INSERT", schema: "public", table: "messages" },
+  (payload) => {
+    const m = payload.new;
+    const involvesMe = m.sender_id === user.id || m.receiver_id === user.id;
+    const involvesFriend = m.sender_id === friendID || m.receiver_id === friendID;
 
-      if (involvesMe && involvesFriend) {
-       if (m.sender_id !== user.id) {
-          displayMessage(m, cachedFriendAvatar, cachedMyAvatar);
-          supabaseClient.from("messages").update({ is_read: true }).eq("id", m.id).then();
-       // Inside your INSERT listener
-} else {
-    // If it IS from me, swap Temp ID for Real ID
-    const temps = chatBox.querySelectorAll('[id^="msg-wrapper-temp-"]');
-    temps.forEach(t => {
-        // Match by content to ensure we swap the right one
-        const contentDiv = t.querySelector('.message div:last-child');
-        if (contentDiv && contentDiv.innerText.trim() === m.content.trim()) {
-            t.id = `msg-wrapper-${m.id}`;
-            // NEW: If the message arrived already marked as read, update ticks now
-            if (m.is_read) {
-                const timeStr = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-                const timeContainer = t.querySelector('.msg-time');
-                if (timeContainer) {
-                    timeContainer.innerHTML = `${timeStr} <span style="color: #06acff; margin-left: 4px;">✓✓</span>`;
-                }
+    if (involvesMe && involvesFriend) {
+      // 1. IF THE MESSAGE IS FROM MY FRIEND
+      if (m.sender_id !== user.id) {
+        displayMessage(m, cachedFriendAvatar, cachedMyAvatar);
+        // Tell the database I've read it (This triggers the blue ticks for THEM)
+        supabaseClient.from("messages").update({ is_read: true }).eq("id", m.id).then();
+      } 
+      
+      // 2. ALWAYS ATTEMPT TO SWAP TEMP IDs (For the Sender)
+      // We do this outside the 'else' to ensure even fast-read messages sync up
+      const temps = chatBox.querySelectorAll('[id^="msg-wrapper-temp-"]');
+      temps.forEach(t => {
+        // Find the message bubble text to match it to the DB record
+        const msgTextContainer = t.querySelector('.message div:last-child');
+        if (msgTextContainer && msgTextContainer.innerText.trim() === m.content.trim()) {
+          t.id = `msg-wrapper-${m.id}`; // Permanent DB ID
+
+          // If the receiver was already in the chat, m.is_read might already be true
+          if (m.is_read && m.sender_id === user.id) {
+            const timeStr = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            const timeContainer = t.querySelector('.msg-time');
+            if (timeContainer) {
+              timeContainer.innerHTML = `${timeStr} <span style="color: #06acff; margin-left: 4px;">✓✓</span>`;
             }
+          }
         }
-    });
-}
-        
-        const isAtBottom = chatBox.scrollHeight - chatBox.scrollTop <= chatBox.clientHeight + 100;
-        if (isAtBottom) chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
-      }
+      });
+
+      // Auto-scroll logic
+      const isAtBottom = chatBox.scrollHeight - chatBox.scrollTop <= chatBox.clientHeight + 100;
+      if (isAtBottom) chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
     }
-  )
+  }
+)
 .on(
     "postgres_changes",
     { event: "UPDATE", schema: "public", table: "messages" },

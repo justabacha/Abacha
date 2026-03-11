@@ -233,68 +233,67 @@ document.addEventListener("DOMContentLoaded", async () => {
       window.showActionMenu(msg, bubble.cloneNode(true));
     };
   };
-// --- D. LOAD HISTORY (Ghost Speed Edition) ---
+// --- D. LOAD HISTORY (Ghost Speed Edition + Fail Safe) ---
 const loadGhostHistory = async () => {
-  chatBox.style.opacity = "0";
+  try {
+    chatBox.style.opacity = "0"; // Hide until ready
 
-  // 1. Pre-fetch BOTH avatars ONCE and store them globally
-  const { data: profiles } = await supabaseClient
-    .from('profiles')
-    .select('id, avatar_url')
-    .in('id', [user.id, friendID]);
+    const { data: profiles, error: pError } = await supabaseClient
+      .from('profiles')
+      .select('id, avatar_url')
+      .in('id', [user.id, friendID]);
 
-  cachedMyAvatar = profiles?.find(p => p.id === user.id)?.avatar_url;
-  cachedFriendAvatar = profiles?.find(p => p.id === friendID)?.avatar_url;
+    if (pError) throw pError;
 
-  const msgFilter = `and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`;
+    cachedMyAvatar = profiles?.find(p => p.id === user.id)?.avatar_url;
+    cachedFriendAvatar = profiles?.find(p => p.id === friendID)?.avatar_url;
 
-  // 2. FAST SNAP (Last 12)
-  const { data: recentHistory } = await supabaseClient
-    .from("messages")
-    .select("*")
-    .or(msgFilter)
-    .not('hidden_from', 'cs', `{${user.id}}`)
-    .order("created_at", { ascending: false })
-    .limit(12);
+    const msgFilter = `and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`;
 
-  if (recentHistory) {
-    chatBox.innerHTML = "";
-    [...recentHistory].reverse().forEach(msg => displayMessage(msg, cachedFriendAvatar, cachedMyAvatar));
+    // FAST SNAP (Last 12)
+    const { data: recentHistory } = await supabaseClient
+      .from("messages")
+      .select("*")
+      .or(msgFilter)
+      .not('hidden_from', 'cs', `{${user.id}}`)
+      .order("created_at", { ascending: false })
+      .limit(12);
 
-    chatBox.scrollTop = chatBox.scrollHeight;
-    chatBox.classList.add('ready');
+    if (recentHistory) {
+      chatBox.innerHTML = "";
+      [...recentHistory].reverse().forEach(msg => displayMessage(msg, cachedFriendAvatar, cachedMyAvatar));
+      
+      chatBox.scrollTop = chatBox.scrollHeight;
+      chatBox.classList.add('ready');
+      
+      // Mark as read in background
+      supabaseClient.from("messages").update({ is_read: true })
+        .eq("sender_id", friendID).eq("receiver_id", user.id).eq("is_read", false).then();
+    }
+  } catch (err) {
+    console.error("Ghost Load Error:", err);
+  } finally {
+    // ALWAYS show the chatbox, even if empty/error, to prevent "Hardcode" freeze
     chatBox.style.opacity = "1";
-
-    supabaseClient.from("messages").update({ is_read: true })
-      .eq("sender_id", friendID).eq("receiver_id", user.id).eq("is_read", false).then();
   }
 
-  // 3. BACKGROUND SYNC
+  // BACKGROUND SYNC (Load the rest)
   const { data: fullHistory } = await supabaseClient
     .from("messages")
     .select("*")
-    .or(msgFilter)
+    .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`)
     .not('hidden_from', 'cs', `{${user.id}}`)
     .order("created_at", { ascending: true });
 
   if (fullHistory) {
     fullHistory.forEach(msg => {
       if (!document.getElementById(`msg-wrapper-${msg.id}`)) {
-        const oldH = chatBox.scrollHeight;
-        const oldT = chatBox.scrollTop;
         displayMessage(msg, cachedFriendAvatar, cachedMyAvatar);
-        
-        if (oldH - oldT > chatBox.clientHeight + 100) {
-            chatBox.scrollTop = oldT + (chatBox.scrollHeight - oldH);
-        } else {
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
       }
     });
   }
   window.loadPins();
 };
-
 loadGhostHistory();
   // E. GHOST PROMPT (FORWARD)
   window.showGhostPrompt = (message) => {
@@ -476,73 +475,72 @@ loadGhostHistory();
   // Fix: Auto-refresh Online status every 10 seconds
   setInterval(syncReceiverHeader, 10000);
 
-// I. REALTIME (Silent Sync)
+// I. REALTIME (Optimized for Race Conditions)
 const dbChannel = supabaseClient
   .channel(`chat_messages_${roomID}`)
- .on(
-  "postgres_changes",
-  { event: "INSERT", schema: "public", table: "messages" },
-  (payload) => {
-    const m = payload.new;
-    const involvesMe = m.sender_id === user.id || m.receiver_id === user.id;
-    const involvesFriend = m.sender_id === friendID || m.receiver_id === friendID;
-
-    if (involvesMe && involvesFriend) {
-      // 1. IF THE MESSAGE IS FROM MY FRIEND
-      if (m.sender_id !== user.id) {
-        displayMessage(m, cachedFriendAvatar, cachedMyAvatar);
-        // Tell the database I've read it (This triggers the blue ticks for THEM)
-        supabaseClient.from("messages").update({ is_read: true }).eq("id", m.id).then();
-      } 
-      
-      // 2. ALWAYS ATTEMPT TO SWAP TEMP IDs (For the Sender)
-      // We do this outside the 'else' to ensure even fast-read messages sync up
-      const temps = chatBox.querySelectorAll('[id^="msg-wrapper-temp-"]');
-      temps.forEach(t => {
-        // Find the message bubble text to match it to the DB record
-        const msgTextContainer = t.querySelector('.message div:last-child');
-        if (msgTextContainer && msgTextContainer.innerText.trim() === m.content.trim()) {
-          t.id = `msg-wrapper-${m.id}`; // Permanent DB ID
-
-          // If the receiver was already in the chat, m.is_read might already be true
-          if (m.is_read && m.sender_id === user.id) {
-            const timeStr = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            const timeContainer = t.querySelector('.msg-time');
-            if (timeContainer) {
-              timeContainer.innerHTML = `${timeStr} <span style="color: #06acff; margin-left: 4px;">✓✓</span>`;
+  .on(
+    "postgres_changes",
+    { event: "INSERT", schema: "public", table: "messages" },
+    (payload) => {
+      const m = payload.new;
+      if ((m.sender_id === user.id || m.receiver_id === user.id) && (m.sender_id === friendID || m.receiver_id === friendID)) {
+        
+        if (m.sender_id !== user.id) {
+          displayMessage(m, cachedFriendAvatar, cachedMyAvatar);
+          supabaseClient.from("messages").update({ is_read: true }).eq("id", m.id).then();
+        } else {
+          // ID SWAP LOGIC
+          const temps = chatBox.querySelectorAll('[id^="msg-wrapper-temp-"]');
+          temps.forEach(t => {
+            const contentDiv = t.querySelector('.message div:last-child');
+            if (contentDiv && contentDiv.innerText.trim() === m.content.trim()) {
+              t.id = `msg-wrapper-${m.id}`;
+              // Update timestamp to real DB time
+              t.setAttribute('data-timestamp', new Date(m.created_at).getTime());
             }
-          }
+          });
         }
-      });
-
-      // Auto-scroll logic
-      const isAtBottom = chatBox.scrollHeight - chatBox.scrollTop <= chatBox.clientHeight + 100;
-      if (isAtBottom) chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+        chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+      }
     }
-  }
-)
-.on(
+  )
+  .on(
     "postgres_changes",
     { event: "UPDATE", schema: "public", table: "messages" },
     (payload) => {
-       const m = payload.new;
-       // 1. Handle Ghost Deletion (Sync across devices)
-       if (m.hidden_from?.includes(user.id)) {
-          document.getElementById(`msg-wrapper-${m.id}`)?.remove();
-       }
-       // 2. Handle Blue Tick Sync (When the other person reads your message)
-       const msgEl = document.getElementById(`msg-wrapper-${m.id}`);
-       if (msgEl && m.is_read && m.sender_id === user.id) {
+      const m = payload.new;
+      
+      // 1. Handle Deletion
+      if (m.hidden_from?.includes(user.id)) {
+        document.getElementById(`msg-wrapper-${m.id}`)?.remove();
+        return;
+      }
+
+      // 2. Handle Blue Ticks (Wait for ID swap if needed)
+      if (m.is_read && m.sender_id === user.id) {
+        // Try finding by Real ID
+        let msgEl = document.getElementById(`msg-wrapper-${m.id}`);
+        
+        // FAIL-SAFE: If the ID swap hasn't happened yet, find by content
+        if (!msgEl) {
+           const temps = chatBox.querySelectorAll('[id^="msg-wrapper-temp-"]');
+           temps.forEach(t => {
+             const contentDiv = t.querySelector('.message div:last-child');
+             if (contentDiv && contentDiv.innerText.trim() === m.content.trim()) {
+               msgEl = t;
+               msgEl.id = `msg-wrapper-${m.id}`; // Force the swap now
+             }
+           });
+        }
+
+        if (msgEl) {
           const timeContainer = msgEl.querySelector('.msg-time');
           if (timeContainer) {
-             const timeStr = new Date(m.created_at).toLocaleTimeString([], {
-                hour: '2-digit', 
-                minute: '2-digit'
-             });
-             // Force the blue color immediately
-             timeContainer.innerHTML = `${timeStr} <span style="color: #06acff; margin-left: 4px;">✓✓</span>`;
+            const timeStr = new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            timeContainer.innerHTML = `${timeStr} <span style="color: #06acff; margin-left: 4px;">✓✓</span>`;
           }
-       }
+        }
+      }
     }
   )
   .subscribe();

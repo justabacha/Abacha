@@ -491,8 +491,8 @@ const dbChannel = supabaseClient
       if (involvesMe && involvesFriend) {
        if (m.sender_id !== user.id) {
           displayMessage(m, cachedFriendAvatar, cachedMyAvatar);
+          supabaseClient.from("messages").update({ is_read: true }).eq("id", m.id).then();
         } else {
-          // If it IS from me, just swap the Temp ID for the Real ID so delete/pin works
           const temps = chatBox.querySelectorAll('[id^="msg-wrapper-temp-"]');
           temps.forEach(t => {
             if (t.querySelector('.message div:last-child').innerText === m.content) {
@@ -506,13 +506,23 @@ const dbChannel = supabaseClient
       }
     }
   )
-  .on(
+.on(
     "postgres_changes",
     { event: "UPDATE", schema: "public", table: "messages" },
     (payload) => {
        const m = payload.new;
+       // 1. Handle Ghost Deletion
        if (m.hidden_from?.includes(user.id)) {
           document.getElementById(`msg-wrapper-${m.id}`)?.remove();
+       }
+       // 2. Handle Real-time Blue Ticks
+       const msgEl = document.getElementById(`msg-wrapper-${m.id}`);
+       if (msgEl && m.is_read && m.sender_id === user.id) {
+          const timeContainer = msgEl.querySelector('.msg-time');
+          if (timeContainer) {
+             const timeStr = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+             timeContainer.innerHTML = `${timeStr} <span style="color: #06acff; margin-left: 4px;">✓✓</span>`;
+          }
        }
     }
   )

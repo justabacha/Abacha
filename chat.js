@@ -511,36 +511,21 @@ const dbChannel = supabaseClient
     { event: "UPDATE", schema: "public", table: "messages" },
     (payload) => {
        const m = payload.new;
-       // 1. Handle Ghost Deletion
+       // 1. Handle Ghost Deletion (Sync across devices)
        if (m.hidden_from?.includes(user.id)) {
           document.getElementById(`msg-wrapper-${m.id}`)?.remove();
        }
-       // 2. Handle Real-time Blue Ticks
+       // 2. Handle Blue Tick Sync (When the other person reads your message)
        const msgEl = document.getElementById(`msg-wrapper-${m.id}`);
        if (msgEl && m.is_read && m.sender_id === user.id) {
           const timeContainer = msgEl.querySelector('.msg-time');
           if (timeContainer) {
-             const timeStr = new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+             const timeStr = new Date(m.created_at).toLocaleTimeString([], {
+                hour: '2-digit', 
+                minute: '2-digit'
+             });
+             // Force the blue color immediately
              timeContainer.innerHTML = `${timeStr} <span style="color: #06acff; margin-left: 4px;">✓✓</span>`;
-          }
-       }
-    }
-  )
-  .on(
-    "postgres_changes",
-    { event: "UPDATE", schema: "public", table: "messages" },
-    (payload) => {
-       const m = payload.new;
-       // Handle Ghost Deletion
-       if (m.hidden_from?.includes(user.id)) {
-          document.getElementById(`msg-wrapper-${m.id}`)?.remove();
-       }
-       // Handle Read Receipt Sync
-       const msgEl = document.getElementById(`msg-wrapper-${m.id}`);
-       if (msgEl && m.is_read) {
-          const timeContainer = msgEl.querySelector('.msg-time');
-          if (timeContainer && m.sender_id === user.id) {
-             timeContainer.innerHTML = `${new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} <span style="color: #34B7F1; margin-left: 4px;">✓✓</span>`;
           }
        }
     }

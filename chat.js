@@ -200,7 +200,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     wrapper.id = `msg-wrapper-${msg.id}`; 
     wrapper.className = `msg-wrapper ${isMe ? "user-wrapper" : "ai-wrapper"}`;
     wrapper.setAttribute('data-timestamp', new Date(msg.created_at).getTime());
-
+    wrapper.setAttribute('data-content', msg.content);
     // USES PRE-FETCHED AVATARS (No testing links!)
     const avatarImg = isMe 
       ? (myAvatar || "https://i.postimg.cc/rpD4fgxR/IMG-5898-2.jpg") 
@@ -248,8 +248,8 @@ const loadGhostHistory = async () => {
     cachedMyAvatar = profiles?.find(p => p.id === user.id)?.avatar_url;
     cachedFriendAvatar = profiles?.find(p => p.id === friendID)?.avatar_url;
 
-    const msgFilter = `and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`;
-
+   // UUIDs must be wrapped in double quotes in PostgREST .or() filters!
+    const msgFilter = `and(sender_id.eq."${user.id}",receiver_id.eq."${friendID}"),and(sender_id.eq."${friendID}",receiver_id.eq."${user.id}")`;
     // FAST SNAP (Last 12)
     const { data: recentHistory } = await supabaseClient
       .from("messages")
@@ -281,7 +281,7 @@ const loadGhostHistory = async () => {
   const { data: fullHistory } = await supabaseClient
     .from("messages")
     .select("*")
-    .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendID}),and(sender_id.eq.${friendID},receiver_id.eq.${user.id})`)
+    .or(msgFilter)
     .not('hidden_from', 'cs', `{${user.id}}`)
     .order("created_at", { ascending: true });
 
@@ -490,15 +490,14 @@ const dbChannel = supabaseClient
           supabaseClient.from("messages").update({ is_read: true }).eq("id", m.id).then();
         } else {
           // ID SWAP LOGIC
-          const temps = chatBox.querySelectorAll('[id^="msg-wrapper-temp-"]');
-          temps.forEach(t => {
-            const contentDiv = t.querySelector('.message div:last-child');
-            if (contentDiv && contentDiv.innerText.trim() === m.content.trim()) {
-              t.id = `msg-wrapper-${m.id}`;
-              // Update timestamp to real DB time
-              t.setAttribute('data-timestamp', new Date(m.created_at).getTime());
-            }
-          });
+        const temps = chatBox.querySelectorAll('[id^="msg-wrapper-temp-"]');
+          temps.forEach(t => {
+            if (t.getAttribute('data-content').trim() === m.content.trim()) {
+              t.id = `msg-wrapper-${m.id}`;
+              // Update timestamp to real DB time
+              t.setAttribute('data-timestamp', new Date(m.created_at).getTime());
+            }
+          });
         }
         chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
       }
@@ -524,13 +523,12 @@ const dbChannel = supabaseClient
         // FAIL-SAFE: If the ID swap hasn't happened yet, find by content
         if (!msgEl) {
            const temps = chatBox.querySelectorAll('[id^="msg-wrapper-temp-"]');
-           temps.forEach(t => {
-             const contentDiv = t.querySelector('.message div:last-child');
-             if (contentDiv && contentDiv.innerText.trim() === m.content.trim()) {
-               msgEl = t;
-               msgEl.id = `msg-wrapper-${m.id}`; // Force the swap now
-             }
-           });
+           temps.forEach(t => {
+             if (t.getAttribute('data-content').trim() === m.content.trim()) {
+               msgEl = t;
+               msgEl.id = `msg-wrapper-${m.id}`; // Force the swap now
+             }
+           });
         }
 
         if (msgEl) {

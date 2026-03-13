@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ghost-v1.1.2'; // Bumped version
+const CACHE_NAME = 'ghost-v1.1.3'; // Bumped version
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -91,22 +91,20 @@ self.addEventListener('push', (event) => {
         }
     }
     
-    // ii. Clean up the Title and Body
+ // ii. Clean up the Title and Body (No more big images, blud)
     const title = data.senderName || data.title;
     const options = {
         body: data.body,
-        icon: data.senderAvatar || '/icon-192-v2.png',
-        badge: '/icon-192-v2.png',
+        icon: data.senderAvatar || '/icon-192-v2.png', // Small circle avatar only
+        badge: '/icon-192-v2.png', // Status bar icon
         vibrate: [200, 100, 200],
         tag: 'ghost-vibe', 
         renotify: true,
-        // This is key: image makes the notification "big" and cleaner
-        image: data.senderAvatar || null, 
+        // Removed the 'image' property entirely so it doesn't show full-screen pics
         data: { 
             senderId: data.senderId, 
             url: `/chat.html?friend_id=${data.senderId}` 
         },
-        // Only add one action to keep it clean and avoid the "Copy URL" bug
         actions: [
             { action: 'open', title: 'Open Chat 💬' }
         ]

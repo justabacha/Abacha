@@ -1,31 +1,50 @@
 // --- GHOST NOTIFICATION ENGINE ---
 const GhostNotifications = {
 async init() {
-        if (!('Notification' in window)) return;
+    if (!('Notification' in window)) return;
 
-        // Corrected: Just get the item. If it exists, it's truthy.
-        const isDismissed = localStorage.getItem('ghost_notification_prompt_dismissed');
-        
-        if (Notification.permission === 'default' && !isDismissed) {
-            this.showPermissionPrompt();
-        }
-    },
+    const isDismissed = localStorage.getItem('ghost_notification_prompt_dismissed');
+    
+    // 1. Check if we are logged in
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
 
-    showPermissionPrompt() {
-        const overlay = document.createElement('div');
-        overlay.id = 'notification-prompt-overlay';
-        overlay.innerHTML = `
-            <div class="ghost-prompt-tile" style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:10000; width:85%;">
-                <div class="prompt-logo">|Just•Abacha😎|</div>
-                <div class="prompt-text">Want to get the vibes the second they drop? Enable alerts, blud.🔔</div>
-                <div style="display:flex; gap:10px; margin-top:15px;">
-                <button class="vibe-btn" onclick="GhostNotifications.requestAccess()" style="flex:1;">Allow</button>
-                <button class="vibe-btn" onclick="GhostNotifications.dismissPrompt()" style="flex:1; background:rgba(255,255,255,0.1);">Later</button>
+    // 2. Check the DB for an existing subscription
+    const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('push_subscription')
+        .eq('id', user.id)
+        .single();
+
+    // 3. SMART TRIGGER: Show prompt if Permission is default OR if the DB is empty (and not dismissed)
+    const dbTokenMissing = !profile?.push_subscription;
+    
+    if ((Notification.permission === 'default' || dbTokenMissing) && !isDismissed) {
+        this.showPermissionPrompt();
+    }
+},
+
+  showPermissionPrompt() {
+    // Check if it already exists to avoid duplicates
+    if (document.getElementById('notification-prompt-overlay')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'notification-prompt-overlay';
+    // Added explicit mobile-friendly styles to ensure it doesn't just look like "text"
+    overlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);";
+    
+    overlay.innerHTML = `
+        <div class="ghost-prompt-tile" style="width:90%; max-width:400px; background:#1a1a1a; border:1px solid #333; padding:20px; border-radius:20px; text-align:center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <div class="prompt-logo" style="color:#fff; font-weight:bold; font-size:1.2rem; margin-bottom:10px;">|Just•Abacha😎|</div>
+            <div class="prompt-text" style="color:#ccc; font-size:0.95rem; line-height:1.4;">Want to get the vibes the second they drop? Enable alerts, blud.🔔</div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="vibe-btn" onclick="GhostNotifications.requestAccess()" style="flex:1; padding:12px; border-radius:12px; border:none; background:#fff; color:#000; font-weight:bold; cursor:pointer;">Allow</button>
+                <button class="vibe-btn" onclick="GhostNotifications.dismissPrompt()" style="flex:1; padding:12px; border-radius:12px; border:none; background:rgba(255,255,255,0.1); color:#fff; cursor:pointer;">Later</button>
             </div>
-            </div>
-        `;
-        document.body.appendChild(overlay);
-    },
+        </div>
+    `;
+    document.body.appendChild(overlay);
+},
 
    async requestAccess() {
         const permission = await Notification.requestPermission();

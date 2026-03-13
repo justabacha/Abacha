@@ -44,12 +44,15 @@ showPermissionPrompt() {
             <div class="prompt-logo" style="color:#888; font-weight:600; font-size:0.9rem; text-align:left; margin-bottom:12px; letter-spacing:0.5px;">|Just•Abacha😎|</div>
             <div class="prompt-text" style="color:#fff; font-size:1.05rem; line-height:1.4; text-align:left; font-weight:500;">Want to get the vibes the second they drop? Enable alerts, blud.🔔</div>
             <div style="display:flex; gap:12px; margin-top:24px;">
-                <button class="vibe-btn" onclick="GhostNotifications.handleAllowClick()" style="flex:1.5; padding:14px; border-radius:12px; border:none; background:#fff; color:#000; font-weight:bold; cursor:pointer; font-size:1rem;">Allow</button>
+               <button class="vibe-btn" id="ghost-allow-trigger" style="flex:1.5; padding:14px; border-radius:12px; border:none; background:#fff; color:#000; font-weight:bold; cursor:pointer; font-size:1rem;">Allow</button>
                 <button class="vibe-btn" onclick="GhostNotifications.dismissPrompt()" style="flex:1; padding:14px; border-radius:12px; border:none; background:rgba(255,255,255,0.08); color:#888; cursor:pointer; font-size:1rem;">Later</button>
             </div>
         </div>
     `;
     document.body.appendChild(overlay);
+    document.getElementById('ghost-allow-trigger').addEventListener('click', () => {
+        GhostNotifications.requestAccess();
+    });
 },
 
 async handleAllowClick() {
@@ -77,7 +80,13 @@ async requestAccess() {
                     .eq('id', user.id);
                 
                 if (!error) {
-                    console.log("Ghost Identity Synced ☁️");
+                   console.log("Ghost Identity Synced ☁️");
+                    const toast = document.getElementById('ghost-toast');
+                    if (toast) {
+                        toast.innerText = "Vibes Linked!🔔";
+                        toast.classList.add('show');
+                        setTimeout(() => toast.classList.remove('show'), 3000);
+                    }
                     self.hideOverlay();
                 } else { throw error; }
             }

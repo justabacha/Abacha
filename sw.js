@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ghost-v1.1.1'; // Bumped version
+const CACHE_NAME = 'ghost-v1.1.2'; // Bumped version
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -75,30 +75,47 @@ self.addEventListener('fetch', (event) => {
 });
 // 4. GHOST PUSH & ACTIONS (Tuned for Background Vibes)
 self.addEventListener('push', (event) => {
-    let data = { title: 'New Vibe Received', body: 'Someone sent a ghost...' };
+    // i. Better Fallbacks
+    let data = { 
+        title: 'New Vibe', 
+        body: 'Check the app for a new message!',
+        senderName: 'Just•Abacha😎',
+        senderAvatar: '/icon-192-v2.png'
+    };
     
-    try {
-        if (event.data) {
+    if (event.data) {
+        try {
             data = event.data.json();
+        } catch (e) {
+            data.body = event.data.text();
         }
-    } catch (e) {
-        console.error("Push data wasn't JSON:", e);
     }
     
+    // ii. Clean up the Title and Body
+    const title = data.senderName || data.title;
     const options = {
         body: data.body,
-        icon: '/icon-192-v2.png', 
+        icon: data.senderAvatar || '/icon-192-v2.png',
         badge: '/icon-192-v2.png',
         vibrate: [200, 100, 200],
-        tag: 'ghost-vibe', // This groups notifications so they don't stack messy
+        tag: 'ghost-vibe', 
         renotify: true,
-data: { 
+        // This is key: image makes the notification "big" and cleaner
+        image: data.senderAvatar || null, 
+        data: { 
             senderId: data.senderId, 
             url: `/chat.html?friend_id=${data.senderId}` 
-        }
+        },
+        // Only add one action to keep it clean and avoid the "Copy URL" bug
+        actions: [
+            { action: 'open', title: 'Open Chat 💬' }
+        ]
     };
 
-    event.waitUntil(self.registration.showNotification(data.title, options));
+    // iii. FORCE background execution
+    event.waitUntil(
+        self.registration.showNotification(title, options)
+    );
 });
 
 // 5. HANDLE NOTIFICATION CLICKS (Updated for Chat.html)

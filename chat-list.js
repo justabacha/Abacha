@@ -170,62 +170,89 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    const sortedFriends = Array.from(uniqueFriends.values()).sort((a, b) => {
-        return pinnedList.includes(b.id) - pinnedList.includes(a.id);
+   // 1. Fetch latest message timestamps for all friends first
+    const friendIds = Array.from(uniqueFriends.keys());
+    const { data: latestMsgs } = await supabaseClient
+        .from('messages')
+        .select('sender_id, receiver_id, created_at')
+        .or(`sender_id.in.(${friendIds}),receiver_id.in.(${friendIds})`)
+        .order('created_at', { ascending: false });
+
+    // Map the latest timestamp to each friend
+    uniqueFriends.forEach((val, key) => {
+        const lastMsg = latestMsgs?.find(m => m.sender_id === key || m.receiver_id === key);
+        uniqueFriends.get(key).last_vibe_at = lastMsg ? new Date(lastMsg.created_at).getTime() : 0;
     });
 
-    let finalHTML = '';
+    // 2. Sort: Pinned first, then by Newest Message (last_vibe_at)
+    const sortedFriends = Array.from(uniqueFriends.values()).sort((a, b) => {
+        const aPinned = pinnedList.includes(a.id) ? 1 : 0;
+        const bPinned = pinnedList.includes(b.id) ? 1 : 0;
 
-    for (const friend of sortedFriends) {
-        // --- FIXED SYNTAX FOR THE MESSAGE FETCH ---
-        // We use a cleaner filter string without spaces
+        if (aPinned !== bPinned) return bPinned - aPinned; // Pinned stays on top
+        return b.last_vibe_at - a.last_vibe_at; // Newest vibe jumps up
+    });
+// 3. SEAMLESS REORDERING (The Ghost Way 👻)
+    sortedFriends.forEach((friend, index) => {
+        let wrapper = container.querySelector(`[data-id="${friend.id}"]`);
+        
+        // If it doesn't exist yet, create it
+        if (!wrapper) {
+            wrapper = document.createElement('div');
+            wrapper.className = 'user-card-wrapper';
+            wrapper.setAttribute('data-id', friend.id);
+            wrapper.style.transition = 'all 0.5s ease-in-out'; 
+            container.appendChild(wrapper);
+        }
+
+        // Fetch unread & last msg for this specific friend
         const msgFilter = `and(sender_id.eq.${user.id},receiver_id.eq.${friend.id}),and(sender_id.eq.${friend.id},receiver_id.eq.${user.id})`;
         
-        const [unreadRes, msgRes] = await Promise.all([
+        Promise.all([
             supabaseClient.from('messages').select('*', { count: 'exact', head: true }).eq('sender_id', friend.id).eq('receiver_id', user.id).eq('is_read', false),
             supabaseClient.from('messages').select('*').or(msgFilter).order('created_at', { ascending: false }).limit(1).maybeSingle()
-        ]);
+        ]).then(([unreadRes, msgRes]) => {
+            const unreadCount = unreadRes.count || 0;
+            const msg = msgRes.data;
+            const isPinned = pinnedList.includes(friend.id);
+            const time = msg ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+            const isOnline = Object.values(ghostPresence).flat().some(p => p.user_id === friend.id);
+            const statusColor = isOnline ? '#32D74B' : '#FF3B30';
+            const isTyping = typingStates[friend.id];
+            const lastMsgText = isTyping ? `<span style="color:#32D74B; font-style:italic;">typing...</span>` : (msg ? msg.content : 'No vibes yet...');
 
-        const unreadCount = unreadRes.count || 0;
-        const msg = msgRes.data;
-        const isPinned = pinnedList.includes(friend.id);
-        const time = msg ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
-        const badgeHtml = unreadCount > 0 ? `<span class="unread-badge" style="background:#FF3B30; color:white; padding:2px 8px; border-radius:10px; font-size:10px; margin-left:10px;">${unreadCount}</span>` : '';
-// Check presence & typing status
-        const isOnline = Object.values(ghostPresence).flat().some(p => p.user_id === friend.id);
-        const statusColor = isOnline ? '#32D74B' : '#FF3B30';
-        const isTyping = typingStates[friend.id];
-        const lastMsg = isTyping ? `<span style="color:#32D74B; font-style:italic;">typing...</span>` : (msg ? msg.content : 'No vibes yet...');
-
-        finalHTML += `
-            <div class="user-card-wrapper" data-id="${friend.id}" style="position: relative;">
-                
+           const newContent = `
                 <div class="user-avatar" style="background-image: url(${friend.avatar_url || 'default.png'})"></div>
-                
-                <div style="position: absolute; left: 65px; top: 55px; width: 14px; height: 14px; background: ${statusColor}; border: 2px solid #000; border-radius: 50%; z-index: 9999; pointer-events: none; box-shadow: 0 0 8px ${statusColor};"></div>
-
-                <div class="user-card ${unreadCount > 0 ? 'unread-vibe' : 'read-vibe'}" id="card-${friend.id}" onclick="handleEntry('${friend.id}', '${friend.avatar_url}')">
+                <div style="position: absolute; left: 65px; top: 55px; width: 14px; height: 14px; background: ${statusColor}; border: 2px solid #000; border-radius: 50%; z-index: 999; box-shadow: 0 0 8px ${statusColor}; pointer-events: none;"></div>
+                <div class="user-card ${unreadCount > 0 ? 'unread-vibe' : 'read-vibe'}" onclick="handleEntry('${friend.id}', '${friend.avatar_url}')">
                     <div class="user-info">
                         <h4 style="display:flex; align-items:center;">
-                            ${friend.username} ${isPinned ? '<span style="margin-left:5px;">📌</span>' : ''} ${badgeHtml}
+                            ${friend.username} ${isPinned ? '<span style="margin-left:5px;">📌</span>' : ''} 
+                            ${unreadCount > 0 ? `<span class="unread-badge" style="background:#FF3B30; color:white; padding:2px 8px; border-radius:10px; font-size:10px; margin-left:10px;">${unreadCount}</span>` : ''}
                         </h4>
-                        <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;">
-                            ${lastMsg}
-                        </p>
+                        <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;">${lastMsgText}</p>
                         <span class="msg-time">${time}</span>
                     </div>
-                </div>
-            </div>`;
-    }
+                </div>`;
+            
+            if (wrapper.innerHTML !== newContent) {
+                wrapper.innerHTML = newContent;
+                // Re-bind long press because we just swapped the innerHTML
+                addLongPress(wrapper, friend.id, friend.friendshipId, friend);
+            }
+        });
 
-    if (container.innerHTML !== finalHTML) {
-        container.innerHTML = finalHTML;
-    }
+        // The Ghost Shift: Reorder without flickering
+        if (container.children[index] !== wrapper) {
+            container.insertBefore(wrapper, container.children[index]);
+        }
+    });
 };
 
-    // Fast initial load, then silent background sync every 5 seconds
-    loadActive(); 
-    setInterval(loadActive, 5000);
+// --- STARTUP ---
+loadActive(); 
+setInterval(loadActive, 5000);
+Promise.all([loadPending(), loadActive()]);
 
     // --- 4. FLOATING GHOST LAYERS ---
 window.showGhostMenu = (friendId, friendshipId, friendObj) => {

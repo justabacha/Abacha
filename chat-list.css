@@ -1,72 +1,48 @@
 /* GHOST VIBES GLOBAL */
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+* { 
+    box-sizing: border-box; 
+    -webkit-tap-highlight-color: transparent; 
+}
+
 body { 
     margin: 0; 
     font-family: -apple-system, system-ui, sans-serif; 
     color: white; 
-    background: #000; /* Solid fallback */
+    background: #000; 
     height: 100vh;
-    overflow: hidden; /* Prevent body scroll, use container scroll */
+    width: 100vw;
+    overflow: hidden; /* Keeps the app-like feel, no body bounce */
 }
 
+/* THE SCROLLABLE ENGINE */
 .vibe-list-container { 
     padding: 20px; 
-    height: calc(100vh - 100px); /* Subtract top nav height */
-    overflow-y: auto; 
-    -webkit-overflow-scrolling: touch; /* Smooth iOS scroll */
-    padding-bottom: 100px; /* Space for the last card */
+    height: 100vh; /* Full height */
+    overflow-y: auto; /* Enable vertical scroll */
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch; 
+    padding-bottom: 120px; /* Extra breathing room at bottom */
+    scrollbar-width: none; /* Firefox */
 }
 
-/* THE TOAST NOTIFICATION */
-#ghost-toast {
-    visibility: hidden;
-    min-width: 200px;
-    background-color: #32D74B;
-    color: #000;
-    text-align: center;
-    border-radius: 50px;
-    padding: 12px 24px;
-    position: fixed;
-    z-index: 100000;
-    left: 50%;
-    bottom: 30px;
-    transform: translateX(-50%);
-    font-weight: 800;
-    font-size: 14px;
-    box-shadow: 0 10px 30px rgba(50, 215, 75, 0.4);
+.vibe-list-container::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
 }
 
-#ghost-toast.show {
-    visibility: visible;
-    animation: fadein 0.5s, fadeout 0.5s 2.5s;
-}
-
-@keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
-@keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
-
-/* Pinned Vibe Style */
-.pinned-vibe .user-card {
-    border-right: 2px solid #FFD700 !important; /* Gold border for pinned */
-    border-bottom: 2px solid #FFD700 !important;
-}
+/* GHOST WALLPAPER */
 .ghost-wallpaper {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: url('setting.jpg') no-repeat center center;
     background-size: cover; z-index: -1; filter: brightness(0.5) contrast(1.1);
 }
-.section-label { color: #32D74B; font-size: 10px; letter-spacing: 2px; margin: 20px 0 10px; text-transform: uppercase; }
 
-.search-input { 
-    width: 100%; padding: 15px; border-radius: 20px; background: rgba(0,0,0,0.6); 
-    border: 1px solid #32D74B; color: white; outline: none; margin-bottom: 20px; backdrop-filter: blur(10px);
-}
-
-/* YOUR PERFECT BASIN GEOMETRY (UNTOUCHED) */
+/* BASIN GEOMETRY & CARDS */
 .user-card-wrapper {
     position: relative;
     margin-bottom: 40px;
     display: flex;
     align-items: center;
+    animation: cardPop 0.4s ease-out forwards;
 }
 
 .user-card { 
@@ -81,8 +57,6 @@ body {
     z-index: 2;
     border-bottom: 2px solid var(--status-glow);
     border-right: 2px solid var(--status-glow);
-    border-top: none !important;
-    border-left: none !important;
     border-radius: 0 0 40px 0; 
     background: linear-gradient(to top, rgba(var(--status-rgb), 0.5) 0%, rgba(var(--status-rgb), 0.1) 60%, transparent 100%);
     -webkit-mask-image: linear-gradient(to top, black 85%, transparent 100%);
@@ -101,137 +75,71 @@ body {
     background-color: #000;
 }
 
+/* THEMES & VIBES */
 .unread-vibe { --status-glow: #007AFF; --status-rgb: 0, 122, 255; }
 .read-vibe { --status-glow: #32D74B; --status-rgb: 50, 215, 75; }
+.pinned-vibe .user-card {
+    border-right: 2px solid #FFD700 !important; 
+    border-bottom: 2px solid #FFD700 !important;
+}
 
-/* TIME & INFO ADJUSTMENTS */
+/* UI ELEMENTS */
+.section-label { color: #32D74B; font-size: 10px; letter-spacing: 2px; margin: 20px 0 10px; text-transform: uppercase; }
+.search-input { 
+    width: 100%; padding: 15px; border-radius: 20px; background: rgba(0,0,0,0.6); 
+    border: 1px solid #32D74B; color: white; outline: none; margin-bottom: 20px; backdrop-filter: blur(10px);
+}
+
 .user-info { position: relative; width: 100%; }
 .user-info h4 { margin: 0; color: white; font-size: 17px; display: flex; align-items: center; }
-.user-info p { margin: 4px 0 0 0; color: #fff; font-size: 13px; opacity: 0.9; }
+.user-info p { margin: 4px 0 0 0; color: #fff; font-size: 13px; opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .msg-time { 
-    position: absolute; 
-    right: 0; 
-    bottom: -15px; 
-    font-size: 11px; 
-    color: rgba(255, 255, 255, 0.6); 
+    position: absolute; right: 0; bottom: -15px; 
+    font-size: 11px; color: rgba(255, 255, 255, 0.6); 
 }
 
 .unread-badge {
-    background: #FF3B30; color: white; font-size: 11px; font-weight: bold;
-    padding: 2px 7px; border-radius: 10px; margin-left: 8px;
+    background: #FF3B30; color: white; font-size: 10px; font-weight: 900;
+    padding: 2px 8px; border-radius: 20px; margin-left: 10px;
+    box-shadow: 0 0 10px rgba(255, 59, 48, 0.5); flex-shrink: 0;
 }
 
-/* GHOST MENU & PIN LAYERS */
+/* OVERLAYS & MENUS */
 .ghost-menu-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(173, 216, 230, 0.2); 
+    background: rgba(0, 0, 0, 0.7); /* Darker for better focus */
     backdrop-filter: blur(15px);
     display: none; z-index: 9999; justify-content: center; align-items: center;
 }
 
-.menu-box {
-    background: rgba(25, 25, 25, 0.95);
-    padding: 25px; border-radius: 35px; border: 1px solid rgba(255,255,255,0.1);
-    display: flex; flex-direction: column; gap: 12px; width: 290px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    position: relative;
-}
-
-.menu-box button {
-    width: 100%; padding: 15px; border-radius: 15px; border: 1px solid #32D74B;
-    background: transparent; color: #32D74B; font-weight: bold; font-size: 16px;
-    cursor: pointer;
-}
-
-.btn-danger { border-color: #FF3B30 !important; color: #FF3B30 !important; }
-.btn-cancel { border: none !important; color: #007AFF !important; margin-top: 10px; }
-.btn-confirm { background: rgba(255, 255, 255, 0.9) !important; color: #007AFF !important; border: none !important; }
-.btn-checkin { background: #32D74B !important; color: black !important; border: none !important; }
-/* Remove the solid box, keep it floating */
 .floating-menu-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    width: 280px;
-    position: relative;
-    align-items: center;
+    display: flex; flex-direction: column; gap: 15px; width: 280px; align-items: center;
 }
 
 .floating-btn {
-    width: 100%;
-    padding: 16px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.05); /* Very faint glass */
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #32D74B;
-    font-weight: 600;
-    font-size: 16px;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    transition: transform 0.2s;
+    width: 100%; padding: 16px; border-radius: 20px; 
+    background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #32D74B; font-weight: 600; font-size: 16px; text-align: center;
+    backdrop-filter: blur(10px); transition: transform 0.2s;
 }
 
-.floating-btn:active { transform: scale(0.95); }
+.btn-ghost-yes { background: rgba(255, 59, 48, 0.2) !important; border: 1px solid #FF3B30 !important; color: #FF3B30 !important; }
+.btn-ghost-cancel { background: rgba(0, 122, 255, 0.2) !important; border: 1px solid #007AFF !important; color: #007AFF !important; }
 
-/* The Dynamic Pin Display */
-.ghost-pin-display {
-    font-size: 24px;
-    letter-spacing: 8px;
-    margin: 20px 0;
-    color: #32D74B;
-    text-shadow: 0 0 10px rgba(50, 215, 75, 0.5);
+/* TOAST */
+#ghost-toast {
+    visibility: hidden; min-width: 200px; background-color: #32D74B; color: #000;
+    text-align: center; border-radius: 50px; padding: 12px 24px;
+    position: fixed; z-index: 100000; left: 50%; bottom: 30px;
+    transform: translateX(-50%); font-weight: 800; font-size: 14px;
 }
-.btn-ghost-yes {
-    background: rgba(255, 59, 48, 0.2) !important;
-    border: 1px solid #FF3B30 !important;
-    color: #FF3B30 !important;
-}
+#ghost-toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
 
-.btn-ghost-cancel {
-    background: rgba(0, 122, 255, 0.2) !important;
-    border: 1px solid #007AFF !important;
-    color: #007AFF !important;
-    }
-    
+/* ANIMATIONS */
+@keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+@keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
 @keyframes cardPop {
-    from { opacity: 0; transform: scale(0.9) translateY(20px); }
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
     to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-#profile-card-overlay .floating-menu-container {
-    animation: cardPop 0.3s ease-out forwards;
-}
-/* Ensure the info area allows the badge to be seen */
-.user-info h4 {
-    display: flex;
-    align-items: center;
-    margin: 0;
-    width: 100%;
-}
-
-.unread-badge {
-    background: #FF3B30;
-    color: white;
-    font-size: 10px;
-    font-weight: 900;
-    padding: 2px 8px;
-    border-radius: 20px;
-    margin-left: 10px;
-    box-shadow: 0 0 10px rgba(255, 59, 48, 0.5);
-    flex-shrink: 0; /* Prevents badge from being crushed */
-}
-
-/* Smooth Scrolling Container */
-.vibe-list-container {
-    padding: 20px;
-    height: 85vh; /* Gives it room to scroll */
-    overflow-y: scroll;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; /* Hides scrollbar on Firefox */
-}
-
-.vibe-list-container::-webkit-scrollbar {
-    display: none; /* Hides scrollbar on Chrome/Safari */
 }

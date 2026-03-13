@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ghost-v1.0.9'; // Bumped version
+const CACHE_NAME = 'ghost-v1.1.0'; // Bumped version
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -75,17 +75,21 @@ self.addEventListener('fetch', (event) => {
 });
 // 4. GHOST PUSH & ACTIONS
 self.addEventListener('push', (event) => {
+    // 1. Extract the data sent from the Supabase Edge Function
     const data = event.data ? event.data.json() : { title: 'New Vibe', body: 'Someone sent a ghost...' };
     
     const options = {
         body: data.body,
-        icon: 'icon-192-v2.png',
+        icon: 'icon-192-v2.png', // Ensure this file exists in your root folder!
         badge: 'icon-192-v2.png',
         vibrate: [100, 50, 100],
-        data: { senderId: data.senderId, url: `/hub.html?friend_id=${data.senderId}` },
+        data: { 
+            senderId: data.senderId, 
+            url: `/hub.html?friend_id=${data.senderId}` 
+        },
         actions: [
             { action: 'reply', title: 'Reply ✍️', type: 'text', placeholder: 'Type vibe...' },
-            { action: 'read', title: 'Mark Read ✓', icon: 'check-icon.png' }
+            { action: 'read', title: 'Mark Read ✓' }
         ]
     };
 

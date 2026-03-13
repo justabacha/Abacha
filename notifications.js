@@ -1,10 +1,10 @@
 // --- GHOST NOTIFICATION ENGINE ---
 const GhostNotifications = {
-  async init() {
+async init() {
         if (!('Notification' in window)) return;
 
-        // Check if we have permission AND if the user hasn't already dismissed it
-        const isDismissed = localStorage.getItem('ghost_notification_prompt_dismissed', 'true');
+        // Corrected: Just get the item. If it exists, it's truthy.
+        const isDismissed = localStorage.getItem('ghost_notification_prompt_dismissed');
         
         if (Notification.permission === 'default' && !isDismissed) {
             this.showPermissionPrompt();
@@ -27,17 +27,36 @@ const GhostNotifications = {
         document.body.appendChild(overlay);
     },
 
-    async requestAccess() {
+   async requestAccess() {
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
-            console.log("Ghost Alerts: Active!");
-            // Here we would register the Push Subscription to Supabase
+            try {
+                const reg = await navigator.serviceWorker.ready;
+                // Generate the subscription
+                const sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    // Use a public VAPID key (you'll generate this next)
+                    applicationServerKey: 'BBw2PAT9ddA7GjRb1id0WUoeFyyfQ7-xAeJ08dtWMWbBgfD2roqHJSNV0WLAxAs2aWS_8SU7lqYFGbY68v5UeQU' 
+                });
+
+                // Sync to Supabase Profiles
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (user) {
+                    const { error } = await supabaseClient
+                        .from('profiles')
+                        .update({ push_subscription: sub })
+                        .eq('id', user.id);
+                    
+                    if (!error) console.log("Ghost Identity Synced to Cloud ☁️");
+                }
+            } catch (err) {
+                console.error("Failed to link Ghost Push:", err);
+            }
         }
-        document.getElementById('notification-prompt-overlay')?.remove();
+        this.dismissPrompt();
     },
-    // Add this right after requestAccess()
-    dismissPrompt() {
-        localStorage.setItem('ghost_notification_prompt_dismissed', 'true');
+   dismissPrompt() {
+        localStorage.setItem('ghost_notification_prompt_dismissed', 'true'); // Added 'true' here
         document.getElementById('notification-prompt-overlay')?.remove();
     },
     // IN-APP TOAST (When user is active in the app)

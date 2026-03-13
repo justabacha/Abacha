@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ghost-v1.1.0'; // Bumped version
+const CACHE_NAME = 'ghost-v1.1.1'; // Bumped version
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -73,46 +73,54 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
-// 4. GHOST PUSH & ACTIONS
+// 4. GHOST PUSH & ACTIONS (Tuned for Background Vibes)
 self.addEventListener('push', (event) => {
-    // 1. Extract the data sent from the Supabase Edge Function
-    const data = event.data ? event.data.json() : { title: 'New Vibe', body: 'Someone sent a ghost...' };
+    let data = { title: 'New Vibe Received', body: 'Someone sent a ghost...' };
+    
+    try {
+        if (event.data) {
+            data = event.data.json();
+        }
+    } catch (e) {
+        console.error("Push data wasn't JSON:", e);
+    }
     
     const options = {
         body: data.body,
-        icon: 'icon-192-v2.png', // Ensure this file exists in your root folder!
-        badge: 'icon-192-v2.png',
-        vibrate: [100, 50, 100],
-        data: { 
+        icon: '/icon-192-v2.png', 
+        badge: '/icon-192-v2.png',
+        vibrate: [200, 100, 200],
+        tag: 'ghost-vibe', // This groups notifications so they don't stack messy
+        renotify: true,
+data: { 
             senderId: data.senderId, 
-            url: `/hub.html?friend_id=${data.senderId}` 
-        },
-        actions: [
-            { action: 'reply', title: 'Reply ✍️', type: 'text', placeholder: 'Type vibe...' },
-            { action: 'read', title: 'Mark Read ✓' }
-        ]
+            url: `/chat.html?friend_id=${data.senderId}` 
+        }
     };
 
     event.waitUntil(self.registration.showNotification(data.title, options));
 });
 
-// 5. HANDLE NOTIFICATION CLICKS
+// 5. HANDLE NOTIFICATION CLICKS (Updated for Chat.html)
 self.addEventListener('notificationclick', (event) => {
-    const action = event.action;
     const notification = event.notification;
-    const senderId = notification.data.senderId;
+    const targetUrl = notification.data.url;
 
-    if (action === 'read') {
-        // Logic to hit Supabase and mark as read silently
-        notification.close();
-    } else if (action === 'reply') {
-        // Grab the text from event.reply
-        const replyText = event.reply;
-        // Logic to insert into Supabase messages table
-        notification.close();
-    } else {
-        // Normal click: open the chat
-        event.waitUntil(clients.openWindow(notification.data.url));
-        notification.close();
-    }
+    notification.close();
+
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+            // Check if chat.html is already open with the RIGHT friend
+            for (const client of clientList) {
+                const clientUrl = new URL(client.url);
+                if (clientUrl.pathname.includes('chat.html') && clientUrl.search.includes(`friend_id=${notification.data.senderId}`)) {
+                    if ('focus' in client) return client.focus();
+                }
+            }
+            // If chat isn't open or is on a different friend, open a new window
+            if (clients.openWindow) {
+                return clients.openWindow(targetUrl);
+            }
+        })
+    );
 });

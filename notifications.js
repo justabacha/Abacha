@@ -108,7 +108,7 @@ showInAppToast(senderName, message, senderId) {
     toast.innerHTML = `<div class="toast-the-ghost-header"><span>${senderName} •|Abacha|</span></div><div class="toast-the-ghost-body">${message}</div>`;
     document.body.appendChild(toast);
     setTimeout(() => toast.classList.add('show'), 100);
-    toast.onclick = () => { window.location.href = `hub.html?friend_id=${senderId}`; };
+    toast.onclick = () => { window.location.href = `chat.html?friend_id=${senderId}`; };
     setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 500); }, 5000);
 }
 };

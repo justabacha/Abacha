@@ -32,10 +32,43 @@ const updatePresence = async () => {
       .eq('id', user.id);
   }
 };
-
 // Update immediately on load, then every 60s
 updatePresence();
 setInterval(updatePresence, 60000);
+// --- GLOBAL GHOST LISTENER (IN-APP TOASTS) ---
+const startGlobalListener = async () => {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
+
+    supabaseClient
+        .channel('global_notifications')
+        .on('postgres_changes', { 
+            event: 'INSERT', 
+            schema: 'public', 
+            table: 'messages',
+            filter: `receiver_id=eq.${user.id}` 
+        }, async (payload) => {
+            const msg = payload.new;
+            
+            // Fetch sender name for the toast
+            const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('username')
+                .eq('id', msg.sender_id)
+                .single();
+
+            const senderName = profile?.username || "Someone";
+            
+            // Trigger the slick pop-up!
+            if (window.GhostNotifications) {
+                window.GhostNotifications.showInAppToast(senderName, msg.content, msg.sender_id);
+            }
+        })
+        .subscribe();
+};
+
+// Start listening for vibes
+startGlobalListener();
 // --- 2. GHOST PROMPT ENGINE ---
 function ghostPrompt(message, type = "success") {
     let container = document.getElementById('ghost-prompt-container');
@@ -368,3 +401,4 @@ window.addEventListener('appinstalled', () => {
         }
     }, false);
 })();
+GhostNotifications.init();

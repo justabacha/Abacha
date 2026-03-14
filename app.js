@@ -118,7 +118,17 @@ function ghostPrompt(message, type = "success") {
             @keyframes ghostBlinkRed { 0% { background: #FF3B30; } 50% { background: #1c1c1e; } 100% { background: #FF3B30; } }
             .ghost-install-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 100000; display: flex; align-items: center; justify-content: center; animation: ghostSlide 0.5s ease; }
             .ghost-install-card { background: rgba(28, 28, 30, 0.9); border: 1px solid rgba(255, 255, 255, 0.1); padding: 30px; border-radius: 28px; width: 85%; max-width: 320px; text-align: center; color: white; }
-        `;
+            .ghost-spinner {
+                width: 24px; height: 24px;
+                border: 3px solid rgba(255,255,255,0.3);
+                border-radius: 50%;
+                border-top-color: #fff;
+                animation: ghostSpin 0.8s linear infinite;
+                display: inline-block;
+                vertical-align: middle;
+            }
+            @keyframes ghostSpin { to { transform: rotate(360deg); } }
+            `;
         document.head.appendChild(style);
     }
 
@@ -167,8 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
-
-    // --- LOGIN ACTION ---
+// --- LOGIN ACTION ---
     if (loginButton) {
         loginButton.onclick = async () => {
             if (passwordInput.value.length < 6) return;
@@ -184,26 +193,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            const { data: profile, error: profileError } = await supabaseClient
-                .from('profiles')
-                .select('is_approved')
-                .eq('id', data.user.id)
-                .maybeSingle();
+            const { data: profile } = await supabaseClient.from('profiles').select('is_approved').eq('id', data.user.id).maybeSingle();
 
-            // Clever Check: If no profile exists, the user was deleted from DB. 
-            // We must wipe the Auth account too or force a fresh start.
-            if (!profile) {
-                console.log("👻 Ghost Engine: Profile missing. Resetting...");
-                await supabaseClient.auth.signOut();
-                ghostPrompt("Account reset required. Please Sign Up again.", "info");
-                loginButton.innerText = "Login";
-                return;
-            }
-
-            if (profile.is_approved) {
+            if (profile && profile.is_approved) {
                 window.location.href = 'hub.html';
             } else {
-                await supabaseClient.auth.signOut();
+                // SEAMLESS: STAY LOGGED IN
                 loginButton.innerText = "Login";
                 try {
                     await fetch('/api/send-code', {
@@ -218,39 +213,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- SIGNUP ACTION ---
-   if (signupButton) {
+    if (signupButton) {
         signupButton.onclick = async () => {
             if (passwordInput.value.length < 6) return;
             const email = emailInput.value;
             const password = passwordInput.value;
             signupButton.innerText = "Ghosting...";
 
-            // 1. Attempt regular signup
             let { data, error } = await supabaseClient.auth.signUp({ email, password });
 
-            // 2. CLEVER BIT: If user exists but profile is gone, "Login" them instead to start fresh
             if (error && error.message.includes("already registered")) {
                 const { data: retryData, error: retryError } = await supabaseClient.auth.signInWithPassword({ email, password });
-                
-                if (!retryError) {
-                    const { data: profile } = await supabaseClient.from('profiles').select('id').eq('id', retryData.user.id).maybeSingle();
-                    if (!profile) {
-                        // User exists in Auth but not in Profiles = Success, proceed to verification
-                        data = retryData;
-                        error = null;
-                    } else {
-                        ghostPrompt("This vibe already exists. Just Login, mate.", "info");
-                        signupButton.innerText = "Sign up";
-                        return;
-                    }
+                if (retryError) {
+                    ghostPrompt("Vibe Mismatch: Email taken, different password.", "error");
+                    signupButton.innerText = "Sign up";
+                    return;
                 }
+                data = retryData;
+                error = null;
             }
 
             if (error) {
                 ghostPrompt("Signup Error: " + error.message, "error");
                 signupButton.innerText = "Sign up";
             } else {
-                await supabaseClient.auth.signOut();
                 signupButton.innerText = "Sign up";
                 try {
                     await fetch('/api/send-code', {
@@ -269,8 +255,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.showGhostVerify = (email) => {
     const layer = document.createElement('div');
     layer.id = "ghost-layer";
-    layer.style = "position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);";
+    layer.style = "position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px); transition: background 0.3s ease;";
     layer.innerHTML = `
+        <style>
+            @keyframes vibeLoaderSpin { to { transform: rotate(360deg); } }
+            .vibe-loader { width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: vibeLoaderSpin 0.8s linear infinite; margin: 0 auto; }
+        </style>
         <div style="background:#1c1c1e; padding:30px; border-radius:24px; width:85%; max-width:350px; text-align:center; border:1px solid #333;">
             <div style="color:gray; font-size:12px; margin-bottom:10px; text-align:left;">|Just•Abacha😎|</div>
             <h3 style="color:white; margin:0 0 10px;">Verify Ghost</h3>
@@ -284,44 +274,51 @@ window.showGhostVerify = (email) => {
     `;
     document.body.appendChild(layer);
 
-   document.getElementById('vibe-verify-btn').onclick = async () => {
+    document.getElementById('vibe-verify-btn').onclick = async () => {
         const btn = document.getElementById('vibe-verify-btn');
         const originalBg = btn.style.background;
-        btn.innerText = "Checking...";
         const inputCode = document.getElementById('otp-input').value.trim();
         
-        const { data, error } = await supabaseClient.from('profiles').select('otp_code').eq('email', email).maybeSingle();
+        // 1. Show only the spinner on the button, lock it
+        btn.innerHTML = '<div class="vibe-loader"></div>';
+        btn.style.pointerEvents = "none";
+
+        const { data } = await supabaseClient.from('profiles').select('otp_code').eq('email', email).maybeSingle();
 
         if (data && data.otp_code === inputCode) {
-            // 1. Update the DB
+            // 2. Instantly update the DB so they are logged in
             await supabaseClient.from('profiles').update({ is_approved: true }).eq('email', email);
             
-            btn.innerHTML = "ACCESS GRANTED 🟢";
-            btn.style.background = "#32D74B";
-            if (navigator.vibrate) navigator.vibrate([50, 50, 200]);
+            // 3. Fire the ghost prompt on the screen (not the button)
+            ghostPrompt("Access Granted. Entering Hub...", "success");
 
-            // 2. AUTO-LOGBACK IN: We need to use the credentials again to create a session
-            const password = document.getElementById('password').value;
-            await supabaseClient.auth.signInWithPassword({ email, password });
-
-            const layer = document.getElementById('ghost-layer');
-            layer.style.transition = "all 0.8s ease";
-            layer.style.filter = "brightness(2) opacity(0)";
-            
-            setTimeout(() => { window.location.href = 'hub.html'; }, 1000);
+            // 4. Black out everything underneath to physically block the login form from flashing
+            const loginContainer = document.getElementById('login-container');
+            if (loginContainer) loginContainer.style.opacity = "0";
+            layer.style.background = "black";
+           // 5. Hold this cover for 3 seconds, then start the fade-out
+            setTimeout(() => {
+                // Smoothly dissolve the layer
+                layer.style.transition = "opacity 1.5s ease";
+                layer.style.opacity = "0";
+                // Redirect mid-fade so the transition feels connected
+                setTimeout(() => {
+                    window.location.href = 'hub.html';
+                }, 1000); 
+            }, 3000);
             
         } else {
-            // BLINK RED LOGIC
-            btn.innerText = "WRONG CODE";
+            // ERROR HANDLING
+            btn.innerHTML = "WRONG CODE";
             btn.style.animation = "ghostBlinkRed 0.5s infinite";
             if (navigator.vibrate) navigator.vibrate(500);
             
             setTimeout(() => {
-                btn.innerText = "Vibe";
+                btn.innerHTML = "Vibe";
                 btn.style.animation = "";
                 btn.style.background = originalBg;
+                btn.style.pointerEvents = "auto";
             }, 2000);
-            
             ghostPrompt("Ghost Denied: Code mismatch.", "error");
         }
     };

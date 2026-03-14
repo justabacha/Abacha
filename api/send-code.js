@@ -56,10 +56,10 @@ export default async function handler(req, res) {
                     </p>
 
                     <div style="text-align: center; margin: 30px 0;">
-                        <div style="background: #111; border: 1px solid #32D74B; color: #32D74B; font-size: 32px; font-weight: 900; padding: 20px; display: inline-block; border-radius: 16px; letter-spacing: 2px; user-select: all; -webkit-user-select: all;">
+                        <div style="background: #111; border: 1px solid #32D74B; color: #32D74B; font-size: 20px; font-weight: 900; padding: 20px; display: inline-block; border-radius: 16px; letter-spacing: 1px; user-select: all; -webkit-user-select: all;">
                             ${ghostCode}
                         </div>
-                        <p style="font-size: 12px; color: #32D74B; margin-top: 10px; font-weight: bold; opacity: 0.8;">Tap to copy</p>
+                        <p style="font-size: 12px; color: #32D74B; margin-top: 10px; font-weight: bold; opacity: 0.8;">long press to copy</p>
                     </div>
                     <div style="margin: 25px 0;">
                         <a href="${process.env.APP_URL || 'https://abacha-smoky.vercel.app'}" 

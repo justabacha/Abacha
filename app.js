@@ -220,7 +220,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             const password = passwordInput.value;
             signupButton.innerText = "Ghosting...";
 
-            let { data, error } = await supabaseClient.auth.signUp({ email, password });
+            let { data, error } = await supabaseClient.auth.signUp({ 
+                email, 
+                password,
+                options: {
+                    data: {
+                        username: email.split('@')[0] || "Ghost"
+                    }
+                }
+            });
 
             if (error && error.message.includes("already registered")) {
                 const { data: retryData, error: retryError } = await supabaseClient.auth.signInWithPassword({ email, password });

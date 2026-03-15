@@ -311,7 +311,7 @@ window.showGhostVerify = (email) => {
                 layer.style.opacity = "0";
                 // Redirect mid-fade so the transition feels connected
                 setTimeout(() => {
-                    window.location.href = 'hub.html';
+                    window.location.href = 'onboarding.html';
                 }, 1000); 
             }, 3000);
             

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Lab | Just•Abacha</title>
+    <link rel="stylesheet" href="onboarding.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="ghost-lab-root">
+        <div id="ghost-lab-root">
+        <div id="suggestions-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Suggested Ghosts</h3>
+                    <button id="close-suggestions">✕</button>
+                </div>
+                <div id="suggestions-list" class="suggestions-list">
+                    <p class="loading-text">Scanning the layer...</p>
+                </div>
+            </div>
+        </div>
+        <section id="step-1" class="lab-step active">
+            <div class="header">
+                <span class="version">V1.0</span>
+                <h2>Identity Lab</h2>
+                <p>Establish your presence in the shadows.</p>
+            </div>
+
+            <div class="avatar-upload">
+                <label for="avatar-input" id="avatar-label">
+                    <div class="preview-circle" id="avatar-preview">📸</div>
+                </label>
+                <input type="file" id="avatar-input" accept="image/*" hidden>
+            </div>
+
+            <div class="form-grid">
+                <input type="text" id="username" placeholder="Username*" class="must-fill">
+                <input type="text" id="phone" placeholder="Phone (+254...)*" class="must-fill">
+                <select id="city" class="must-fill">
+                    <option value="" disabled selected>Select City*</option>
+                    <option value="Nairobi">Nairobi</option>
+                    <option value="Mombasa">Mombasa</option>
+                    <option value="Kisumu">Kisumu</option>
+                    <option value="Eldoret">Eldoret</option>
+                    <option value="Nakuru">Nakuru</option>
+                </select>
+                <textarea id="bio" placeholder="Status/Quote*" class="must-fill" maxlength="100"></textarea>
+            </div>
+
+            <button id="save-identity" class="action-btn">Save Identity</button>
+        </section>
+
+        <section id="step-2" class="lab-step">
+            <div class="step-nav">
+                <button class="skip-btn" id="skip-to-end">Skip ➔</button>
+            </div>
+            <h2>The Manual</h2>
+            <div class="manual-content">
+                <div class="manual-card">
+                    <h3>📡 Getting Started</h3>
+                    <p>Go to Settings > Chat Requests. Send a vibe request and wait for your friend to accept.</p>
+                    <button class="mini-action-btn" id="view-suggestions">View Suggested Friends</button>
+                </div>
+                <div class="manual-card">
+                    <h3>🖼️ Atmosphere</h3>
+                    <p>Change chat wallpapers in Settings to set the perfect background vibe.</p>
+                </div>
+                <div class="manual-card">
+                    <h3>⏳ Ghost Mode</h3>
+                    <p>Toggle Ghost Mode for 24hr vanish—messages evaporate into the shadows.</p>
+                </div>
+            </div>
+            <button id="next-to-credits" class="action-btn">Next</button>
+        </section>
+
+       <section id="step-3" class="lab-step">
+            <div class="manifest-box">
+                <div class="credits">
+                    <p>JustAbacha was created by <b>Phestone</b> on January 2026, to provide a secure, ephemeral "Inner Circle" where conversations breathe and wash, giving users high-end "Ghost Layer" experience that prioritizes privacy and peak aesthetic.</p>
+                </div>
+
+                <div class="quote-container">
+                    <p class="quote">"Design is not just what it looks like; its how it works in the shadows."</p>
+                    <span class="author">Mr.Nice Guy</span>
+                </div>
+                
+                <div class="version-tag">...Just abacha V1.0...</div>
+                
+                <div class="legal">
+                    Handcrafted by Phestone.<br>
+                    Powered by Phesty Ghost Engine.<br>
+                    2026 All Rights Reserved.
+                </div>
+            </div>
+            <button id="enter-hub" class="action-btn success">Enter the Hub</button>
+        </section>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="onboarding.js"></script>
+</body>
+</html>
+</body>
+</html>

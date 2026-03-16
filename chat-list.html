@@ -31,7 +31,25 @@
         <input type="text" id="search-ghost" class="search-input" placeholder="Search alias to vibe...">
         <div id="search-results"></div>
 
-        <div class="section-label">Pending Requests</div>
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <div class="section-label" style="margin: 0;">Pending Requests</div>
+            <button onclick="toggleGhostSearch()" style="
+                background: rgba(50, 215, 75, 0.15); 
+                border: 1px solid #3253d7; 
+                border-radius: 50%; 
+                width: 32px; 
+                height: 32px; 
+                color: #46f766; 
+                font-size: 20px; 
+                font-weight: bold; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                cursor: pointer;
+                transition: transform 0.2s ease;
+                outline: none;
+            " onmousedown="this.style.transform='scale(0.9)'" onmouseup="this.style.transform='scale(1)'">+</button>
+        </div>
         <div id="pending-list"></div>
 
         <div class="section-label">Active Chats</div>

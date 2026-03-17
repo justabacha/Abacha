@@ -1,4 +1,9 @@
 /* --- 1. CORE & RESET --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap');
+
+body, #ghost-emoji-layer {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
 * {
     -webkit-user-select: none;
     -webkit-touch-callout: none;
@@ -85,7 +90,11 @@ input, textarea {
     gap: 12px; 
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 100%);
 }
-
+#msg-input {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI",
+                 "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+    font-size: 16px;
+}
 .msg-wrapper { 
     display: flex; 
     align-items: flex-end; 
@@ -133,6 +142,11 @@ input, textarea {
     display: block;
 }
 
+/* Specific fix for emojis inside bubbles to keep them sharp */
+.message img.emoji {
+    width: 1.3em !important;
+    height: 1.3em !important;
+}
 .reply-quote {
     background: rgba(0, 122, 255, 0.2);
     border-left: 3px solid #007AFF; 
@@ -177,9 +191,12 @@ input, textarea {
     border-radius: 30px; 
     padding: 8px 18px;
     display: flex; 
-    align-items: center; 
+    align-items: flex-end; /* Aligns to bottom for iOS vibe */
     border: 1px solid rgba(255, 255, 255, 0.15);
     z-index: 1000;
+    min-height: 50px;
+    height: auto;
+    width: 100%;
 }
 
 .input-tile input, 
@@ -258,25 +275,39 @@ input, textarea {
     text-align: left;
 }
 
+/* --- 6. OVERLAYS & MODALS (FIXED TOP-DROP) --- */
 #ghost-prompt-overlay {
     display: none;
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(10px);
+    top: 0; left: 0; width: 100%; height: auto; /* Height auto so it doesn't block the screen */
+    background: transparent; /* Removed the dark 0.7 background */
+    backdrop-filter: none; /* Removed the global blur */
     z-index: 20000;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start; /* Aligns to top */
+    padding-top: 25px;
+    pointer-events: none; /* Let clicks pass through to chat until they hit the tile */
 }
 
 .ghost-prompt-tile {
-    background: rgba(25, 25, 25, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    width: 280px;
-    padding: 20px;
+    pointer-events: auto; /* Buttons are clickable */
+    background: rgba(20, 20, 20, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 22px;
+    width: 90%;
+    max-width: 350px;
+    padding: 16px 20px;
     position: relative;
-    text-align: center;
+    text-align: left; /* Left align for that iOS notification look */
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    animation: ghostDrop 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+@keyframes ghostDrop {
+    from { transform: translateY(-150%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
 .prompt-logo {
@@ -366,3 +397,134 @@ input, textarea {
 .modal-btn { flex: 1; padding: 12px; border-radius: 15px; border: none; font-weight: bold; font-size: 14px; }
 .btn-yes { background: #FF3B30; color: white; }
 .btn-no { background: #32D74B; color: white; }
+/* --- VIBE ACTION CIRCLES --- */
+.vibe-circle {
+    width: 38px;
+    height: 38px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    font-size: 18px;
+    transition: transform 0.2s ease, background 0.2s;
+}
+
+.vibe-circle:active {
+    transform: scale(0.85) translateY(2px);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* --- EMOJI GLASS TRAY --- */
+.glass-tray {
+    background: rgba(20, 20, 20, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 10px;
+    padding: 15px;
+    animation: slideUp 0.3s ease-out;
+}
+
+.tray-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    font-weight: bold;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* 1. THE GLASS TRAY */
+#ghost-emoji-layer {
+    background: rgba(82, 82, 82, 0.85); 
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 0.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px 20px 0 0;
+}
+
+/* 2. THE GRID (Phone Standard: 8 Columns) */
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr); 
+    gap: 5px; /* Tighter for phone screens */
+    padding: 12px 8px;
+    max-height: 300px; /* Standard keyboard height */
+    overflow-y: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 3. THE GLASS CELLS (Natural Fit) */
+.emoji-grid span {
+    cursor: pointer;
+    aspect-ratio: 1 / 1; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    background-color: rgba(250, 235, 215, 0.121);
+    border-radius: 8px; /* Slightly tighter curves */
+    transition: background 0.2s ease;
+}
+
+/* 4. THE iOS IMAGE LOCK (Standard Size) */
+.emoji-grid span img.emoji {
+    width: 24px !important; /* THE standard mobile size */
+    height: 24px !important;
+    pointer-events: none;
+    display: block;
+}
+img.emoji {
+    height: 1.2em !important;
+    width: 1.2em !important;
+    margin: 0 .08em !important;
+    vertical-align: -0.15em !important;
+    image-rendering: -webkit-optimize-contrast;
+    filter: drop-shadow(0 0.5px 0.5px rgba(0,0,0,0.2));
+}
+
+.emoji-grid span:hover {
+    background: rgba(255,255,255,0.08);
+}
+
+.emoji-grid span:active {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(0.88);
+}
+
+.tray-category-header {
+    grid-column: 1 / -1;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(253, 242, 242, 0.927);
+    text-transform: uppercase;
+    padding: 15px 0 8px 5px;
+}
+#emoji-preview {
+    position: absolute;
+    bottom: 60px;
+    left: 20px;
+    right: 20px;
+    color: white;
+    pointer-events: none;
+    font-size: 16px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    opacity: 0.8;
+}
+/* Smooth Scrollbar - Hidden but functional for cleaner look */
+.emoji-grid::-webkit-scrollbar { width: 4px; }
+.emoji-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}

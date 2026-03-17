@@ -13,6 +13,13 @@
 })();
 
 // --- 2. GLOBALS ---
+const parseEmojis = (el) => {
+  if (!el) return;
+  twemoji.parse(el, {
+    callback: (icon) =>
+      'https://cdn.jsdelivr.net/gh/iamcal/emoji-data@master/img-apple-160/' + icon + '.png'
+  });
+};
 const urlParams = new URLSearchParams(window.location.search);
 const friendID = urlParams.get("friend_id");
 let replyingTo = null;
@@ -159,7 +166,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Run header sync first
   await syncReceiverHeader();
   // B. LOAD PINS
-  window.loadPins = async () => {
+ window.loadPins = async () => {
     const now = new Date().toISOString();
     const { data: pins } = await supabaseClient
       .from("messages")
@@ -172,16 +179,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (currentPins.length) {
       pinBar.style.display = "block";
       pinBar.innerHTML = currentPins
-        .map(
-          (p) => `
-        <div class="pin-item">
-          <span>📌 ${p.content.substring(0, 25)}...</span>
-          <span onclick="window.unpinMessage('${p.id}')" style="cursor:pointer;padding:5px;">✕</span>
-        </div>`
-        )
+        .map((p) => {
+          // GHOST FIX: Clean the text specifically for the Pin Bar display
+          let displayContent = p.content;
+          if (displayContent.includes("]\n")) {
+            displayContent = displayContent.split("]\n")[1] || "";
+          }
+          
+          return `
+            <div class="pin-item">
+              <span>📌 ${displayContent.substring(0, 25)}${displayContent.length > 25 ? '...' : ''}</span>
+              <span onclick="window.unpinMessage('${p.id}')" style="cursor:pointer;padding:5px;">✕</span>
+            </div>`;
+        })
         .join("");
-    } else pinBar.style.display = "none";
-  };
+    } else {
+      pinBar.style.display = "none";
+    }
+};
 // C. DISPLAY MESSAGE (Ghost Speed Version)
   const displayMessage = (msg, friendAvatar = null, myAvatar = null) => {
     if (document.getElementById(`msg-wrapper-${msg.id}`)) return;
@@ -226,7 +241,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (nextMsg) chatBox.insertBefore(wrapper, nextMsg);
     else chatBox.appendChild(wrapper);
-
+    parseEmojis(wrapper);
     const bubble = wrapper.querySelector(".message");
     bubble.oncontextmenu = (e) => {
       e.preventDefault();
@@ -304,26 +319,43 @@ loadGhostHistory();
         <div class="prompt-text">${message}</div>
         <button class="vibe-btn" onclick="document.getElementById('ghost-prompt-overlay').style.display='none'">Vibe</button>
       </div>`;
-  };
+      // Auto-pull back up after 3s if they don't click "Vibe"
+    setTimeout(() => {
+        if (overlay.style.display === "flex") {
+            overlay.style.display = "none";
+        }
+    }, 3000);
+  };
 
   // F. ACTION MENU
-  window.showActionMenu = (msg, clonedBubble) => {
+ window.showActionMenu = (msg, clonedBubble) => {
     const overlay = document.getElementById("chat-overlay");
     const menuContainer = document.getElementById("menu-content");
     const isPinned = currentPins.some((p) => p.id === msg.id);
+
+    // WHATSAPP STYLE: Grab only the actual message text for the UI/Pins
+    let cleanText = msg.content;
+    if (cleanText.includes("]\n")) {
+        cleanText = cleanText.split("]\n")[1] || "";
+    }
+
+    const safeContent = cleanText
+        .replace(/'/g, "\\'")
+        .replace(/\n/g, " ")
+        .trim();
 
     menuContainer.innerHTML = "";
     clonedBubble.classList.add("popped-message");
 
     menuContainer.appendChild(clonedBubble);
-   menuContainer.insertAdjacentHTML(
+    menuContainer.insertAdjacentHTML(
       "beforeend",
       `
       <div class="action-tile">
-        <div class="action-item" onclick="window.triggerReply('${msg.sender_id}', '${msg.content.replace(/'/g, "\\'")}')">Reply ✍️</div>
-        <div class="action-item" onclick="const txt='${msg.content.replace(/'/g, "\\'")}'; navigator.clipboard.writeText(txt).then(() => { alert('Ghost Copied!'); window.closeGhostModal(); document.getElementById('chat-overlay').style.display='none'; })">Copy 📑</div>
+        <div class="action-item" onclick="window.triggerReply('${msg.sender_id}', '${safeContent}')">Reply ✍️</div>
+        <div class="action-item" onclick="navigator.clipboard.writeText('${safeContent}').then(() => { alert('Ghost Copied!'); document.getElementById('chat-overlay').style.display='none'; })">Copy 📑</div>
         <div class="action-item" onclick="window.showGhostPrompt('This feature is coming soon.!🍻')">Forward 📤</div>
-        <div class="action-item" onclick="${isPinned ? `window.unpinMessage('${msg.id}')` : `window.openPinModal('${msg.id}', '${msg.content.replace(/'/g, "\\'")}')`}">
+        <div class="action-item" onclick="${isPinned ? `window.unpinMessage('${msg.id}')` : `window.openPinModal('${msg.id}', '${safeContent}')`}">
             ${isPinned ? "Unpin" : "Pin"} 📌
         </div>
         <div class="action-item delete" onclick="window.deleteMessage('${msg.id}')">Delete 🗑️</div>
@@ -331,7 +363,7 @@ loadGhostHistory();
     );
 
     overlay.style.display = "flex";
-  };
+};
 
   // G. REPLY
   window.triggerReply = async (senderId, content) => {
@@ -389,13 +421,12 @@ loadGhostHistory();
         receiver_id: friendID,
         created_at: new Date().toISOString()
     };
-   // Change this line:
     displayMessage(tempMsg, cachedFriendAvatar, cachedMyAvatar);
     chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
     chatBox.scrollTop = chatBox.scrollHeight;
     
     msgInput.value = "";
-    msgInput.style.height = 'auto';
+    msgInput.style.height = 'auto';//reset height after sending
 
     // --- BACKGROUND SEND ---
     const { error } = await supabaseClient.from('messages').insert([
@@ -411,15 +442,27 @@ loadGhostHistory();
         document.getElementById(`msg-wrapper-${tempId}`)?.remove();
         window.showGhostPrompt("Vibe failed to send... 💀");
     }
-
-    msgInput.value = "";
-    msgInput.style.height = 'auto'; // Reset height after sending
   };
 
-  // Auto-stretch and Key handling
+  // Ghost Expansion Engine
   msgInput.addEventListener('input', function() {
-      this.style.height = 'auto';
-      this.style.height = (this.scrollHeight) + 'px';
+      this.style.height = 'auto'; // Reset to calculate actual scrollHeight
+      const offset = this.offsetHeight - this.clientHeight;
+      const newHeight = this.scrollHeight + offset;
+      
+      // Limit to about 5 lines (approx 120px)
+      if (newHeight < 120) {
+          this.style.height = newHeight + 'px';
+          this.style.overflowY = 'hidden';
+      } else {
+          this.style.height = '120px';
+          this.style.overflowY = 'scroll';
+      }
+      // 👇 EMOJI PREVIEW MAGIC
+    const preview = document.getElementById('emoji-preview');
+    preview.innerText = this.value;
+
+    parseEmojis(preview);
   });
 
  msgInput.addEventListener('keydown', (e) => {

@@ -153,7 +153,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         // Online Logic (2-minute window)
-        const isOnline = friend.last_seen && (new Date() - new Date(friend.last_seen) < 12000);
+        const isOnline = friend.last_seen && (new Date() - new Date(friend.last_seen) < 60000);
         if (statusEl) {
             statusEl.textContent = isOnline ? "● ONLINE" : "● OFFLINE";
             statusEl.style.color = isOnline ? "#32D74B" : "#f21515";
@@ -162,9 +162,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.error("Header Sync Failed:", err);
     }
   };
-
   // Run header sync first
-  await syncReceiverHeader();
+  syncReceiverHeader();
   // B. LOAD PINS
  window.loadPins = async () => {
     const now = new Date().toISOString();

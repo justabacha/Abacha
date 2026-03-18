@@ -40,37 +40,36 @@ twemoji.parse(grid, {
 window.toggleEmojiLayer = () => {
     const layer = document.getElementById('ghost-emoji-layer');
     const input = document.getElementById('msg-input');
-    const inputContainer = input.parentElement; // Targets the container holding your text area
-    
-    if (layer.style.display === 'none' || layer.style.display === '') {
-        input.blur(); 
-        
-        // Force the layer to act like a mobile keyboard at the bottom
-        layer.style.position = 'fixed';
-        layer.style.bottom = '0';
-        layer.style.left = '0';
-        layer.style.width = '100%';
-        layer.style.height = '300px'; 
-        layer.style.zIndex = '9999';
+    const mainContainer = document.querySelector('.floating-input-container');
+    const isOpening = (layer.style.display === 'none' || layer.style.display === '');
+
+    if (isOpening) {
+        input.blur(); // Hide the system keyboard
         layer.style.display = 'block';
-        
-        // Push the input text area up so it isn't hidden by the emojis
-        inputContainer.style.transition = 'transform 0.3s ease';
-        inputContainer.style.transform = 'translateY(-300px)';
+        // Lift the entire input bar exactly above the emoji tray
+        mainContainer.style.transition = 'transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1)';
+        mainContainer.style.transform = 'translateY(-300px)'; 
     } else {
         layer.style.display = 'none';
-        inputContainer.style.transform = 'translateY(0)';
+        mainContainer.style.transform = 'translateY(0)'; // Snap back to original position
         input.focus();
     }
 };
 
 document.getElementById('msg-input').addEventListener('click', () => {
-    document.getElementById('ghost-emoji-layer').style.display = 'none';
+    const layer = document.getElementById('ghost-emoji-layer');
+    const mainContainer = document.querySelector('.floating-input-container');
+    // If user clicks text area to type, hide emojis and reset position
+    layer.style.display = 'none';
+    mainContainer.style.transform = 'translateY(0)';
 });
 
 document.getElementById('msg-input').addEventListener('keydown', (e) => {
     if (e.key === "Enter") {
-        document.getElementById('ghost-emoji-layer').style.display = 'none';
+        const layer = document.getElementById('ghost-emoji-layer');
+        const mainContainer = document.querySelector('.floating-input-container');
+        layer.style.display = 'none';
+        mainContainer.style.transform = 'translateY(0)';
     }
 });
 

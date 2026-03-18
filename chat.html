@@ -72,14 +72,6 @@
                 <div class="vibe-circle" onclick="window.showGhostPrompt('Voice notes coming soon! 🎙️🍻')"><img src="https://img.icons8.com/fluency/48/microphone.png" width="24"></div>
             </div>
 
-            <div id="ghost-emoji-layer" class="glass-tray" style="display: none;">
-    <div class="tray-header">
-        <span onclick="toggleEmojiLayer()" style="cursor:pointer; font-size: 18px;">←</span>
-        <span>Ghost Emojis</span>
-        <span onclick="emojiBackspace()" style="cursor:pointer; color:#f4eeee; font-size: 18px;">⌫</span>
-    </div>
-    <div class="emoji-grid" id="dynamic-emoji-grid"></div>
-</div>
 
             <div id="reply-preview-container"></div>
         <div class="input-tile" style="align-items: flex-end; display: flex; padding: 10px 15px;">
@@ -98,6 +90,14 @@
 <script src="chat.js"></script>
 
 <script src="ui-extras.js"></script>
+   <div id="ghost-emoji-layer" class="glass-tray" style="display: none;">
+    <div class="tray-header">
+        <span onclick="toggleEmojiLayer()" style="cursor:pointer; font-size: 18px;">←</span>
+        <span>Ghost Emojis</span>
+        <span onclick="emojiBackspace()" style="cursor:pointer; color:#f4eeee; font-size: 18px;">⌫</span>
+    </div>
+    <div class="emoji-grid" id="dynamic-emoji-grid"></div>
+</div>
 </body>
     </html>
     

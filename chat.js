@@ -28,6 +28,36 @@ let pendingPinMsg = null;
 let messageToDelete = null;
 let cachedMyAvatar = null;
 let cachedFriendAvatar = null;
+// --- 2.5 GHOST CACHE ENGINE (The Transformer) ---
+const getGhostCache = (roomID) => JSON.parse(localStorage.getItem(`ghost_cache_${roomID}`)) || [];
+
+const saveToGhostCache = (roomID, msg) => {
+  let cache = getGhostCache(roomID);
+  // Ensure we don't double-save
+  if (!cache.find(m => m.id === msg.id || (msg.id.startsWith('temp-') && m.content === msg.content))) {
+    cache.push(msg);
+    // Keep it chronologically sorted
+    cache.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    localStorage.setItem(`ghost_cache_${roomID}`, JSON.stringify(cache));
+  }
+};
+
+const updateCacheStatus = (roomID, updatedMsg) => {
+  let cache = getGhostCache(roomID);
+  const index = cache.findIndex(m => m.id === updatedMsg.id);
+  if (index !== -1) {
+    // If it's been hidden/deleted, pluck it out of the capsule
+    if (updatedMsg.hidden_from?.includes(friendID) && updatedMsg.hidden_from?.includes(updatedMsg.sender_id)) {
+        cache.splice(index, 1);
+    } else if (updatedMsg.hidden_from?.includes(urlParams.get("friend_id"))) {
+        // Just let it be, but if WE hid it, remove from our local view
+        cache.splice(index, 1);
+    } else {
+        cache[index] = { ...cache[index], ...updatedMsg };
+    }
+    localStorage.setItem(`ghost_cache_${roomID}`, JSON.stringify(cache));
+  }
+};
 
 // --- 3. GLOBAL UI HELPERS ---
 window.cancelReply = () => {
@@ -288,61 +318,81 @@ const avatarImg = isMe
   };
 // --- D. LOAD HISTORY (Ghost Speed Edition + Fail Safe) ---
 const loadGhostHistory = async () => {
-  // Move msgFilter out of the try block so the background sync can see it!
-  const msgFilter = `and(sender_id.eq."${user.id}",receiver_id.eq."${friendID}"),and(sender_id.eq."${friendID}",receiver_id.eq."${user.id}")`;
-  try {
-    chatBox.style.opacity = "0"; // Hide until ready
+  const roomID = [user.id, friendID].sort().join("_");
+  const msgFilter = `and(sender_id.eq."${user.id}",receiver_id.eq."${friendID}"),and(sender_id.eq."${friendID}",receiver_id.eq."${user.id}")`;
 
-    const { data: profiles, error: pError } = await supabaseClient
-      .from('profiles')
-      .select('id, avatar_url')
-      .in('id', [user.id, friendID]);
+  try {
+    chatBox.style.opacity = "0"; // Initial hide for clean transition
 
-    if (pError) throw pError;
+    // 1. FETCH AVATARS FIRST (Your original Logic)
+    // We need this so both Cache and DB messages have the right images
+    const { data: profiles, error: pError } = await supabaseClient
+      .from('profiles')
+      .select('id, avatar_url')
+      .in('id', [user.id, friendID]);
 
-    cachedMyAvatar = profiles?.find(p => p.id === user.id)?.avatar_url;
-    cachedFriendAvatar = profiles?.find(p => p.id === friendID)?.avatar_url;
-   // FAST SNAP (Last 12)
-    const { data: recentHistory } = await supabaseClient
+    if (!pError) {
+      cachedMyAvatar = profiles?.find(p => p.id === user.id)?.avatar_url;
+      cachedFriendAvatar = profiles?.find(p => p.id === friendID)?.avatar_url;
+    }
+
+    // 2. INSTANT LOAD FROM LOCAL CACHE
+    const localMsgs = getGhostCache(roomID);
+    if (localMsgs.length > 0) {
+      chatBox.innerHTML = "";
+      localMsgs.forEach(msg => displayMessage(msg, cachedFriendAvatar, cachedMyAvatar));
+      chatBox.scrollTop = chatBox.scrollHeight;
+      chatBox.classList.add('ready');
+      chatBox.style.opacity = "1"; // Show cache immediately
+    }
+
+    // 3. FETCH THE DELTA (New messages only)
+    const lastTimestamp = localMsgs.length > 0 
+      ? localMsgs[localMsgs.length - 1].created_at 
+      : new Date(0).toISOString();
+
+    const { data: newVibes } = await supabaseClient
       .from("messages")
       .select("*")
       .or(msgFilter)
+      .gt("created_at", lastTimestamp)
       .not('hidden_from', 'cs', `{${user.id}}`)
-      .order("created_at", { ascending: false })
-      .limit(12);
+      .order("created_at", { ascending: true });
 
-    if (recentHistory) {
-      chatBox.innerHTML = "";
-      [...recentHistory].reverse().forEach(msg => displayMessage(msg, cachedFriendAvatar, cachedMyAvatar));
-      
+    if (newVibes && newVibes.length > 0) {
+      newVibes.forEach(msg => {
+        if (!document.getElementById(`msg-wrapper-${msg.id}`)) {
+          displayMessage(msg, cachedFriendAvatar, cachedMyAvatar);
+          saveToGhostCache(roomID, msg);
+        }
+      });
       chatBox.scrollTop = chatBox.scrollHeight;
-      chatBox.classList.add('ready');
-      
-      // Mark as read in background
-      supabaseClient.from("messages").update({ is_read: true })
-        .eq("sender_id", friendID).eq("receiver_id", user.id).eq("is_read", false).then();
     }
+
+    // 4. BACKGROUND MARK AS READ (Your original Logic)
+    supabaseClient.from("messages")
+      .update({ is_read: true })
+      .eq("sender_id", friendID)
+      .eq("receiver_id", user.id)
+      .eq("is_read", false)
+      .then();
+
+    // 5. BACKGROUND SYNC (Keep cache fresh for deletions/ticks)
+    const { data: syncCheck } = await supabaseClient
+      .from("messages")
+      .select("*")
+      .or(msgFilter)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (syncCheck) {
+      syncCheck.forEach(m => updateCacheStatus(roomID, m));
+    }
+
   } catch (err) {
     console.error("Ghost Load Error:", err);
   } finally {
-    // ALWAYS show the chatbox, even if empty/error, to prevent "Hardcode" freeze
-    chatBox.style.opacity = "1";
-  }
-
-  // BACKGROUND SYNC (Load the rest)
-  const { data: fullHistory } = await supabaseClient
-    .from("messages")
-    .select("*")
-    .or(msgFilter)
-    .not('hidden_from', 'cs', `{${user.id}}`)
-    .order("created_at", { ascending: true });
-
-  if (fullHistory) {
-    fullHistory.forEach(msg => {
-      if (!document.getElementById(`msg-wrapper-${msg.id}`)) {
-        displayMessage(msg, cachedFriendAvatar, cachedMyAvatar);
-      }
-    });
+    chatBox.style.opacity = "1"; // Fail-safe show
   }
   window.loadPins();
 };
@@ -460,6 +510,7 @@ loadGhostHistory();
         created_at: new Date().toISOString()
     };
     displayMessage(tempMsg, cachedFriendAvatar, cachedMyAvatar);
+    saveToGhostCache(roomID, tempMsg);
     chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
     chatBox.scrollTop = chatBox.scrollHeight;
     
@@ -544,7 +595,7 @@ const dbChannel = supabaseClient
     (payload) => {
       const m = payload.new;
       if ((m.sender_id === user.id || m.receiver_id === user.id) && (m.sender_id === friendID || m.receiver_id === friendID)) {
-        
+        saveToGhostCache(roomID, m);
         if (m.sender_id !== user.id) {
           displayMessage(m, cachedFriendAvatar, cachedMyAvatar);
           supabaseClient.from("messages").update({ is_read: true }).eq("id", m.id).then();
@@ -568,7 +619,7 @@ const dbChannel = supabaseClient
     { event: "UPDATE", schema: "public", table: "messages" },
     (payload) => {
       const m = payload.new;
-      
+      updateCacheStatus(roomID, m);
       // 1. Handle Deletion
       if (m.hidden_from?.includes(user.id)) {
         document.getElementById(`msg-wrapper-${m.id}`)?.remove();

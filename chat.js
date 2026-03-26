@@ -47,30 +47,33 @@ window.closeGhostModal = () => {
 window.confirmGhostDelete = async () => {
   if (!messageToDelete) return;
   
-  // 1. Hide it from the UI immediately (Optimistic)
   const el = document.getElementById(`msg-wrapper-${messageToDelete}`);
-  if (el) el.remove();
+  if (el) el.remove(); // Optimistic UI: Hide it instantly for the user
 
-  // 2. SOFT DELETE: Add current user's ID to the hidden_from array
   const { data: { user } } = await supabaseClient.auth.getUser();
   
-  // First, get the current array to avoid overwriting others' deletions
+  // 1. Fetch current state
   const { data: msg } = await supabaseClient
     .from("messages")
-    .select("hidden_from")
+    .select("hidden_from, sender_id, receiver_id")
     .eq("id", messageToDelete)
     .single();
 
-  const updatedHiddenFrom = [...(msg?.hidden_from || []), user.id];
+  if (!msg) return;
 
-  const { error } = await supabaseClient
-    .from("messages")
-    .update({ hidden_from: updatedHiddenFrom })
-    .eq("id", messageToDelete);
+  const otherPersonID = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
+  const isAlreadyHiddenByOther = msg.hidden_from?.includes(otherPersonID);
 
-  if (error) {
-      console.error("Ghost Hide Failed:", error.message);
-      window.showGhostPrompt("Could't hide that vibe... 💀");
+  if (isAlreadyHiddenByOther) {
+    // 2. BOTH want it gone? KILL IT PERMANENTLY 💀
+    await supabaseClient.from("messages").delete().eq("id", messageToDelete);
+  } else {
+    // 3. Just YOU want it gone? HIDE IT 👻
+    const updatedHiddenFrom = [...(msg.hidden_from || []), user.id];
+    await supabaseClient
+      .from("messages")
+      .update({ hidden_from: updatedHiddenFrom })
+      .eq("id", messageToDelete);
   }
 
   messageToDelete = null;
@@ -112,13 +115,46 @@ window.unpinMessage = async (id) => {
     .eq("id", id);
   window.loadPins();
 };
+// --- OPTIMIZED GHOST ENGINE ---
+let heartbeatInterval;
+let statusChannel;
+
+const stopGhostServices = () => {
+    if (heartbeatInterval) clearInterval(heartbeatInterval);
+    if (statusChannel) statusChannel.unsubscribe();
+};
+
+const startGhostServices = (user, roomID) => {
+    stopGhostServices(); 
+    heartbeatInterval = setInterval(async () => {
+        if (document.visibilityState === 'visible') {
+            await supabaseClient.from('profiles').update({ 
+                last_seen: new Date().toISOString() 
+            }).eq('id', user.id);
+        }
+    }, 30000);
+
+    statusChannel = supabaseClient.channel(`status_${roomID}`);
+    statusChannel.on("broadcast", { event: "typing" }, (payload) => {
+        if (payload.payload.userId === friendID) {
+            const indicator = document.getElementById("typing-indicator");
+            if (indicator) {
+                indicator.style.display = "block";
+                clearTimeout(window.typingTimer);
+                window.typingTimer = setTimeout(() => indicator.style.display = "none", 2000);
+            }
+        }
+    }).subscribe();
+};
+window.addEventListener('beforeunload', stopGhostServices);
 
 // --- 4. MAIN CHAT ENGINE ---
 document.addEventListener("DOMContentLoaded", async () => {
   const { data: { user } } = await supabaseClient.auth.getUser();
   const roomID = [user.id, friendID].sort().join("_");
   if (!user || !friendID) return;
-
+   // START THE ENGINE FOR CURRENT CHAT
+  startGhostServices(user, roomID);
   const chatBox = document.getElementById("chat-box");
   const sendBtn = document.getElementById("send-btn");
   const msgInput = document.getElementById("msg-input");
@@ -215,12 +251,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     wrapper.className = `msg-wrapper ${isMe ? "user-wrapper" : "ai-wrapper"}`;
     wrapper.setAttribute('data-timestamp', new Date(msg.created_at).getTime());
     wrapper.setAttribute('data-content', msg.content);
-    // USES PRE-FETCHED AVATARS (No testing links!)
-    const avatarImg = isMe 
-      ? (myAvatar || "https://i.postimg.cc/rpD4fgxR/IMG-5898-2.jpg") 
-      : (friendAvatar || "https://i.postimg.cc/rpD4fgxR/IMG-5898-2.jpg");
+   // Clean Fallback Logic
+const myInitial = user.email ? user.email.charAt(0).toUpperCase() : 'G';
+const friendInitial = document.getElementById('header-name')?.textContent?.charAt(0) || 'G';
 
-    wrapper.innerHTML = `
+const avatarImg = isMe 
+  ? (cachedMyAvatar || `https://ui-avatars.com/api/?name=${myInitial}&background=007AFF&color=fff`) 
+  : (cachedFriendAvatar || `https://ui-avatars.com/api/?name=${friendInitial}&background=32D74B&color=fff`);
+   
+  wrapper.innerHTML = `
       <img src="${avatarImg}" class="avatar">
       <div class="message ${isMe ? "sent" : "received"}">
         ${msg.content.includes("↳ [") 
@@ -477,26 +516,6 @@ loadGhostHistory();
   });
 
   sendBtn.onclick = handleSend;
-// --- TYPING LOGIC ---
-  const typingIndicator = document.getElementById("typing-indicator");
-  let typingTimeout;
-  
-  const statusChannel = supabaseClient.channel(`status_${roomID}`, {
-    config: { broadcast: { self: false } }
-  });
-
-  statusChannel
-    .on("broadcast", { event: "typing" }, (payload) => {
-        // Friend is typing!
-        if (payload.payload.userId === friendID) {
-            typingIndicator.style.display = "block";
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => {
-                typingIndicator.style.display = "none";
-            }, 2000);
-        }
-    })
-    .subscribe();
 
   // Send typing signal
   let lastTypingSignal = 0;
@@ -585,13 +604,5 @@ const dbChannel = supabaseClient
 }
   )
   .subscribe();
-// Single optimized heartbeat
-  const ghostHeartbeat = async () => {
-    await supabaseClient
-      .from('profiles')
-      .update({ last_seen: new Date().toISOString() })
-      .eq('id', user.id);
-  };
-  ghostHeartbeat(); 
-  setInterval(ghostHeartbeat, 25000);
+
 });

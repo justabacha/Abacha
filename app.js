@@ -75,8 +75,7 @@ function ghostPrompt(message, type = "success") {
     if (!container) {
         container = document.createElement('div');
         container.id = 'ghost-prompt-container';
-        container.style = "position:fixed; top:60px; left:50%; transform:translateX(-50%); z-index:100000; display:flex; flex-direction:column; gap:12px; align-items: center; width: 100%; pointer-events: none;";
-        document.body.appendChild(container);
+        document.body.appendChild(container);
     }
 
     const tile = document.createElement('div');
@@ -84,31 +83,20 @@ function ghostPrompt(message, type = "success") {
     const btnColor = isSuccess ? "#32D74B" : "#007AFF"; 
     const btnText = isSuccess ? "vibe" : "ok";
 
-    tile.style = `
-        background: rgba(28, 28, 30, 0.85);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 16px;
-        border-radius: 18px;
-        width: 280px;
-        color: white;
-        font-family: -apple-system, sans-serif;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        animation: ghostSlide 0.4s ease-out;
-        pointer-events: auto;
-    `;
+    tile.className= 'ghost-tile';
     
-    tile.innerHTML = `
-        <div style="color:gray; font-size:10px; margin-bottom:8px; display:flex; justify-content:space-between;">
-            <span>|Just•Abacha😎|</span>
-            <span onclick="this.parentElement.parentElement.remove()" style="cursor:pointer;">✕</span>
-        </div>
-        <div style="font-size: 14px; margin-bottom: 12px; line-height:1.4;">${message}</div>
-        <button onclick="this.parentElement.remove()" style="width:100%; padding:10px; border-radius:10px; border:none; background:${btnColor}; color:white; font-weight:bold; cursor:pointer;">
-            ${btnText}
-        </button>
-    `;
+   tile.innerHTML = `
+    <div class="header">
+        <span style="letter-spacing: 1px;">|Just•Abacha😎|</span>
+        <span onclick="this.parentElement.parentElement.remove()" style="cursor:pointer; font-size: 14px; padding: 4px;">✕</span>
+    </div>
+    <div style="font-size: 13px; margin: 4px 0 14px 0; line-height: 1.4; color: #efefef; text-align: center;">
+        ${message}
+    </div>
+    <button class="vibe-btn ${isSuccess ? 'bg-green' : 'bg-blue'}" onclick="this.parentElement.remove()" style="margin-top: auto;">
+        ${btnText}
+    </button>
+`;
 
     if (!document.getElementById('ghost-anim')) {
         const style = document.createElement('style');
@@ -198,16 +186,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (profile && profile.is_approved) {
                 window.location.href = 'hub.html';
             } else {
-                // SEAMLESS: STAY LOGGED IN
-                loginButton.innerText = "Login";
-                try {
-                    await fetch('/api/send-code', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: email })
-                    });
-                } catch (e) { console.log("API Bypass active"); }
-                showGhostVerify(email);
+               // SEAMLESS: LOGIN ONLY (No OTP)
+              loginButton.innerText = "Login";
+              window.location.href = 'hub.html';
             }
         };
     }
@@ -264,23 +245,72 @@ window.showGhostVerify = (email) => {
     const layer = document.createElement('div');
     layer.id = "ghost-layer";
     layer.style = "position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px); transition: background 0.3s ease;";
-    layer.innerHTML = `
-        <style>
-            @keyframes vibeLoaderSpin { to { transform: rotate(360deg); } }
-            .vibe-loader { width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: vibeLoaderSpin 0.8s linear infinite; margin: 0 auto; }
-        </style>
-        <div style="background:#1c1c1e; padding:30px; border-radius:24px; width:85%; max-width:350px; text-align:center; border:1px solid #333;">
-            <div style="color:gray; font-size:12px; margin-bottom:10px; text-align:left;">|Just•Abacha😎|</div>
-            <h3 style="color:white; margin:0 0 10px;">Verify Ghost</h3>
-            <p style="color:gray; font-size:14px; margin-bottom:20px;">Enter the code sent to your email.</p>
-            <input id="otp-input" type="text" placeholder="JA-0000-ABA" style="width:100%; padding:12px; border-radius:10px; background:#2c2c2e; border:none; color:white; text-align:center; font-weight:bold; margin-bottom:20px; text-transform: uppercase;">
-            <div style="display:flex; gap:10px;">
-                <button id="vibe-verify-btn" style="flex:1; padding:12px; border-radius:12px; background:#32D74B; border:none; color:white; font-weight:bold; cursor:pointer;">Vibe</button>
-                <button onclick="document.getElementById('ghost-layer').remove()" style="flex:1; padding:12px; border-radius:12px; background:#007AFF; border:none; color:white; font-weight:bold; cursor:pointer;">No</button>
-            </div>
-        </div>
-    `;
+  layer.innerHTML = `
+    <style>
+        @keyframes vibeLoaderSpin { to { transform: rotate(360deg); } }
+        .vibe-loader { width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: vibeLoaderSpin 0.8s linear infinite; margin: 0 auto; }
+    </style>
+    <div style="background:#1c1c1e; padding:40px 30px 30px 30px; border-radius:28px; width:88%; max-width:350px; text-align:center; border:1px solid #333; position:relative; box-shadow: 0 30px 60px rgba(0,0,0,0.7);">
+        
+        <!-- THE ROOF: Absolute Positioning for Premium Feel -->
+        <div style="position:absolute; top:15px; left:20px; color:gray; font-size:10px; opacity:0.6;">|Just•Abacha😎|</div>
+        <div onclick="document.getElementById('ghost-layer').remove()" style="position:absolute; top:10px; right:15px; color:white; opacity:0.5; cursor:pointer; font-size:20px; padding:5px;">✕</div>
+
+        <h3 style="color:white; margin:10px 0 10px; font-size:22px; letter-spacing:-0.5px;">Verify Ghost</h3>
+        <p style="color:gray; font-size:14px; margin-bottom:25px;">Enter the code sent to your email.</p>
+        
+        <input id="otp-input" type="text" placeholder="JA-0000-ABA" style="width:100%; padding:14px; border-radius:12px; background:#2c2c2e; border:1px solid #444; color:white; text-align:center; font-weight:bold; margin-bottom:20px; text-transform: uppercase; font-size:18px;">
+
+        <!-- Info Hint Tag -->
+        <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:25px; color:white; opacity:0.8;">
+            <span style="display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border:1px solid white; border-radius:50%; font-size:10px; font-family:serif; font-weight:bold; line-height:1;">i</span>
+            <span style="font-size:12px;">Check your spam if not found, mate.</span>
+        </div>
+
+        <div style="display:flex; gap:12px;">
+            <button id="vibe-verify-btn" style="flex:1; padding:14px; border-radius:14px; background:#32D74B; border:none; color:white; font-weight:bold; cursor:pointer; font-size:14px;">Vibe</button>
+            <button id="resend-ghost-btn" style="flex:1; padding:14px; border-radius:14px; background:#007AFF; border:none; color:white; font-weight:bold; cursor:pointer; font-size:14px;">Resend</button>
+        </div>
+    </div>
+`;
     document.body.appendChild(layer);
+    // --- RESEND LOGIC ENGINE ---
+document.getElementById('resend-ghost-btn').onclick = async () => {
+    const resendBtn = document.getElementById('resend-ghost-btn');
+    const originalContent = resendBtn.innerHTML;
+    
+    // Lock button & show loader
+    resendBtn.innerHTML = '<div class="vibe-loader"></div>';
+    resendBtn.style.pointerEvents = "none";
+    resendBtn.style.opacity = "0.7";
+
+    try {
+        const response = await fetch('/api/send-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email })
+        });
+
+        if (response.ok) {
+            ghostPrompt("New Code Ghosted! Watch your spam, blud.", "success");
+            resendBtn.innerHTML = "Sent!";
+            resendBtn.style.background = "#32D74B"; // Turn green briefly for success
+        } else {
+            throw new Error();
+        }
+    } catch (e) {
+        ghostPrompt("Resend Failed. Try again, bestie.", "error");
+        resendBtn.innerHTML = "Retry";
+    }
+
+    // Reset button after 4 seconds
+    setTimeout(() => {
+        resendBtn.innerHTML = "Resend";
+        resendBtn.style.background = "#007AFF";
+        resendBtn.style.pointerEvents = "auto";
+        resendBtn.style.opacity = "1";
+    }, 4000);
+};
 
     document.getElementById('vibe-verify-btn').onclick = async () => {
         const btn = document.getElementById('vibe-verify-btn');

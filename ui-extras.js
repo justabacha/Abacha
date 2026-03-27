@@ -198,7 +198,7 @@ window.uploadAndSendPhotos = async (caption, user, friendID, roomID) => {
 
         // Send to messages table
         const { error: msgError } = await supabaseClient.from('messages').insert([{
-            content: caption || '',
+            content: caption.trim() || 'Photo 📸', // If caption is empty, it saves "Photo 📸"
             sender_id: user.id,
             receiver_id: friendID,
             message_type: 'photo',

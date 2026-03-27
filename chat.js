@@ -356,11 +356,16 @@ const avatarImg = isMe
     if (nextMsg) chatBox.insertBefore(wrapper, nextMsg);
     else chatBox.appendChild(wrapper);
     parseEmojis(wrapper);
-    const bubble = wrapper.querySelector(".message");
-    bubble.oncontextmenu = (e) => {
-      e.preventDefault();
-      window.showActionMenu(msg, bubble.cloneNode(true));
-    };
+    // GHOST FIX: Support both standard messages and photo containers for the menu
+    const bubble = wrapper.querySelector(".message") || wrapper.querySelector(".photo-vibe-container");
+    
+    if (bubble) {
+        bubble.oncontextmenu = (e) => {
+            e.preventDefault();
+            // Pass the original msg object so the menu knows if it's a photo or text
+            window.showActionMenu(msg, bubble.cloneNode(true));
+        };
+    }
   };
 // --- D. LOAD HISTORY (Ghost Speed Edition + Fail Safe) ---
 const loadGhostHistory = async () => {

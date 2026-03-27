@@ -189,36 +189,52 @@ document.addEventListener("DOMContentLoaded", async () => {
   const sendBtn = document.getElementById("send-btn");
   const msgInput = document.getElementById("msg-input");
 
-  // A. RECEIVER HEADER (Synced with Chatlist Logic)
+ // A. RECEIVER HEADER (Synced & Ghost-Fast)
   const syncReceiverHeader = async () => {
+    const nameEl = document.getElementById('header-name');
+    const avatarEl = document.getElementById('header-avatar');
+    const statusEl = document.getElementById('online-status');
+    const cacheKey = `ghost_user_${friendID}`;
+
+    // 1. GHOST FAST-TRACK: Load from local storage instantly
+    const cachedFriend = JSON.parse(localStorage.getItem(cacheKey));
+    if (cachedFriend) {
+      if (nameEl) nameEl.textContent = cachedFriend.username || 'Ghost';
+      if (avatarEl && cachedFriend.avatar) {
+        avatarEl.style.backgroundImage = `url('${cachedFriend.avatar}')`;
+        avatarEl.style.backgroundSize = "cover";
+        avatarEl.style.backgroundColor = "transparent";
+      }
+    }
+
+    // 2. ROBUST LOGIC: Sync with DB
     try {
-        console.log("Ghost Protocol: Fetching friend data for", friendID);
         const { data: friend, error } = await supabaseClient
           .from('profiles')
-          .select('*') // Pull all columns to match chatlist.js robustness
+          .select('*') 
           .eq('id', friendID)
           .maybeSingle();
 
-        if (error || !friend) {
-          console.error("Ghost Header Error:", error);
-          return;
-        }
+        if (error || !friend) return;
 
-        // Target the specific elements by ID
-        const nameEl = document.getElementById('header-name');
-        const avatarEl = document.getElementById('header-avatar');
-        const statusEl = document.getElementById('online-status');
+        // Update UI with fresh data
+        const freshUsername = friend.username || 'Ghost';
+        const freshAvatar = friend.avatar_url || friend.avatar;
 
-        if (nameEl) nameEl.textContent = `${friend.username || 'Ghost'}`;
+        if (nameEl) nameEl.textContent = freshUsername;
         
-        if (avatarEl && (friend.avatar_url || friend.avatar)) {
-          const img = friend.avatar_url || friend.avatar;
-          avatarEl.style.backgroundImage = `url('${img}')`;
+        if (avatarEl && freshAvatar) {
+          avatarEl.style.backgroundImage = `url('${freshAvatar}')`;
           avatarEl.style.backgroundSize = "cover";
           avatarEl.style.backgroundColor = "transparent";
         }
 
-        // Online Logic (2-minute window)
+        // Save to cache for next time
+        localStorage.setItem(cacheKey, JSON.stringify({
+          username: freshUsername,
+          avatar: freshAvatar
+        }));
+
         const isOnline = friend.last_seen && (new Date() - new Date(friend.last_seen) < 60000);
         if (statusEl) {
             statusEl.textContent = isOnline ? "● ONLINE" : "● OFFLINE";
@@ -228,7 +244,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.error("Header Sync Failed:", err);
     }
   };
-  // Run header sync first
   syncReceiverHeader();
   // B. LOAD PINS
  window.loadPins = async () => {
@@ -322,9 +337,9 @@ const loadGhostHistory = async () => {
   const msgFilter = `and(sender_id.eq."${user.id}",receiver_id.eq."${friendID}"),and(sender_id.eq."${friendID}",receiver_id.eq."${user.id}")`;
 
   try {
-    chatBox.style.opacity = "0"; // Initial hide for clean transition
+    chatBox.style.opacity = "1"; 
 
-    // 1. FETCH AVATARS FIRST (Your original Logic)
+    // 1. FETCH AVATARS FIRST
     // We need this so both Cache and DB messages have the right images
     const { data: profiles, error: pError } = await supabaseClient
       .from('profiles')
@@ -620,9 +635,13 @@ const dbChannel = supabaseClient
     (payload) => {
       const m = payload.new;
       updateCacheStatus(roomID, m);
-      // 1. Handle Deletion
+      // 1. Handle Deletion/Hiding for the current user
       if (m.hidden_from?.includes(user.id)) {
-        document.getElementById(`msg-wrapper-${m.id}`)?.remove();
+        const el = document.getElementById(`msg-wrapper-${m.id}`);
+        if (el) el.remove();
+        //purge from cache so it doesn't come back on refresh
+        let cache = getGhostCache(roomID);
+        localStorage.setItem(`ghost_cache_${roomID}`, JSON.stringify(cache.filter(msg => msg.id !== m.id)));
         return;
       }
 
@@ -652,7 +671,17 @@ const dbChannel = supabaseClient
           }
         }
       }
-}
+    }
+  )
+  .on(
+    "postgres_changes",
+    { event: "DELETE", schema: "public", table: "messages" },
+    (payload) => {
+      const deletedId = payload.old.id;
+      document.getElementById(`msg-wrapper-${deletedId}`)?.remove();
+      let cache = getGhostCache(roomID);
+      localStorage.setItem(`ghost_cache_${roomID}`, JSON.stringify(cache.filter(msg => msg.id !== deletedId)));
+    }
   )
   .subscribe();
 

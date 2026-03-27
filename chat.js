@@ -278,8 +278,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 };
 // C. DISPLAY MESSAGE (Ghost Speed Version)
-  const displayMessage = (msg, friendAvatar = null, myAvatar = null) => {
+const displayMessage = (msg, friendAvatar = null, myAvatar = null) => {
+    // 1. Check if ID already exists
     if (document.getElementById(`msg-wrapper-${msg.id}`)) return;
+
+    // 2. Check for "Optimistic" duplicates (same content/sender/recent time)
+    const existing = Array.from(chatBox.querySelectorAll('.msg-wrapper')).find(el => {
+        return el.getAttribute('data-content') === msg.content && 
+               Math.abs(parseInt(el.getAttribute('data-timestamp')) - new Date(msg.created_at).getTime()) < 5000;
+    });
+    if (existing) {
+        // Just update the ID of the temp message to the real one from DB
+        if (existing.id.startsWith('msg-wrapper-temp-')) existing.id = `msg-wrapper-${msg.id}`;
+        return;
+    }
 
     const isMe = msg.sender_id === user.id;
     const timeStr = new Date(msg.created_at).toLocaleTimeString([], {
@@ -622,6 +634,7 @@ const dbChannel = supabaseClient
               t.id = `msg-wrapper-${m.id}`;
               // Update timestamp to real DB time
               t.setAttribute('data-timestamp', new Date(m.created_at).getTime());
+              saveToGhostCache(roomID, m); // Update the cache with the real ID and timestamp
             }
           });
         }

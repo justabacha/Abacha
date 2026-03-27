@@ -536,3 +536,48 @@ img.emoji {
     from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
+/* Instagram-Style Photo Container (No Bubble) */
+.photo-vibe-container {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    display: flex;
+    flex-direction: column;
+    max-width: 70%;
+    padding: 0 !important;
+    margin: 10px 0;
+}
+
+/* The actual images in the chat */
+.insta-photo-stack img {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 18px; /* Smooth IG corners */
+    border: 1px solid rgba(255,255,255,0.1); /* Subtle edge instead of thick white */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    transition: transform 0.3s ease;
+}
+.sent.photo-vibe-container { align-items: flex-end; }
+.received.photo-vibe-container { align-items: flex-start; }
+
+.insta-photo-stack {
+    transition: transform 0.2s ease;
+}
+
+.insta-photo-stack:active {
+    transform: scale(0.95); /* Little bounce when you click it */
+}
+/* Small Preview Area (Left side of input) */
+#photo-preview-area {
+    display: none;
+    padding: 10px;
+    background: transparent;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+#preview-stack-container {
+    display: flex;
+    padding-left: 10px; /* Keeps it tucked left */
+}

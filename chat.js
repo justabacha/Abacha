@@ -316,14 +316,33 @@ const avatarImg = isMe
   ? (cachedMyAvatar || `https://ui-avatars.com/api/?name=${myInitial}&background=007AFF&color=fff`) 
   : (cachedFriendAvatar || `https://ui-avatars.com/api/?name=${friendInitial}&background=32D74B&color=fff`);
    
-  wrapper.innerHTML = `
-      <img src="${avatarImg}" class="avatar">
-      <div class="message ${isMe ? "sent" : "received"}">
-        ${msg.content.includes("↳ [") 
+ const isPhoto = msg.message_type === 'photo' && msg.file_url;
+    
+    let innerContent = '';
+    if (isPhoto) {
+        // Split the string and filter out any empty strings/ghost commas
+        const urls = msg.file_url.split(',').filter(url => url.trim() !== "");
+        
+        innerContent = `
+            <div class="insta-photo-stack" onclick="window.viewFullHD('${urls[0]}')" style="position:relative; width: 60vw; max-width: 220px; aspect-ratio: 1/1; margin-bottom: 5px; cursor: pointer;">
+                ${urls.slice(0, 3).map((url, i) => `
+                    <img src="${url}" onerror="this.src='https://via.placeholder.com/150?text=Ghost+Image'" style="position:absolute; width:100%; height:100%; object-fit:cover; border-radius:18px; border:1px solid rgba(255,255,255,0.1); transform: rotate(${i * 4 - 4}deg); z-index: ${5 - i}; box-shadow: 0 8px 20px rgba(0,0,0,0.5);">
+                `).join('')}
+                ${urls.length > 1 ? `<div style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); color:white; padding:4px 8px; border-radius:12px; font-size:11px; z-index:10; backdrop-filter:blur(5px);">1/${urls.length}</div>` : ''}
+            </div>
+            ${msg.content ? `<div style="padding: 5px 10px; font-size: 14px; color: white; word-wrap: break-word; max-width: 60vw;">${msg.content}</div>` : ''}`;
+    } else {
+        innerContent = msg.content.includes("↳ [") 
           ? `<div class="reply-quote">${msg.content.split("]\n")[0].replace("↳ [", "")}</div><div>${msg.content.split("]\n")[1] || ""}</div>`
-          : `<div>${msg.content}</div>`
-        }
-        <div class="msg-time" style="font-size:10px; opacity:1.0; margin-top:4px; text-align:right; display: flex; align-items: center; justify-content: flex-end;">
+          : `<div>${msg.content}</div>`;
+    }
+
+    // This structure preserves your original avatar and layout while toggling the container class
+    wrapper.innerHTML = `
+      <img src="${avatarImg}" class="avatar">
+      <div class="${isPhoto ? 'photo-vibe-container' : 'message ' + (isMe ? 'sent' : 'received')}">
+        ${innerContent}
+        <div class="msg-time" style="font-size:10px; opacity:0.7; margin-top:4px; text-align:right; display: flex; align-items: center; justify-content: flex-end; padding-right: 5px;">
           ${timeStr} ${isMe ? ticks : ''}
         </div>
       </div>
@@ -519,6 +538,16 @@ loadGhostHistory();
   // H. SEND & INPUT ENGINE
  const handleSend = async () => {
     const message = msgInput.value.trim();
+
+    // GHOST CHECK: If we have photos, use the uploader from ui-extra.js
+    if (typeof selectedFiles !== 'undefined' && selectedFiles.length > 0) {
+        const success = await window.uploadAndSendPhotos(message, user, friendID, roomID);
+        if (success) {
+            msgInput.value = "";
+            msgInput.style.height = 'auto';
+        }
+        return; // Stop here, photos handled the send
+    }
     if (!message) return;
 
     let content = message;

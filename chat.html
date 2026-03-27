@@ -63,15 +63,22 @@
 
     <div id="chat-box"></div>
 
-        <div class="floating-input-container">
-           <div id="vibe-action-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 0 5px;">
-                 
+       <div class="floating-input-container">
+            <!-- Hidden File Input -->
+            <input type="file" id="photo-input" multiple accept="image/*" style="display: none;" onchange="handlePhotoSelect(event)">
+
+            <div id="vibe-action-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 0 5px;">
                 <div class="vibe-circle" onclick="triggerMusicUpload()"><img src="https://img.icons8.com/fluency/48/apple-music.png" width="24"></div>
                 <div class="vibe-circle" onclick="triggerPhotoUpload()"><img src="https://img.icons8.com/color/48/google-photos-new.png" width="24"></div>
                 <div class="vibe-circle" onclick="shareLocation()"><img src="https://img.icons8.com/fluency/48/google-maps-new.png" width="24"></div>
                 <div class="vibe-circle" onclick="window.showGhostPrompt('Voice notes coming soon! 🎙️🍻')"><img src="https://img.icons8.com/fluency/48/microphone.png" width="24"></div>
             </div>
 
+            <!-- Photo Preview Area -->
+            <div id="photo-preview-area" style="display: none; padding: 8px; position: relative; background: rgba(255,255,255,0.05); border-radius: 12px; margin: 5px 10px; width: fit-content;">
+            <div id="preview-stack-container" style="display: flex; align-items: center; justify-content: flex-start; gap: -20px;"></div>
+            <span onclick="clearPhotoSelection()" style="position: absolute; top: -5px; right: -5px; background: #FF3B30; border-radius: 50%; width: 18px; height: 18px; text-align: center; cursor: pointer; color: white; font-size: 11px; line-height: 18px; z-index: 20;">✕</span>
+            </div>
 
             <div id="reply-preview-container"></div>
         <div class="input-tile" style="align-items: flex-end; display: flex; padding: 10px 15px;">

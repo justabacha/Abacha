@@ -193,8 +193,7 @@ window.uploadAndSendPhotos = async (caption, user, friendID, roomID) => {
             return publicUrl;
         });
 
-        const uploadedUrls = await uploadPromises;
-        const validUrls = uploadedUrls.filter(url => url !== null);
+        const uploadedUrls = await Promise.all(uploadPromises);
         const finalUrlsString = uploadedUrls.join(',');
 
         // Send to messages table

@@ -580,8 +580,11 @@ img.emoji {
     border-radius: 18px; /* Smooth IG corners */
     border: 1px solid rgba(255,255,255,0.1); /* Subtle edge instead of thick white */
     box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-    transition: transform 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Added a little bounce vibe */
 }
+
+.insta-photo-stack:hover img:nth-child(1) { transform: rotate(-10deg) translate(-15px, 5px) !important; }
+.insta-photo-stack:hover img:nth-child(3) { transform: rotate(10deg) translate(15px, 5px) !important; }
 .sent.photo-vibe-container { align-items: flex-end; }
 .received.photo-vibe-container { align-items: flex-start; }
 

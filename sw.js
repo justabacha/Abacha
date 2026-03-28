@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ghost-v1.1.5'; // Bumped version
+const CACHE_NAME = 'ghost-v1.1.6'; // Bumped version
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

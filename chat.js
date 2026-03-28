@@ -337,16 +337,35 @@ const avatarImg = isMe
         
         innerContent = `
             <div class="insta-photo-stack ${msg.is_loading ? 'loading-stack' : ''}" 
-                onclick="${msg.is_loading ? '' : `window.viewFullHD('${urls[0]}', '${msg.id}', '${msg.sender_id}')`}" 
-                 style="position:relative; width: 60vw; max-width: 220px; aspect-ratio: 1/1; margin-bottom: 5px; cursor: pointer;">
-                
-                ${msg.is_loading ? '<div class="stack-loader"></div>' : ''}
-                
-                ${urls.slice(0, 3).map((url, i) => `
-                    <img src="${url}" onerror="this.src='https://via.placeholder.com/150?text=Ghost+Image'" style="position:absolute; width:100%; height:100%; object-fit:cover; border-radius:18px; border:1px solid rgba(255,255,255,0.1); transform: rotate(${i * 4 - 4}deg); z-index: ${5 - i}; box-shadow: 0 8px 20px rgba(0,0,0,0.5);">
-                `).join('')}
-                ${urls.length > 1 && !msg.is_loading ? `<div style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); color:white; padding:4px 8px; border-radius:12px; font-size:11px; z-index:10; backdrop-filter:blur(5px);">1/${urls.length}</div>` : ''}
-            </div>
+    onclick="${msg.is_loading ? '' : `window.viewFullHD('${msg.file_url}', '${msg.id}', '${msg.sender_id}')`}"
+    style="position:relative; width: 55vw; max-width: 200px; aspect-ratio: 3/4; margin-bottom: 15px; cursor: pointer; margin-left: 10px;">
+    
+    ${msg.is_loading ? '<div class="stack-loader"></div>' : ''}
+    
+    ${urls.slice(0, 3).reverse().map((url, i) => {
+        // Reverse so the first image is always on top (z-index)
+        // Aggressive stack: Rotate more and shift X/Y coordinates
+        const index = 2 - i; // Correcting index for the top-layer
+        const rotate = index * 6 - 6; // More rotation (e.g., -6, 0, 6)
+        const shiftX = index * 8 - 8; // Shifts them sideways so you see the "edge"
+        const shiftY = index * 4;     // Slight vertical stagger
+        
+        return `
+            <img src="${url}" 
+                 onerror="this.src='https://via.placeholder.com/150?text=Ghost+Image'" 
+                 style="position:absolute; width:100%; height:100%; object-fit:cover; border-radius:18px; 
+                        border:1px solid rgba(255,255,255,0.15); 
+                        transform: rotate(${rotate}deg) translate(${shiftX}px, ${shiftY}px); 
+                        z-index: ${10 - index}; 
+                        box-shadow: -5px 8px 20px rgba(0,0,0,0.5);">
+        `;
+    }).reverse().join('')}
+
+    ${urls.length > 1 && !msg.is_loading ? `
+        <div style="position:absolute; bottom:10px; right:10px; background:rgba(0,0,0,0.7); color:white; padding:4px 10px; border-radius:10px; font-size:10px; z-index:20; backdrop-filter:blur(10px); font-weight:bold; border: 1px solid rgba(255,255,255,0.1);">
+            1/${urls.length}
+        </div>` : ''}
+</div>
             ${msg.content ? `<div style="padding: 5px 10px; font-size: 14px; color: white; word-wrap: break-word; max-width: 60vw;">${msg.content}</div>` : ''}`;
     } else {
         innerContent = msg.content.includes("↳ [") 

@@ -158,49 +158,99 @@ window.clearPhotoSelection = () => {
     document.getElementById('photo-input').value = '';
 };
 // D. Full HD View.
-window.viewFullHD = (url, msgId, senderId) => {
+window.viewFullHD = (urlsString, msgId, senderId) => {
+    const urls = urlsString.split(',').filter(u => u.trim() !== "");
+    let currentIndex = 0;
+
     const overlay = document.createElement('div');
     overlay.id = "ghost-full-hd-overlay";
-    overlay.style = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-        background: rgba(0,0,0,0.96); z-index: 9999; display: flex; 
-        flex-direction: column; align-items: center; justify-content: center;
-        backdrop-filter: blur(12px);
-    `;
+    overlay.style = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                     background: rgba(0,0,0,0.96); z-index: 9999; display: flex; 
+                     flex-direction: column; align-items: center; justify-content: center;
+                     backdrop-filter: blur(12px);`;
 
-    overlay.innerHTML = `
-        <img src="${url}" id="hd-image-target" style="max-width: 95%; max-height: 80%; border-radius: 12px; box-shadow: 0 0 40px rgba(0,0,0,0.6);">
-        
-        <div class="photo-accessory-bar">
-            <!-- REPLY: U-SHAPED ARROW -->
-           <div class="acc-btn" onclick="const sId = '${senderId}'; this.parentElement.parentElement.remove(); window.triggerReply(sId, 'Photo 📸')">
-           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 10l-5 5 5 5"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg>
-           </div>
+    const renderUI = () => {
+        overlay.innerHTML = `
+            <!-- NAVIGATION ARROWS (DESKTOP) -->
+            ${urls.length > 1 ? `
+                <div id="prev-ghost" style="position:absolute; left:20px; color:white; font-size:45px; cursor:pointer; z-index:10002; opacity:${currentIndex === 0 ? '0.2' : '0.7'}; transition:0.3s;">‹</div>
+                <div id="next-ghost" style="position:absolute; right:20px; color:white; font-size:45px; cursor:pointer; z-index:10002; opacity:${currentIndex === urls.length - 1 ? '0.2' : '0.7'}; transition:0.3s;">›</div>
+            ` : ''}
 
-            <!-- DOWNLOAD: DROPPING ARROW -->
-            <div class="acc-btn" onclick="window.downloadGhostPhoto('${url}')">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <!-- MAIN IMAGE -->
+            <img src="${urls[currentIndex]}" id="hd-image-target" style="max-width: 95%; max-height: 75%; border-radius: 12px; box-shadow: 0 0 40px rgba(0,0,0,0.6); transition: opacity 0.2s ease; object-fit: contain;">
+            
+            <!-- FIXED BOTTOM CONTROLS (Prevents overlap) -->
+            <div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 20px;">
+                <!-- INSTA-DOTS INDICATOR -->
+                ${urls.length > 1 ? `
+                <div style="display: flex; gap: 8px; margin-bottom: 15px; z-index:10002;">
+                    ${urls.map((_, i) => `
+                        <div style="width: 8px; height: 8px; border-radius: 50%; background: ${i === currentIndex ? '#007AFF' : 'rgba(255,255,255,0.3)'}; transition: 0.3s;"></div>
+                    `).join('')}
+                </div>` : ''}
+
+                <!-- YOUR ORIGINAL ACCESSORY BAR -->
+                <div class="photo-accessory-bar" style="position: static; transform: none; margin: 0;">
+                    <div class="acc-btn" onclick="const sId = '${senderId}'; document.getElementById('ghost-full-hd-overlay').remove(); window.triggerReply(sId, 'Photo 📸')">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 10l-5 5 5 5"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg>
+                    </div>
+                    <div class="acc-btn" onclick="window.downloadGhostPhoto('${urls[currentIndex]}')">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    </div>
+                    <div class="acc-btn" onclick="window.showGhostPrompt('Vibe coming soon, stay tuned!')">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                    </div>
+                    <div class="acc-btn" id="heart-${msgId}" onclick="window.toggleGhostLike('${msgId}')">
+                        <svg width="24" height="24" viewBox="0 0 24 24" id="svg-heart-${msgId}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    </div>
+                    <div class="acc-btn" onclick="window.showGhostPrompt('Sharing is coming! 🧬')">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    </div>
+                </div>
             </div>
 
-            <!-- REACT: SMILEY -->
-            <div class="acc-btn" onclick="window.showGhostPrompt('Vibe coming soon, stay tuned!')">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
-            </div>
+            <div style="position:absolute; top:20px; right:20px; color:white; font-size:30px; cursor:pointer; opacity: 0.6; z-index:10005;" onclick="this.parentElement.remove()">✕</div>
+        `;
 
-            <!-- LIKE: HEART -->
-            <div class="acc-btn" id="heart-${msgId}" onclick="window.toggleGhostLike('${msgId}')">
-                <svg width="24" height="24" viewBox="0 0 24 24" id="svg-heart-${msgId}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            </div>
+        if (urls.length > 1) {
+            const p = document.getElementById('prev-ghost');
+            const n = document.getElementById('next-ghost');
+            if(p) p.onclick = (e) => { e.stopPropagation(); move(-1); };
+            if(n) n.onclick = (e) => { e.stopPropagation(); move(1); };
+        }
+    };
 
-            <!-- SHARE: DNA STRING -->
-            <div class="acc-btn" onclick="window.showGhostPrompt('Sharing is coming! 🧬')">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-            </div>
-        </div>
+    const move = (dir) => {
+        let newIndex = currentIndex + dir;
+        if (newIndex >= 0 && newIndex < urls.length) {
+            currentIndex = newIndex;
+            renderUI();
+        }
+    };
 
-        <div style="position:absolute; top:20px; right:20px; color:white; font-size:30px; cursor:pointer; opacity: 0.6;" onclick="this.parentElement.remove()">✕</div>
-    `;
+    let startX = 0;
+    overlay.addEventListener('touchstart', e => startX = e.touches[0].clientX, {passive: true});
+    overlay.addEventListener('touchend', e => {
+        let diff = startX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) move(diff > 0 ? 1 : -1);
+    }, {passive: true});
 
+    const handleKeys = (e) => {
+        if (e.key === "ArrowRight") move(1);
+        if (e.key === "ArrowLeft") move(-1);
+        if (e.key === "Escape") overlay.remove();
+    };
+    window.addEventListener('keydown', handleKeys);
+
+    const checkRemoval = setInterval(() => {
+        if (!document.body.contains(overlay)) {
+            window.removeEventListener('keydown', handleKeys);
+            clearInterval(checkRemoval);
+        }
+    }, 500);
+
+    renderUI();
     document.body.appendChild(overlay);
 };
 // E. THE MEGA UPLOADER (Talks to Supabase Gallery)

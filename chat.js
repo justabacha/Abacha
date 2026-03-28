@@ -343,8 +343,6 @@ const avatarImg = isMe
     ${msg.is_loading ? '<div class="stack-loader"></div>' : ''}
     
     ${urls.slice(0, 3).reverse().map((url, i) => {
-        // Reverse so the first image is always on top (z-index)
-        // Aggressive stack: Rotate more and shift X/Y coordinates
         const index = 2 - i; // Correcting index for the top-layer
         const rotate = index * 6 - 6; // More rotation (e.g., -6, 0, 6)
         const shiftX = index * 8 - 8; // Shifts them sideways so you see the "edge"

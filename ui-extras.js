@@ -161,6 +161,7 @@ window.clearPhotoSelection = () => {
 window.viewFullHD = (urlsString, msgId, senderId) => {
     const urls = urlsString.split(',').filter(u => u.trim() !== "");
     let currentIndex = 0;
+    let lastTap = 0;
 
     const overlay = document.createElement('div');
     overlay.id = "ghost-full-hd-overlay";
@@ -180,6 +181,9 @@ window.viewFullHD = (urlsString, msgId, senderId) => {
             <!-- MAIN IMAGE -->
             <img src="${urls[currentIndex]}" id="hd-image-target" style="max-width: 95%; max-height: 75%; border-radius: 12px; box-shadow: 0 0 40px rgba(0,0,0,0.6); transition: opacity 0.2s ease; object-fit: contain;">
             
+            <!-- BIG HEART OVERLAY -->
+            <div id="big-heart" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%) scale(0); opacity:0; color:white; font-size:80px; z-index:10010; pointer-events:none; transition:0.3s;">❤️</div>
+
             <!-- FIXED BOTTOM CONTROLS (Prevents overlap) -->
             <div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 20px;">
                 <!-- INSTA-DOTS INDICATOR -->
@@ -219,6 +223,56 @@ window.viewFullHD = (urlsString, msgId, senderId) => {
             if(p) p.onclick = (e) => { e.stopPropagation(); move(-1); };
             if(n) n.onclick = (e) => { e.stopPropagation(); move(1); };
         }
+
+        // --- NEW: JS-ONLY INJECTIONS ---
+        const imgTarget = document.getElementById('hd-image-target');
+        const bigHeart = document.getElementById('big-heart');
+
+        if (imgTarget) {
+            imgTarget.style.transition = "opacity 0.2s ease, transform 0.1s ease-out"; // Smooth zoom reset
+
+            imgTarget.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const now = Date.now();
+                if (now - lastTap < 300) {
+                    window.toggleGhostLike(msgId);
+                    if (bigHeart) {
+                        bigHeart.style.opacity = '1';
+                        bigHeart.style.transform = 'translate(-50%, -50%) scale(1.5)';
+                        setTimeout(() => {
+                            bigHeart.style.opacity = '0';
+                            bigHeart.style.transform = 'translate(-50%, -50%) scale(0)';
+                        }, 600);
+                    }
+                }
+                lastTap = now;
+            });
+
+            let scale = 1;
+            let startDist = 0;
+            
+            imgTarget.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2) {
+                    startDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                }
+            }, {passive: true});
+
+            imgTarget.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2) {
+                    const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                    scale = Math.min(Math.max(1, scale * (dist / startDist)), 4);
+                    imgTarget.style.transform = `scale(${scale})`;
+                    startDist = dist;
+                }
+            }, {passive: true});
+
+            imgTarget.addEventListener('touchend', () => {
+                if (scale < 1.1) {
+                    scale = 1;
+                    imgTarget.style.transform = 'scale(1)';
+                }
+            }, {passive: true});
+        }
     };
 
     const move = (dir) => {
@@ -229,11 +283,24 @@ window.viewFullHD = (urlsString, msgId, senderId) => {
         }
     };
 
+    // --- UPDATED SWIPE: Ignore if zooming ---
     let startX = 0;
-    overlay.addEventListener('touchstart', e => startX = e.touches[0].clientX, {passive: true});
+    let isPinching = false;
+    
+    overlay.addEventListener('touchstart', e => {
+        if (e.touches.length === 1) startX = e.touches[0].clientX;
+        if (e.touches.length > 1) isPinching = true;
+    }, {passive: true});
+    
     overlay.addEventListener('touchend', e => {
-        let diff = startX - e.changedTouches[0].clientX;
-        if (Math.abs(diff) > 50) move(diff > 0 ? 1 : -1);
+        if (isPinching) {
+            if (e.touches.length === 0) isPinching = false;
+            return; // Stops the image from changing when you finish zooming
+        }
+        if (e.changedTouches && e.changedTouches.length > 0) {
+            let diff = startX - e.changedTouches[0].clientX;
+            if (Math.abs(diff) > 50) move(diff > 0 ? 1 : -1);
+        }
     }, {passive: true});
 
     const handleKeys = (e) => {

@@ -77,37 +77,50 @@ window.closeGhostModal = () => {
 window.confirmGhostDelete = async () => {
   if (!messageToDelete) return;
   
-  const el = document.getElementById(`msg-wrapper-${messageToDelete}`);
-  if (el) el.remove(); // Optimistic UI: Hide it instantly for the user
+  const targetId = messageToDelete; // Capture ID immediately
+  const roomID = [urlParams.get("friend_id"), (await supabaseClient.auth.getUser()).data.user.id].sort().join("_");
 
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  
-  // 3a. Fetch current state
-  const { data: msg } = await supabaseClient
-    .from("messages")
-    .select("hidden_from, sender_id, receiver_id")
-    .eq("id", messageToDelete)
-    .single();
+  // (1). OPTIMISTIC UI: Remove from DOM
+  const el = document.getElementById(`msg-wrapper-${targetId}`);
+  if (el) el.remove(); 
 
-  if (!msg) return;
+  // (2). CACHE PURGE: Prevent the "Zombie" message on refresh
+  let cache = getGhostCache(roomID);
+  localStorage.setItem(`ghost_cache_${roomID}`, JSON.stringify(cache.filter(m => m.id !== targetId)));
 
-  const otherPersonID = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
-  const isAlreadyHiddenByOther = msg.hidden_from?.includes(otherPersonID);
-
-  if (isAlreadyHiddenByOther) {
-    // 3b. BOTH want it gone? KILL IT PERMANENTLY 💀
-    await supabaseClient.from("messages").delete().eq("id", messageToDelete);
-  } else {
-    // 3c. Just YOU want it gone? HIDE IT 👻
-    const updatedHiddenFrom = [...(msg.hidden_from || []), user.id];
-    await supabaseClient
-      .from("messages")
-      .update({ hidden_from: updatedHiddenFrom })
-      .eq("id", messageToDelete);
-  }
-
-  messageToDelete = null;
+  // (3). UI CLEANUP: Close modal now so it doesn't feel laggy
   window.closeGhostModal();
+  messageToDelete = null;
+
+  try {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    
+    // (3a). Fetch current state to see if other person already hid it
+    const { data: msg } = await supabaseClient
+      .from("messages")
+      .select("hidden_from, sender_id, receiver_id")
+      .eq("id", targetId)
+      .single();
+
+    if (!msg) return;
+
+    const otherPersonID = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
+    const isAlreadyHiddenByOther = msg.hidden_from?.includes(otherPersonID);
+
+    if (isAlreadyHiddenByOther) {
+      // (3b). Delete permanently if both hid it
+      await supabaseClient.from("messages").delete().eq("id", targetId);
+    } else {
+      // (3c). Update hidden_from array
+      const updatedHiddenFrom = [...(msg.hidden_from || []), user.id];
+      await supabaseClient
+        .from("messages")
+        .update({ hidden_from: updatedHiddenFrom })
+        .eq("id", targetId);
+    }
+  } catch (err) {
+    console.error("Ghost Delete Logic Error:", err);
+  }
 };
 
 window.openPinModal = (id, content) => {
@@ -324,7 +337,7 @@ const avatarImg = isMe
         
         innerContent = `
             <div class="insta-photo-stack ${msg.is_loading ? 'loading-stack' : ''}" 
-                 onclick="${msg.is_loading ? '' : `window.viewFullHD('${urls[0]}')`}" 
+                onclick="${msg.is_loading ? '' : `window.viewFullHD('${urls[0]}', '${msg.id}', '${msg.sender_id}')`}" 
                  style="position:relative; width: 60vw; max-width: 220px; aspect-ratio: 1/1; margin-bottom: 5px; cursor: pointer;">
                 
                 ${msg.is_loading ? '<div class="stack-loader"></div>' : ''}

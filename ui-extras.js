@@ -158,7 +158,7 @@ window.clearPhotoSelection = () => {
     document.getElementById('photo-input').value = '';
 };
 // D. Full HD View.
-window.viewFullHD = (url, msgId) => {
+window.viewFullHD = (url, msgId, senderId) => {
     const overlay = document.createElement('div');
     overlay.id = "ghost-full-hd-overlay";
     overlay.style = `
@@ -173,9 +173,9 @@ window.viewFullHD = (url, msgId) => {
         
         <div class="photo-accessory-bar">
             <!-- REPLY: U-SHAPED ARROW -->
-            <div class="acc-btn" onclick="window.showGhostPrompt('Reply vibe coming soon! ⤴️')">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 10l-5 5 5 5"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg>
-            </div>
+           <div class="acc-btn" onclick="const sId = '${senderId}'; this.parentElement.parentElement.remove(); window.triggerReply(sId, 'Photo 📸')">
+           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 10l-5 5 5 5"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg>
+           </div>
 
             <!-- DOWNLOAD: DROPPING ARROW -->
             <div class="acc-btn" onclick="window.downloadGhostPhoto('${url}')">
@@ -183,7 +183,7 @@ window.viewFullHD = (url, msgId) => {
             </div>
 
             <!-- REACT: SMILEY -->
-            <div class="acc-btn" onclick="window.showGhostPrompt('Stay tuned for Vibes! ➕')">
+            <div class="acc-btn" onclick="window.showGhostPrompt('Vibe coming soon, stay tuned!')">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
             </div>
 

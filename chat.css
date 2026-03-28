@@ -547,7 +547,30 @@ img.emoji {
     padding: 0 !important;
     margin: 10px 0;
 }
+/* The Ghost Spinner */
+.stack-loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top: 3px solid #007AFF;
+    border-radius: 50%;
+    animation: ghost-spin 0.8s linear infinite;
+    z-index: 10;
+}
 
+@keyframes ghost-spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Dim the images while loading */
+.loading-stack img {
+    filter: brightness(0.5) blur(2px);
+}
 /* The actual images in the chat */
 .insta-photo-stack img {
     position: absolute;
@@ -580,4 +603,67 @@ img.emoji {
 #preview-stack-container {
     display: flex;
     padding-left: 10px; /* Keeps it tucked left */
+}
+/* --- GHOST PHOTO ACCESSORIES --- */
+.photo-accessory-bar {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 25px;
+    background: rgba(71, 70, 70, 0.5);
+    padding: 12px 25px;
+    border-radius: 30px;
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 10001;
+}
+
+.acc-btn {
+    font-size: 20px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.acc-btn:active { transform: scale(0.8); }
+
+/* Heart Animation */
+@keyframes heartPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1); }
+}
+
+.heart-active {
+    color: #ff3b30 !important;
+    animation: heartPop 0.4s cubic-bezier(0.17, 0.89, 0.32, 1.49);
+}
+
+/* Small Heart on Shrunk Stack */
+.mini-heart {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    font-size: 12px;
+    color: #ff3b30;
+    z-index: 20;
+    text-shadow: 0 0 5px rgba(0,0,0,0.8);
+}
+.acc-btn svg {
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    color: white;
+    filter: drop-shadow(0 0 2px rgba(0,0,0,0.5));
+}
+
+.acc-btn:hover svg {
+    transform: scale(1.2);
+    color: #06acff; /* Ghost Blue hover vibe */
+}
+
+.heart-active svg {
+    animation: heartPop 0.4s ease;
 }

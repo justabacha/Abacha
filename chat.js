@@ -82,7 +82,7 @@ window.confirmGhostDelete = async () => {
 
   const { data: { user } } = await supabaseClient.auth.getUser();
   
-  // 1. Fetch current state
+  // 3a. Fetch current state
   const { data: msg } = await supabaseClient
     .from("messages")
     .select("hidden_from, sender_id, receiver_id")
@@ -95,10 +95,10 @@ window.confirmGhostDelete = async () => {
   const isAlreadyHiddenByOther = msg.hidden_from?.includes(otherPersonID);
 
   if (isAlreadyHiddenByOther) {
-    // 2. BOTH want it gone? KILL IT PERMANENTLY 💀
+    // 3b. BOTH want it gone? KILL IT PERMANENTLY 💀
     await supabaseClient.from("messages").delete().eq("id", messageToDelete);
   } else {
-    // 3. Just YOU want it gone? HIDE IT 👻
+    // 3c. Just YOU want it gone? HIDE IT 👻
     const updatedHiddenFrom = [...(msg.hidden_from || []), user.id];
     await supabaseClient
       .from("messages")
@@ -196,7 +196,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const statusEl = document.getElementById('online-status');
     const cacheKey = `ghost_user_${friendID}`;
 
-    // 1. GHOST FAST-TRACK: Load from local storage instantly
+    // A1. GHOST FAST-TRACK: Load from local storage instantly
     const cachedFriend = JSON.parse(localStorage.getItem(cacheKey));
     if (cachedFriend) {
       if (nameEl) nameEl.textContent = cachedFriend.username || 'Ghost';
@@ -207,7 +207,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    // 2. ROBUST LOGIC: Sync with DB
+    // A2. ROBUST LOGIC: Sync with DB
     try {
         const { data: friend, error } = await supabaseClient
           .from('profiles')
@@ -279,10 +279,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 };
 // C. DISPLAY MESSAGE (Ghost Speed Version)
 const displayMessage = (msg, friendAvatar = null, myAvatar = null) => {
-    // 1. Check if ID already exists
+    // C1. Check if ID already exists
     if (document.getElementById(`msg-wrapper-${msg.id}`)) return;
 
-    // 2. Check for "Optimistic" duplicates (same content/sender/recent time)
+    // C2. Check for "Optimistic" duplicates (same content/sender/recent time)
     const existing = Array.from(chatBox.querySelectorAll('.msg-wrapper')).find(el => {
         return el.getAttribute('data-content') === msg.content && 
                Math.abs(parseInt(el.getAttribute('data-timestamp')) - new Date(msg.created_at).getTime()) < 5000;
@@ -319,16 +319,20 @@ const avatarImg = isMe
  const isPhoto = msg.message_type === 'photo' && msg.file_url;
     
     let innerContent = '';
-    if (isPhoto) {
-        // Split the string and filter out any empty strings/ghost commas
+     if (isPhoto) {
         const urls = msg.file_url.split(',').filter(url => url.trim() !== "");
         
         innerContent = `
-            <div class="insta-photo-stack" onclick="window.viewFullHD('${urls[0]}')" style="position:relative; width: 60vw; max-width: 220px; aspect-ratio: 1/1; margin-bottom: 5px; cursor: pointer;">
+            <div class="insta-photo-stack ${msg.is_loading ? 'loading-stack' : ''}" 
+                 onclick="${msg.is_loading ? '' : `window.viewFullHD('${urls[0]}')`}" 
+                 style="position:relative; width: 60vw; max-width: 220px; aspect-ratio: 1/1; margin-bottom: 5px; cursor: pointer;">
+                
+                ${msg.is_loading ? '<div class="stack-loader"></div>' : ''}
+                
                 ${urls.slice(0, 3).map((url, i) => `
                     <img src="${url}" onerror="this.src='https://via.placeholder.com/150?text=Ghost+Image'" style="position:absolute; width:100%; height:100%; object-fit:cover; border-radius:18px; border:1px solid rgba(255,255,255,0.1); transform: rotate(${i * 4 - 4}deg); z-index: ${5 - i}; box-shadow: 0 8px 20px rgba(0,0,0,0.5);">
                 `).join('')}
-                ${urls.length > 1 ? `<div style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); color:white; padding:4px 8px; border-radius:12px; font-size:11px; z-index:10; backdrop-filter:blur(5px);">1/${urls.length}</div>` : ''}
+                ${urls.length > 1 && !msg.is_loading ? `<div style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); color:white; padding:4px 8px; border-radius:12px; font-size:11px; z-index:10; backdrop-filter:blur(5px);">1/${urls.length}</div>` : ''}
             </div>
             ${msg.content ? `<div style="padding: 5px 10px; font-size: 14px; color: white; word-wrap: break-word; max-width: 60vw;">${msg.content}</div>` : ''}`;
     } else {
@@ -375,7 +379,7 @@ const loadGhostHistory = async () => {
   try {
     chatBox.style.opacity = "1"; 
 
-    // 1. FETCH AVATARS FIRST
+    // D1. FETCH AVATARS FIRST
     // We need this so both Cache and DB messages have the right images
     const { data: profiles, error: pError } = await supabaseClient
       .from('profiles')
@@ -387,7 +391,7 @@ const loadGhostHistory = async () => {
       cachedFriendAvatar = profiles?.find(p => p.id === friendID)?.avatar_url;
     }
 
-    // 2. INSTANT LOAD FROM LOCAL CACHE
+    // D2. INSTANT LOAD FROM LOCAL CACHE
     const localMsgs = getGhostCache(roomID);
     if (localMsgs.length > 0) {
       chatBox.innerHTML = "";
@@ -397,7 +401,7 @@ const loadGhostHistory = async () => {
       chatBox.style.opacity = "1"; // Show cache immediately
     }
 
-    // 3. FETCH THE DELTA (New messages only)
+    // D3. FETCH THE DELTA (New messages only)
     const lastTimestamp = localMsgs.length > 0 
       ? localMsgs[localMsgs.length - 1].created_at 
       : new Date(0).toISOString();
@@ -420,7 +424,7 @@ const loadGhostHistory = async () => {
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // 4. BACKGROUND MARK AS READ (Your original Logic)
+    // D4. BACKGROUND MARK AS READ (Your original Logic)
     supabaseClient.from("messages")
       .update({ is_read: true })
       .eq("sender_id", friendID)
@@ -428,7 +432,7 @@ const loadGhostHistory = async () => {
       .eq("is_read", false)
       .then();
 
-    // 5. BACKGROUND SYNC (Keep cache fresh for deletions/ticks)
+    // D5. BACKGROUND SYNC (Keep cache fresh for deletions/ticks)
     const { data: syncCheck } = await supabaseClient
       .from("messages")
       .select("*")
@@ -546,12 +550,36 @@ loadGhostHistory();
 
     // GHOST CHECK: If we have photos, use the uploader from ui-extra.js
     if (typeof selectedFiles !== 'undefined' && selectedFiles.length > 0) {
+        // --- GHOST OPTIMISTIC PHOTO STACK ---
+        const tempId = 'temp-photo-' + Date.now();
+        // Create local preview URLs so we don't wait for upload to see the images
+        const localPreviews = selectedFiles.slice(0, 3).map(file => URL.createObjectURL(file));
+        
+        const tempMsg = {
+            id: tempId,
+            content: message || 'Photo 📸',
+            sender_id: user.id,
+            receiver_id: friendID,
+            message_type: 'photo',
+            file_url: localPreviews.join(','), 
+            created_at: new Date().toISOString(),
+            is_loading: true // This triggers the spinner and blur
+        };
+
+        displayMessage(tempMsg, cachedFriendAvatar, cachedMyAvatar);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        
+        // Reset input immediately to prevent double-sending
+        msgInput.value = "";
+        msgInput.style.height = 'auto';
+
         const success = await window.uploadAndSendPhotos(message, user, friendID, roomID);
-        if (success) {
-            msgInput.value = "";
-            msgInput.style.height = 'auto';
+        
+        if (!success) {
+            document.getElementById(`msg-wrapper-${tempId}`)?.remove();
+            window.showGhostPrompt("Upload failed! 💀");
         }
-        return; // Stop here, photos handled the send
+        return; 
     }
     if (!message) return;
 
@@ -660,17 +688,31 @@ const dbChannel = supabaseClient
         if (m.sender_id !== user.id) {
           displayMessage(m, cachedFriendAvatar, cachedMyAvatar);
           supabaseClient.from("messages").update({ is_read: true }).eq("id", m.id).then();
-        } else {
-          // ID SWAP LOGIC
-        const temps = chatBox.querySelectorAll('[id^="msg-wrapper-temp-"]');
-          temps.forEach(t => {
-            if (t.getAttribute('data-content').trim() === m.content.trim()) {
-              t.id = `msg-wrapper-${m.id}`;
-              // Update timestamp to real DB time
-              t.setAttribute('data-timestamp', new Date(m.created_at).getTime());
-              saveToGhostCache(roomID, m); // Update the cache with the real ID and timestamp
-            }
-          });
+       } else {
+          // ID SWAP LOGIC (Handles both Text and Photos)
+          const temps = chatBox.querySelectorAll('[id^="msg-wrapper-temp-"]');
+          temps.forEach(t => {
+            const isMatch = m.message_type === 'photo' 
+                ? t.id.includes('temp-photo') // Match photo temp
+                : t.getAttribute('data-content').trim() === m.content.trim(); // Match text temp
+
+            if (isMatch) {
+              t.id = `msg-wrapper-${m.id}`;
+              t.setAttribute('data-timestamp', new Date(m.created_at).getTime());
+              
+              // If it's a photo, kill the loader and refresh the stack with HD URLs
+              if (m.message_type === 'photo') {
+                  const stack = t.querySelector('.insta-photo-stack');
+                  if (stack) {
+                      stack.classList.remove('loading-stack');
+                      stack.onclick = () => window.viewFullHD(m.file_url.split(',')[0]);
+                      const loader = stack.querySelector('.stack-loader');
+                      if (loader) loader.remove();
+                  }
+              }
+              saveToGhostCache(roomID, m);
+            }
+          });
         }
         chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
       }
@@ -682,7 +724,7 @@ const dbChannel = supabaseClient
     (payload) => {
       const m = payload.new;
       updateCacheStatus(roomID, m);
-      // 1. Handle Deletion/Hiding for the current user
+      // I1. Handle Deletion/Hiding for the current user
       if (m.hidden_from?.includes(user.id)) {
         const el = document.getElementById(`msg-wrapper-${m.id}`);
         if (el) el.remove();
@@ -692,32 +734,36 @@ const dbChannel = supabaseClient
         return;
       }
 
-      // 2. Handle Blue Ticks (Wait for ID swap if needed)
-      if (m.is_read) {
-        // Try finding by Real ID
-        let msgEl = document.getElementById(`msg-wrapper-${m.id}`);
-        
-        // FAIL-SAFE: If the ID swap hasn't happened yet, and we have content
-        if (!msgEl && m.content) {
-           const temps = chatBox.querySelectorAll('[id^="msg-wrapper-temp-"]');
-           temps.forEach(t => {
-             if (t.getAttribute('data-content').trim() === m.content.trim()) {
-               msgEl = t;
-               msgEl.id = `msg-wrapper-${m.id}`; // Force the swap now
-             }
-           });
-        }
+    // I2. Handle Blue Ticks (Wait for ID swap if needed)
+      if (m.is_read) {
+        let msgEl = document.getElementById(`msg-wrapper-${m.id}`);
+        
+        // GHOST FAIL-SAFE: If the ID hasn't swapped yet, find it by content or photo status
+        if (!msgEl) {
+           const temps = chatBox.querySelectorAll('[id^="msg-wrapper-temp-"]');
+           temps.forEach(t => {
+             const isPhotoMatch = m.message_type === 'photo' && t.id.includes('temp-photo');
+             const isTextMatch = m.content && t.getAttribute('data-content')?.trim() === m.content.trim();
 
-        // Check if it's OUR message using the DOM class, avoiding missing payload data
-       if (msgEl && msgEl.classList.contains('user-wrapper')) {
+             if (isPhotoMatch || isTextMatch) {
+               msgEl = t;
+               msgEl.id = `msg-wrapper-${m.id}`; // Force the ID swap now blud
+             }
+           });
+        }
+
+        // PAINT THE BLUE TICKS
+        if (msgEl && msgEl.classList.contains('user-wrapper')) {
           const timeContainer = msgEl.querySelector('.msg-time');
-          // Only update if it's not already blue to save resources
+          
+          // Check if it's already blue to avoid flickering
           if (timeContainer && !timeContainer.querySelector('span[style*="#06acff"]')) {
-            const timeText = timeContainer.innerText.replace('✓✓', '').trim();
-            timeContainer.innerHTML = `${timeText} <span style="color: #06acff; margin-left: 4px;">✓✓</span>`;
+            const timeOnly = timeContainer.textContent.replace('✓✓', '').trim();
+            // Use innerHTML to inject the blue tick span
+            timeContainer.innerHTML = `${timeOnly} <span style="color: #06acff; margin-left: 4px;">✓✓</span>`;
           }
         }
-      }
+      }
     }
   )
   .on(

@@ -1,7 +1,7 @@
 /**
  * GHOST ACCESSORIES ENGINE - ALL-IN-ONE EDITION
  */
-
+let ghostLikedMessages = new Set();
 // 1. THE ULTIMATE LOCAL DICTIONARY (Merged for 100% reliability)
 const LOCAL_EMOJIS = {
     "Smileys & Emotion": ["😀","😃","😄","😁","😆","😅","😂","🤣","🥲","☺️","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🥸","🤩","🥳","😏","😒","😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🫣","🤭","🫢","🫡","🤫","🫠","🤥","😶","😶‍🌫️","😐","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","😵‍💫","🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕","🤑","🤠","😈","👿","👹","👺","🤡","💩","👻","💀","☠️","👽","👾","🤖","🎃"],
@@ -158,16 +158,49 @@ window.clearPhotoSelection = () => {
     document.getElementById('photo-input').value = '';
 };
 // D. Full HD View.
-window.viewFullHD = (url) => {
+window.viewFullHD = (url, msgId) => {
     const overlay = document.createElement('div');
+    overlay.id = "ghost-full-hd-overlay";
     overlay.style = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-        background: rgba(0,0,0,0.95); z-index: 9999; display: flex; 
-        align-items: center; justify-content: center; cursor: zoom-out;
-        backdrop-filter: blur(10px);
+        background: rgba(0,0,0,0.96); z-index: 9999; display: flex; 
+        flex-direction: column; align-items: center; justify-content: center;
+        backdrop-filter: blur(12px);
     `;
-    overlay.innerHTML = `<img src="${url}" style="max-width: 95%; max-height: 95%; border-radius: 12px; box-shadow: 0 0 30px rgba(0,0,0,0.5);">`;
-    overlay.onclick = () => overlay.remove();
+
+    overlay.innerHTML = `
+        <img src="${url}" id="hd-image-target" style="max-width: 95%; max-height: 80%; border-radius: 12px; box-shadow: 0 0 40px rgba(0,0,0,0.6);">
+        
+        <div class="photo-accessory-bar">
+            <!-- REPLY: U-SHAPED ARROW -->
+            <div class="acc-btn" onclick="window.showGhostPrompt('Reply vibe coming soon! ⤴️')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 10l-5 5 5 5"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg>
+            </div>
+
+            <!-- DOWNLOAD: DROPPING ARROW -->
+            <div class="acc-btn" onclick="window.downloadGhostPhoto('${url}')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </div>
+
+            <!-- REACT: SMILEY -->
+            <div class="acc-btn" onclick="window.showGhostPrompt('Stay tuned for Vibes! ➕')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            </div>
+
+            <!-- LIKE: HEART -->
+            <div class="acc-btn" id="heart-${msgId}" onclick="window.toggleGhostLike('${msgId}')">
+                <svg width="24" height="24" viewBox="0 0 24 24" id="svg-heart-${msgId}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </div>
+
+            <!-- SHARE: DNA STRING -->
+            <div class="acc-btn" onclick="window.showGhostPrompt('Sharing is coming! 🧬')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            </div>
+        </div>
+
+        <div style="position:absolute; top:20px; right:20px; color:white; font-size:30px; cursor:pointer; opacity: 0.6;" onclick="this.parentElement.remove()">✕</div>
+    `;
+
     document.body.appendChild(overlay);
 };
 // E. THE MEGA UPLOADER (Talks to Supabase Gallery)
@@ -215,5 +248,62 @@ window.uploadAndSendPhotos = async (caption, user, friendID, roomID) => {
         console.error("Ghost Upload Failed:", err);
         window.showGhostPrompt("Upload failed... check your vibe! 💀");
         return false;
+    }
+};
+// F. DOWNLOAD LOGIC
+window.downloadGhostPhoto = async (url) => {
+    try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `Ghost-Vibe-${Date.now()}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.showGhostPrompt("Saved to gallery! 📥");
+    } catch (err) {
+        window.showGhostPrompt("Download failed... 💀");
+    }
+};
+
+// F. MERGED LIKE / HEART LOGIC (No Duplicates)
+window.toggleGhostLike = (msgId) => {
+    const btn = document.getElementById(`heart-${msgId}`);
+    const heartSvg = document.getElementById(`svg-heart-${msgId}`);
+    if (!btn || !heartSvg) return;
+
+    // Use our global Set to track state so it sticks
+    const isLiked = ghostLikedMessages.has(msgId);
+    const stack = document.querySelector(`#msg-wrapper-${msgId} .insta-photo-stack`);
+    
+    if (!isLiked) {
+        // F1. Update Global Memory
+        ghostLikedMessages.add(msgId);
+        
+        // F2. Turn SVG Red & Animate
+        heartSvg.setAttribute('fill', '#ff3b30');
+        heartSvg.setAttribute('stroke', '#ff3b30');
+        btn.classList.add('heart-active');
+        
+        // F3. Tack Heart on the Photostack
+        if (stack && !stack.querySelector('.mini-heart')) {
+            stack.insertAdjacentHTML('beforeend', '<div class="mini-heart" style="position:absolute; bottom:5px; right:5px; color:#ff3b30; font-size:14px; text-shadow: 0 0 4px black; z-index:10;">❤️</div>');
+        }
+    } else {
+        // i. Remove from Global Memory
+        ghostLikedMessages.delete(msgId);
+        
+        // ii. Reset SVG to Empty
+        heartSvg.setAttribute('fill', 'none');
+        heartSvg.setAttribute('stroke', 'currentColor');
+        btn.classList.remove('heart-active');
+        
+        // iii. Remove Heart from the Photostack
+        if (stack) {
+            const mini = stack.querySelector('.mini-heart');
+            if (mini) mini.remove();
+        }
     }
 };

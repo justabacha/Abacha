@@ -162,15 +162,17 @@ window.viewFullHD = (urlsString, msgId, senderId) => {
     const urls = urlsString.split(',').filter(u => u.trim() !== "");
     let currentIndex = 0;
     let lastTap = 0;
+    let scale = 1;
 
     const overlay = document.createElement('div');
     overlay.id = "ghost-full-hd-overlay";
     overlay.style = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
                      background: rgba(0,0,0,0.96); z-index: 9999; display: flex; 
                      flex-direction: column; align-items: center; justify-content: center;
-                     backdrop-filter: blur(12px);`;
+                     backdrop-filter: blur(12px); overflow: hidden;`;
 
     const renderUI = () => {
+        scale = 1; // Reset scale on image change
         overlay.innerHTML = `
             <!-- NAVIGATION ARROWS (DESKTOP) -->
             ${urls.length > 1 ? `
@@ -179,22 +181,20 @@ window.viewFullHD = (urlsString, msgId, senderId) => {
             ` : ''}
 
             <!-- MAIN IMAGE -->
-            <img src="${urls[currentIndex]}" id="hd-image-target" style="max-width: 95%; max-height: 75%; border-radius: 12px; box-shadow: 0 0 40px rgba(0,0,0,0.6); transition: opacity 0.2s ease; object-fit: contain;">
+            <img src="${urls[currentIndex]}" id="hd-image-target" style="max-width: 95%; max-height: 75%; border-radius: 12px; box-shadow: 0 0 40px rgba(0,0,0,0.6); transition: opacity 0.2s ease, transform 0.1s ease-out; object-fit: contain; cursor: zoom-in;">
             
             <!-- BIG HEART OVERLAY -->
             <div id="big-heart" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%) scale(0); opacity:0; color:white; font-size:80px; z-index:10010; pointer-events:none; transition:0.3s;">❤️</div>
 
-            <!-- FIXED BOTTOM CONTROLS (Prevents overlap) -->
-            <div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 20px;">
-                <!-- INSTA-DOTS INDICATOR -->
+            <!-- FIXED BOTTOM CONTROLS -->
+            <div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 20px; z-index:10002;">
                 ${urls.length > 1 ? `
-                <div style="display: flex; gap: 8px; margin-bottom: 15px; z-index:10002;">
+                <div style="display: flex; gap: 8px; margin-bottom: 15px;">
                     ${urls.map((_, i) => `
                         <div style="width: 8px; height: 8px; border-radius: 50%; background: ${i === currentIndex ? '#007AFF' : 'rgba(255,255,255,0.3)'}; transition: 0.3s;"></div>
                     `).join('')}
                 </div>` : ''}
 
-                <!-- YOUR ORIGINAL ACCESSORY BAR -->
                 <div class="photo-accessory-bar" style="position: static; transform: none; margin: 0;">
                     <div class="acc-btn" onclick="const sId = '${senderId}'; document.getElementById('ghost-full-hd-overlay').remove(); window.triggerReply(sId, 'Photo 📸')">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 10l-5 5 5 5"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg>
@@ -224,13 +224,11 @@ window.viewFullHD = (urlsString, msgId, senderId) => {
             if(n) n.onclick = (e) => { e.stopPropagation(); move(1); };
         }
 
-        // --- NEW: JS-ONLY INJECTIONS ---
         const imgTarget = document.getElementById('hd-image-target');
         const bigHeart = document.getElementById('big-heart');
 
         if (imgTarget) {
-            imgTarget.style.transition = "opacity 0.2s ease, transform 0.1s ease-out"; // Smooth zoom reset
-
+            // DOUBLE CLICK / TAP TO LIKE
             imgTarget.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const now = Date.now();
@@ -248,9 +246,17 @@ window.viewFullHD = (urlsString, msgId, senderId) => {
                 lastTap = now;
             });
 
-            let scale = 1;
+            // DESKTOP: MOUSE WHEEL ZOOM
+            overlay.onwheel = (e) => {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? -0.2 : 0.2;
+                scale = Math.min(Math.max(1, scale + delta), 4);
+                imgTarget.style.transform = `scale(${scale})`;
+                imgTarget.style.cursor = scale > 1 ? 'zoom-out' : 'zoom-in';
+            };
+
+            // MOBILE: PINCH ZOOM
             let startDist = 0;
-            
             imgTarget.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 2) {
                     startDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
@@ -265,13 +271,6 @@ window.viewFullHD = (urlsString, msgId, senderId) => {
                     startDist = dist;
                 }
             }, {passive: true});
-
-            imgTarget.addEventListener('touchend', () => {
-                if (scale < 1.1) {
-                    scale = 1;
-                    imgTarget.style.transform = 'scale(1)';
-                }
-            }, {passive: true});
         }
     };
 
@@ -283,10 +282,8 @@ window.viewFullHD = (urlsString, msgId, senderId) => {
         }
     };
 
-    // --- UPDATED SWIPE: Ignore if zooming ---
     let startX = 0;
     let isPinching = false;
-    
     overlay.addEventListener('touchstart', e => {
         if (e.touches.length === 1) startX = e.touches[0].clientX;
         if (e.touches.length > 1) isPinching = true;
@@ -295,17 +292,19 @@ window.viewFullHD = (urlsString, msgId, senderId) => {
     overlay.addEventListener('touchend', e => {
         if (isPinching) {
             if (e.touches.length === 0) isPinching = false;
-            return; // Stops the image from changing when you finish zooming
+            return;
         }
         if (e.changedTouches && e.changedTouches.length > 0) {
             let diff = startX - e.changedTouches[0].clientX;
-            if (Math.abs(diff) > 50) move(diff > 0 ? 1 : -1);
+            if (Math.abs(diff) > 50 && scale === 1) move(diff > 0 ? 1 : -1);
         }
     }, {passive: true});
 
     const handleKeys = (e) => {
-        if (e.key === "ArrowRight") move(1);
-        if (e.key === "ArrowLeft") move(-1);
+        if (scale === 1) {
+            if (e.key === "ArrowRight") move(1);
+            if (e.key === "ArrowLeft") move(-1);
+        }
         if (e.key === "Escape") overlay.remove();
     };
     window.addEventListener('keydown', handleKeys);
